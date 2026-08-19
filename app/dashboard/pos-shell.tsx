@@ -4,51 +4,24 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
-  BarChart3,
-  Boxes,
-  ChevronRight,
-  ClipboardList,
-  CreditCard,
-  FileText,
-  LayoutDashboard,
-  Menu,
-  Package,
-  PanelLeftClose,
-  PanelLeftOpen,
-  ReceiptText,
-  Settings,
-  ShoppingBag,
-  ShoppingCart,
-  Store,
-  Tags,
-  Users,
-  WalletCards,
-  X,
+  BarChart3, ChevronRight, CreditCard, FileText, LayoutDashboard, Menu, Package,
+  PanelLeftClose, PanelLeftOpen, ReceiptText, ShoppingBag, ShoppingCart, Store, Tags,
+  Users, WalletCards, X,
 } from 'lucide-react'
 import LogoutButton from './logout-button'
 
 type Props = {
   children: React.ReactNode
-  profile: {
-    fullName: string
-    role: 'admin' | 'staff' | 'user'
-    phone: string | null
-  }
+  profile: { fullName: string; role: 'admin' | 'staff' | 'user'; phone: string | null }
   businessName: string
 }
 
-type NavItem = {
-  label: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  adminOnly?: boolean
-  comingSoon?: boolean
-}
+type NavItem = { label: string; href: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean; comingSoon?: boolean }
 
 const mainNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Products', href: '/dashboard/products', icon: Package, comingSoon: true },
-  { label: 'Categories', href: '/dashboard/categories', icon: Tags, comingSoon: true },
+  { label: 'Products', href: '/dashboard/products', icon: Package },
+  { label: 'Categories', href: '/dashboard/categories', icon: Tags },
   { label: 'Parties', href: '/dashboard/parties', icon: Users, comingSoon: true },
   { label: 'Sales', href: '/dashboard/sales', icon: ShoppingCart, comingSoon: true },
   { label: 'Purchases', href: '/dashboard/purchases', icon: ShoppingBag, comingSoon: true },
@@ -62,238 +35,43 @@ const financeNav: NavItem[] = [
   { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true, comingSoon: true },
 ]
 
-function NavSection({
-  title,
-  items,
-  role,
-  pathname,
-  onNavigate,
-}: {
-  title: string
-  items: NavItem[]
-  role: Props['profile']['role']
-  pathname: string
-  onNavigate: () => void
-}) {
-  return (
-    <div className="mt-6">
-      <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{title}</p>
-      <nav className="mt-2 space-y-1">
-        {items.map((item) => {
-          if (item.adminOnly && role !== 'admin') return null
-          const Icon = item.icon
-          const active = pathname === item.href
-          const disabled = item.comingSoon
-
-          if (disabled) {
-            return (
-              <div
-                key={item.href}
-                title="Coming in a future phase"
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400"
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                <span className="text-[9px] font-semibold uppercase tracking-wide">Soon</span>
-              </div>
-            )
-          }
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                active
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
-    </div>
-  )
+function NavSection({ title, items, role, pathname, onNavigate }: { title: string; items: NavItem[]; role: Props['profile']['role']; pathname: string; onNavigate: () => void }) {
+  return <div className="mt-6">
+    <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{title}</p>
+    <nav className="mt-2 space-y-1">
+      {items.map((item) => {
+        if (item.adminOnly && role !== 'admin') return null
+        const Icon = item.icon
+        if (item.comingSoon) return <div key={item.href} title="Coming in a future phase" className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400"><Icon className="h-5 w-5 shrink-0" /><span className="flex-1">{item.label}</span><span className="text-[9px] font-semibold uppercase">Soon</span></div>
+        const active = pathname === item.href || (item.href === '/dashboard/products' && pathname === '/dashboard/categories')
+        return <Link key={item.href} href={item.href} onClick={onNavigate} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}><Icon className="h-5 w-5 shrink-0" /><span>{item.label}</span></Link>
+      })}
+    </nav>
+  </div>
 }
 
 export default function POSShell({ children, profile, businessName }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-
   const closeMobile = () => setMobileOpen(false)
+  const adminItems = [{ label: 'Team', href: '/dashboard/team', icon: Users }]
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 hidden border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${
-          collapsed ? 'w-[76px]' : 'w-64'
-        }`}
-      >
-        <div className="flex h-16 items-center border-b border-slate-200 px-4">
-          <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <Store className="h-5 w-5" />
-            </span>
-            {!collapsed && (
-              <span className="truncate text-lg font-bold">
-                Partronix<span className="text-blue-600">.in</span>
-              </span>
-            )}
-          </Link>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          {!collapsed ? (
-            <>
-              <NavSection title="Workspace" items={mainNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />
-              <NavSection title="Accounts" items={financeNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />
-              {profile.role === 'admin' && (
-                <NavSection
-                  title="Administration"
-                  items={[{ label: 'Team', href: '/dashboard/team', icon: Users }]}
-                  role={profile.role}
-                  pathname={pathname}
-                  onNavigate={closeMobile}
-                />
-              )}
-            </>
-          ) : (
-            <nav className="space-y-2 pt-2">
-              {[...mainNav.filter((item) => !item.comingSoon), ...(profile.role === 'admin' ? [{ label: 'Team', href: '/dashboard/team', icon: Users }] : [])].map((item) => {
-                const Icon = item.icon
-                const active = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={item.label}
-                    className={`flex items-center justify-center rounded-xl p-2.5 ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </Link>
-                )
-              })}
-            </nav>
-          )}
-        </div>
-
-        <div className="border-t border-slate-200 p-3">
-          <div className={`mb-2 flex items-center gap-3 rounded-xl bg-slate-50 p-3 ${collapsed ? 'justify-center' : ''}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-              {profile.fullName.charAt(0).toUpperCase()}
-            </span>
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{profile.fullName}</p>
-                <p className="truncate text-xs capitalize text-slate-500">{profile.role}</p>
-              </div>
-            )}
-          </div>
-          <div className={collapsed ? 'flex justify-center' : ''}>
-            <button
-              type="button"
-              onClick={() => setCollapsed((value) => !value)}
-              className="hidden items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 lg:flex"
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-              {!collapsed && 'Collapse'}
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button aria-label="Close menu" onClick={closeMobile} className="absolute inset-0 bg-slate-950/40" />
-          <aside className="relative flex h-full w-[min(86vw,320px)] flex-col bg-white shadow-2xl">
-            <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-              <Link href="/dashboard" onClick={closeMobile} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white"><Store className="h-5 w-5" /></span>
-                <span className="text-lg font-bold">Partronix<span className="text-blue-600">.in</span></span>
-              </Link>
-              <button onClick={closeMobile} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Close menu">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-3 py-4">
-              <NavSection title="Workspace" items={mainNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />
-              <NavSection title="Accounts" items={financeNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />
-              {profile.role === 'admin' && (
-                <NavSection title="Administration" items={[{ label: 'Team', href: '/dashboard/team', icon: Users }]} role={profile.role} pathname={pathname} onNavigate={closeMobile} />
-              )}
-            </div>
-          </aside>
-        </div>
-      )}
-
-      <div className={`min-h-screen transition-all duration-200 ${collapsed ? 'lg:pl-[76px]' : 'lg:pl-64'}`}>
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">{businessName}</p>
-                <p className="hidden text-xs text-slate-500 sm:block">POS workspace</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="max-w-[180px] truncate text-sm font-medium">{profile.fullName}</p>
-                <p className="text-xs capitalize text-slate-500">{profile.role}</p>
-              </div>
-              <LogoutButton />
-            </div>
-          </div>
-        </header>
-
-        <main className="px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-8">
-          {children}
-        </main>
-
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
-          <div className="mx-auto grid max-w-lg grid-cols-4 gap-1">
-            {[
-              { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-              { label: 'Sales', href: '/dashboard/sales', icon: ShoppingCart },
-              { label: 'Products', href: '/dashboard/products', icon: Package },
-              { label: 'More', href: '/dashboard/team', icon: ChevronRight, adminOnly: true },
-            ].map((item) => {
-              if (item.adminOnly && profile.role !== 'admin') return null
-              const Icon = item.icon
-              const active = pathname === item.href
-              const disabled = item.href !== '/dashboard' && item.href !== '/dashboard/team'
-              if (disabled) {
-                return (
-                  <div key={item.label} className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-slate-300">
-                    <Icon className="h-5 w-5" />
-                    <span className="text-[10px] font-medium">{item.label}</span>
-                  </div>
-                )
-              }
-              return (
-                <Link key={item.label} href={item.href} className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-500'}`}>
-                  <Icon className="h-5 w-5" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        </nav>
+  return <div className="min-h-screen bg-slate-50 text-slate-900">
+    <aside className={`fixed inset-y-0 left-0 z-50 hidden border-r border-slate-200 bg-white transition-all duration-200 lg:flex lg:flex-col ${collapsed ? 'w-[76px]' : 'w-64'}`}>
+      <div className="flex h-16 items-center border-b border-slate-200 px-4"><Link href="/dashboard" className="flex min-w-0 items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white"><Store className="h-5 w-5" /></span>{!collapsed && <span className="truncate text-lg font-bold">Partronix<span className="text-blue-600">.in</span></span>}</Link></div>
+      <div className="flex-1 overflow-y-auto px-3 py-4">
+        {!collapsed ? <><NavSection title="Workspace" items={mainNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} /><NavSection title="Accounts" items={financeNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />{profile.role === 'admin' && <NavSection title="Administration" items={adminItems} role={profile.role} pathname={pathname} onNavigate={closeMobile} />}</> : <nav className="space-y-2 pt-2">{[...mainNav.filter((item) => !item.comingSoon), ...(profile.role === 'admin' ? adminItems : [])].map((item) => { const Icon = item.icon; const active = pathname === item.href || (item.href === '/dashboard/products' && pathname === '/dashboard/categories'); return <Link key={item.href} href={item.href} title={item.label} className={`flex items-center justify-center rounded-xl p-2.5 ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}><Icon className="h-5 w-5" /></Link> })}</nav>}
       </div>
+      <div className="border-t border-slate-200 p-3"><div className={`mb-2 flex items-center gap-3 rounded-xl bg-slate-50 p-3 ${collapsed ? 'justify-center' : ''}`}><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{profile.fullName.charAt(0).toUpperCase()}</span>{!collapsed && <div className="min-w-0"><p className="truncate text-sm font-semibold">{profile.fullName}</p><p className="truncate text-xs capitalize text-slate-500">{profile.role}</p></div>}</div><button type="button" onClick={() => setCollapsed((value) => !value)} className={`hidden items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 lg:flex ${collapsed ? 'mx-auto' : ''}`} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>{collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}{!collapsed && 'Collapse'}</button></div>
+    </aside>
+
+    {mobileOpen && <div className="fixed inset-0 z-50 lg:hidden"><button aria-label="Close menu" onClick={closeMobile} className="absolute inset-0 bg-slate-950/40" /><aside className="relative flex h-full w-[min(86vw,320px)] flex-col bg-white shadow-2xl"><div className="flex h-16 items-center justify-between border-b border-slate-200 px-4"><Link href="/dashboard" onClick={closeMobile} className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white"><Store className="h-5 w-5" /></span><span className="text-lg font-bold">Partronix<span className="text-blue-600">.in</span></span></Link><button onClick={closeMobile} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Close menu"><X className="h-5 w-5" /></button></div><div className="flex-1 overflow-y-auto px-3 py-4"><NavSection title="Workspace" items={mainNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} /><NavSection title="Accounts" items={financeNav} role={profile.role} pathname={pathname} onNavigate={closeMobile} />{profile.role === 'admin' && <NavSection title="Administration" items={adminItems} role={profile.role} pathname={pathname} onNavigate={closeMobile} />}</div></aside></div>}
+
+    <div className={`min-h-screen transition-all duration-200 ${collapsed ? 'lg:pl-[76px]' : 'lg:pl-64'}`}>
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur"><div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"><div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => setMobileOpen(true)} className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Open menu"><Menu className="h-5 w-5" /></button><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{businessName}</p><p className="hidden text-xs text-slate-500 sm:block">POS workspace</p></div></div><div className="flex items-center gap-2 sm:gap-3"><div className="hidden text-right sm:block"><p className="max-w-[180px] truncate text-sm font-medium">{profile.fullName}</p><p className="text-xs capitalize text-slate-500">{profile.role}</p></div><LogoutButton /></div></div></header>
+      <main className="px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-8">{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden"><div className="mx-auto grid max-w-lg grid-cols-4 gap-1"><Link href="/dashboard" className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${pathname === '/dashboard' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'}`}><LayoutDashboard className="h-5 w-5" /><span className="text-[10px] font-medium">Home</span></Link><div className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-slate-300"><ShoppingCart className="h-5 w-5" /><span className="text-[10px] font-medium">Sales</span></div><Link href="/dashboard/products" className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${pathname === '/dashboard/products' || pathname === '/dashboard/categories' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'}`}><Package className="h-5 w-5" /><span className="text-[10px] font-medium">Products</span></Link>{profile.role === 'admin' ? <Link href="/dashboard/team" className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${pathname === '/dashboard/team' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'}`}><Users className="h-5 w-5" /><span className="text-[10px] font-medium">Team</span></Link> : <div className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-slate-300"><ChevronRight className="h-5 w-5" /><span className="text-[10px] font-medium">More</span></div>}</div></nav>
     </div>
-  )
+  </div>
 }
