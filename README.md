@@ -14,8 +14,31 @@ A mobile-ready and desktop-ready POS foundation for shop administration, staff o
 
 ## Current phase
 
-**Phase 0 — Architecture & project standards**
+**Phase 1 — Foundation**
 
-This phase freezes the architecture, folder conventions, database principles, security rules, and phased roadmap. Application features begin in Phase 1.
+The project now contains the runnable Next.js application shell, responsive styling, Supabase browser/server clients, session middleware, and the first future-ready SQL migration for businesses, profiles, roles, audit logs and RLS.
 
-See `docs/architecture.md` and `docs/development-phases.md`.
+## Local development
+
+```powershell
+git clone https://github.com/HBHATIA80/pos.git
+cd pos
+git checkout phase-1-foundation
+npm install
+```
+
+Create `.env.local` from `.env.example`, add your Supabase project URL and public/anon key, then run:
+
+```powershell
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+Run `supabase/migrations/0001_phase1_foundation.sql` in the Supabase SQL Editor before developing against the database.
+
+See `docs/phase-1-foundation.md` for the complete checklist.
+
+## Next
+
+Phase 2 will implement mobile-number + password signup/login and first-user/shop onboarding without replacing the Phase 1 schema.
