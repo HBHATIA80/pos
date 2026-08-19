@@ -68,7 +68,7 @@ export default function ProductsPage() {
   async function loadAll() {
     setLoading(true)
     const results = await Promise.all(
-      tabs.map((item) => fetch(`/api/catalog?entity=${item.key}`, { cache: 'no-store' }).then(async (response) => ({ key: item.key, response, data: await response.json().catch(() => ({})) })))
+      tabs.map((item) => fetch(`/api/catalog?entity=${item.key}`, { cache: 'no-store' }).then(async (response) => ({ key: item.key, response, data: await response.json().catch(() => ({})) }))))
     for (const result of results) {
       if (!result.response.ok) {
         if (result.response.status !== 401) toast.error(result.data.error ?? `Unable to load ${result.key}`)
