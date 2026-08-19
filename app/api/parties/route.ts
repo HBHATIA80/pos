@@ -41,9 +41,7 @@ async function getContext() {
 
 export async function GET() {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('parties')
@@ -57,16 +55,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = partySchema.safeParse((await request.json().catch(() => null))?.data)
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid party' }, { status: 400 })
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid party' }, { status: 400 })
 
   const data = parsed.data
+  if (data.opening_balance > 0 && data.opening_balance_type === 'none') {
+    return NextResponse.json({ error: 'Choose receivable or payable for a non-zero opening balance' }, { status: 400 })
+  }
+
   const row = {
     business_id: profile.business_id,
     party_code: clean(data.party_code),
@@ -80,7 +78,7 @@ export async function POST(request: Request) {
     state: clean(data.state),
     postal_code: clean(data.postal_code),
     opening_balance: data.opening_balance,
-    opening_balance_type: data.opening_balance === 0 ? data.opening_balance_type : data.opening_balance_type === 'none' ? 'receivable' : data.opening_balance_type,
+    opening_balance_type: data.opening_balance_type,
     credit_limit: data.credit_limit,
     notes: clean(data.notes),
     is_active: data.is_active ?? true,
@@ -94,23 +92,16 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => null)
   const id = z.string().uuid().safeParse(body?.id)
   const parsed = partySchema.partial().safeParse(body?.data ?? {})
-  if (!id.success || !parsed.success) {
-    return NextResponse.json({ error: parsed.success ? 'Invalid party id' : parsed.error.issues[0]?.message ?? 'Invalid party' }, { status: 400 })
-  }
+  if (!id.success || !parsed.success) return NextResponse.json({ error: parsed.success ? 'Invalid party id' : parsed.error.issues[0]?.message ?? 'Invalid party' }, { status: 400 })
 
   const updates: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(parsed.data)) {
-    if (typeof value === 'string') updates[key] = clean(value)
-    else updates[key] = value
-  }
-  if ('opening_balance' in updates && updates.opening_balance === 0 && !('opening_balance_type' in updates)) updates.opening_balance_type = 'none'
+  for (const [key, value] of Object.entries(parsed.data)) updates[key] = typeof value === 'string' ? clean(value) : value
+
   if ('opening_balance' in updates && Number(updates.opening_balance) > 0 && updates.opening_balance_type === 'none') {
     return NextResponse.json({ error: 'Choose receivable or payable for a non-zero opening balance' }, { status: 400 })
   }
