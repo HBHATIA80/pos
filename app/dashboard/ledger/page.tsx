@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { FileText, RefreshCw, Search, WalletCards } from 'lucide-react'
+import { Download, FileText, Printer, RefreshCw, Search, WalletCards } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type Party = {
@@ -41,6 +41,7 @@ type LedgerData = {
 
 const money = (value: number) => `₹${Number(value ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const dateTime = (value: string) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+const csvEscape = (value: string | number) => `"${String(value ?? '').replaceAll('"', '""')}"`
 
 export default function LedgerPage() {
   const [parties, setParties] = useState<Party[]>([])
@@ -91,6 +92,42 @@ export default function LedgerPage() {
     }
   }
 
+  function exportCsv() {
+    if (!data) return
+    const rows = [
+      ['Party', data.party.name],
+      ['Party Code', data.party.party_code ?? ''],
+      ['Period', `${data.period.start_date}${data.period.end_date ? ` to ${data.period.end_date}` : ''}`],
+      ['Opening Balance', data.opening_balance.toFixed(2)],
+      ['Final Balance', `${Math.abs(data.final_balance).toFixed(2)} ${data.balance_type}`],
+      [],
+      ['Date', 'Description', 'Reference', 'Debit', 'Credit', 'Running Balance', 'Balance Type', 'Payment Method', 'Notes'],
+      ...data.entries.map((entry) => [
+        dateTime(entry.date),
+        entry.description,
+        entry.reference,
+        entry.debit.toFixed(2),
+        entry.credit.toFixed(2),
+        Math.abs(entry.balance).toFixed(2),
+        entry.balance < 0 ? 'payable' : entry.balance > 0 ? 'receivable' : 'settled',
+        entry.payment_method ?? '',
+        entry.notes ?? '',
+      ]),
+    ]
+    const csv = rows.map((row) => row.map((value) => csvEscape(value)).join(',')).join('\r\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    const safeName = data.party.name.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'party'
+    anchor.href = url
+    anchor.download = `${safeName}-ledger-${data.period.start_date}${data.period.end_date ? `-to-${data.period.end_date}` : ''}.csv`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+    toast.success('Ledger CSV exported')
+  }
+
   useEffect(() => { void loadParties() }, [])
   useEffect(() => { void loadLedger() }, [selectedParty, startDate, endDate])
 
@@ -102,7 +139,7 @@ export default function LedgerPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 print:hidden">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Phase 7.3 · Party Ledger</span>
@@ -115,8 +152,13 @@ export default function LedgerPage() {
         </div>
       </section>
 
+      <div className="hidden print:block print:mb-6">
+        <h1 className="text-2xl font-bold">Party Ledger</h1>
+        {data && <p className="mt-1 text-sm">{data.party.name}{data.party.phone ? ` · ${data.party.phone}` : ''} · {data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}</p>}
+      </div>
+
       <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm print:hidden">
           <div className="border-b border-slate-200 p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -134,7 +176,7 @@ export default function LedgerPage() {
         </section>
 
         <section className="space-y-5">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px_auto] md:items-end">
               <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Party</label><div className="rounded-xl bg-slate-50 px-4 py-3"><p className="font-semibold text-slate-900">{data?.party.name ?? parties.find((party) => party.id === selectedParty)?.name ?? 'Select a party'}</p><p className="text-xs text-slate-500">{data?.party.phone ?? parties.find((party) => party.id === selectedParty)?.phone ?? ''}</p></div></div>
               <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</label><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="min-h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500" /></div>
@@ -152,7 +194,13 @@ export default function LedgerPage() {
             </div>
 
             <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-200 p-5"><div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-blue-600" /><h2 className="font-semibold">{data.party.name} — Ledger</h2></div><p className="mt-1 text-xs text-slate-500">{data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}. Debit increases receivable; credit records money received.</p></div>
+              <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div><div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-blue-600" /><h2 className="font-semibold">{data.party.name} — Ledger</h2></div><p className="mt-1 text-xs text-slate-500">{data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}. Debit increases receivable; credit records money received.</p></div>
+                <div className="flex gap-2 print:hidden">
+                  <button type="button" onClick={exportCsv} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" /> CSV</button>
+                  <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Printer className="h-4 w-4" /> Print</button>
+                </div>
+              </div>
               <div className="overflow-x-auto"><table className="min-w-[820px] w-full text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-400"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Reference</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Credit</th><th className="px-4 py-3 text-right">Running Balance</th></tr></thead><tbody className="divide-y divide-slate-100">{data.entries.map((entry) => <tr key={entry.id}><td className="px-4 py-3 text-xs text-slate-500">{dateTime(entry.date)}</td><td className="px-4 py-3 font-medium">{entry.description}</td><td className="px-4 py-3 text-xs text-slate-500">{entry.reference || '—'}</td><td className="px-4 py-3 text-right font-semibold">{entry.debit ? money(entry.debit) : '—'}</td><td className="px-4 py-3 text-right font-semibold text-emerald-700">{entry.credit ? money(entry.credit) : '—'}</td><td className={`px-4 py-3 text-right font-bold ${entry.balance < 0 ? 'text-amber-700' : 'text-blue-700'}`}>{money(Math.abs(entry.balance))}{entry.balance < 0 ? ' Payable' : entry.balance > 0 ? ' Receivable' : ''}</td></tr>)}</tbody></table></div>
               {data.entries.length === 1 && <div className="p-8 text-center text-sm text-slate-500">No sales or payments were recorded in this period.</div>}
             </section>
