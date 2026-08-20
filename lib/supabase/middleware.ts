@@ -24,6 +24,28 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return response
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role,is_active')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.role === 'user' && profile.is_active) {
+    const pathname = request.nextUrl.pathname
+
+    if (pathname === '/dashboard' || (pathname.startsWith('/dashboard/') && !pathname.startsWith('/dashboard/orders'))) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard/orders'
+      redirectUrl.search = ''
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
   return response
 }
