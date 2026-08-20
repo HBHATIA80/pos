@@ -3,14 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -61,7 +56,6 @@ export async function GET() {
   }
 
   const invoiceIds = (invoices ?? []).map((invoice) => invoice.id)
-
   const payments = invoiceIds.length
     ? await supabase
         .from('sale_payments')
@@ -79,39 +73,26 @@ export async function GET() {
   const paymentByInvoice = new Map<string, number>()
   for (const payment of payments.data ?? []) {
     if (payment.status !== 'active') continue
-    paymentByInvoice.set(
-      payment.invoice_id,
-      (paymentByInvoice.get(payment.invoice_id) ?? 0) + Number(payment.amount ?? 0),
-    )
+    paymentByInvoice.set(payment.invoice_id, (paymentByInvoice.get(payment.invoice_id) ?? 0) + Number(payment.amount ?? 0))
   }
 
-  let runningBalance = 0
-  const entries = (invoices ?? []).flatMap((invoice) => {
+  const rawEntries = (invoices ?? []).flatMap((invoice) => {
     const invoiceAmount = Number(invoice.grand_total ?? 0)
-    const paidAmount = paymentByInvoice.get(invoice.id) ?? 0
-    const invoiceEntries = [
-      {
-        id: invoice.id,
-        type: 'purchase' as const,
-        date: invoice.completed_at ?? invoice.sold_at ?? invoice.created_at,
-        reference: invoice.invoice_no,
-        description: `Purchase ${invoice.invoice_no}`,
-        debit: invoiceAmount,
-        credit: 0,
-        order_status: invoice.order_status,
-        items: invoice.sales_invoice_items ?? [],
-      },
-    ]
-
-    runningBalance += invoiceAmount
+    const invoiceEntries = [{
+      id: invoice.id,
+      type: 'purchase' as const,
+      date: invoice.completed_at ?? invoice.sold_at ?? invoice.created_at,
+      reference: invoice.invoice_no,
+      description: `Purchase ${invoice.invoice_no}`,
+      debit: invoiceAmount,
+      credit: 0,
+    }]
 
     const invoicePayments = (payments.data ?? []).filter(
       (payment) => payment.invoice_id === invoice.id && payment.status === 'active',
     )
 
     for (const payment of invoicePayments) {
-      const amount = Number(payment.amount ?? 0)
-      runningBalance = Math.max(runningBalance - amount, 0)
       invoiceEntries.push({
         id: payment.id,
         type: 'payment' as const,
@@ -119,13 +100,17 @@ export async function GET() {
         reference: payment.reference_no ?? '',
         description: payment.payment_method === 'cash' ? 'Cash Payment' : 'Bank Payment',
         debit: 0,
-        credit: amount,
-        order_status: invoice.order_status,
-        items: [],
+        credit: Number(payment.amount ?? 0),
       })
     }
 
     return invoiceEntries
+  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  let runningBalance = 0
+  const entries = rawEntries.map((entry) => {
+    runningBalance = Math.max(runningBalance + entry.debit - entry.credit, 0)
+    return { ...entry, balance: Number(runningBalance.toFixed(2)) }
   })
 
   const purchases = (invoices ?? []).map((invoice) => ({
@@ -136,24 +121,18 @@ export async function GET() {
     grand_total: Number(invoice.grand_total ?? 0),
     items: invoice.sales_invoice_items ?? [],
     paid_amount: paymentByInvoice.get(invoice.id) ?? 0,
-    balance_amount: Math.max(
-      Number(invoice.grand_total ?? 0) - (paymentByInvoice.get(invoice.id) ?? 0),
-      0,
-    ),
-  }))
+    balance_amount: Math.max(Number(invoice.grand_total ?? 0) - (paymentByInvoice.get(invoice.id) ?? 0), 0),
+  })).reverse()
 
   return NextResponse.json({
-    customer: {
-      id: user.id,
-      name: profile.full_name,
-    },
+    customer: { id: user.id, name: profile.full_name },
     summary: {
       purchase_count: purchases.length,
       purchase_total: purchases.reduce((sum, purchase) => sum + purchase.grand_total, 0),
       paid_total: purchases.reduce((sum, purchase) => sum + purchase.paid_amount, 0),
       outstanding_total: runningBalance,
     },
-    purchases: purchases.reverse(),
+    purchases,
     entries: entries.reverse(),
   })
 }
