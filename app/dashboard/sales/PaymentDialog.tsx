@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Banknote, Check, CreditCard, Loader2, Printer, X } from 'lucide-react'
+import { Banknote, Check, CreditCard, Loader2, Printer, ReceiptText, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type PaymentMethod = 'cash' | 'bank'
@@ -109,13 +109,14 @@ export default function PaymentDialog({ invoiceId, open, onClose, onPaymentSaved
                 <Check className="mx-auto h-8 w-8 text-emerald-600" />
                 <p className="mt-2 font-bold text-emerald-800">Payment Saved</p>
                 <p className="mt-1 text-sm text-emerald-700">The payment now has a printable receipt.</p>
-                <div className="mt-4 flex gap-3">
-                  <button type="button" onClick={printReceipt} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700"><Printer className="h-4 w-4" /> Print Receipt</button>
-                  <button type="button" onClick={onClose} className="min-h-12 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-white">Done</button>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <button type="button" onClick={printReceipt} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700"><Printer className="h-4 w-4" /> Print Receipt</button>
+                  <button type="button" onClick={() => window.open('/dashboard/sales/payments', '_blank', 'noopener,noreferrer')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white text-sm font-semibold text-blue-700 hover:bg-blue-50"><ReceiptText className="h-4 w-4" /> Payment History</button>
+                  <button type="button" onClick={onClose} className="min-h-12 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-white">Done</button>
                 </div>
               </div>
             ) : summary?.payment_status === 'paid' ? (
-              <div className="rounded-2xl bg-emerald-50 p-6 text-center"><Check className="mx-auto h-9 w-9 text-emerald-600" /><p className="mt-3 font-bold text-emerald-800">Invoice Fully Paid</p><p className="mt-1 text-sm text-emerald-700">There is no outstanding balance.</p></div>
+              <div className="space-y-3 rounded-2xl bg-emerald-50 p-6 text-center"><Check className="mx-auto h-9 w-9 text-emerald-600" /><p className="mt-3 font-bold text-emerald-800">Invoice Fully Paid</p><p className="mt-1 text-sm text-emerald-700">There is no outstanding balance.</p><button type="button" onClick={() => window.open('/dashboard/sales/payments', '_blank', 'noopener,noreferrer')} className="mx-auto inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"><ReceiptText className="h-4 w-4" /> Payment History</button></div>
             ) : <>
               <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400">Payment Method</label><div className="grid grid-cols-2 gap-3">
                 {(['cash', 'bank'] as PaymentMethod[]).map((method) => <button key={method} type="button" onClick={() => setPaymentMethod(method)} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border text-sm font-semibold ${paymentMethod === method ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{method === 'cash' ? <Banknote className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />}{method === 'cash' ? 'Cash' : 'Bank'}</button>)}
