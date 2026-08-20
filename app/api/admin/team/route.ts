@@ -20,18 +20,13 @@ const updateMemberSchema = z.object({
 function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
   if (!url || !serviceRoleKey) throw new Error('Supabase service role configuration is missing.')
-
-  return createClient(url, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  return createClient(url, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })
 }
 
 async function requireAdmin() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) return { error: 'Authentication required.', status: 401 as const }
 
   const { data: profile, error } = await supabase
@@ -43,7 +38,6 @@ async function requireAdmin() {
   if (error || !profile || profile.role !== 'admin' || !profile.is_active || !profile.business_id) {
     return { error: 'Admin access required.', status: 403 as const }
   }
-
   return { user, profile, supabase }
 }
 
@@ -72,22 +66,17 @@ export async function POST(request: Request) {
   const admin = createAdminClient()
   const { fullName, phone, password, role } = parsed.data
 
-  // Customer-facing users always receive the minimum portal permissions:
-  // catalog visibility and the ability to place an order. They never receive
-  // sales.manage or any administrative permission implicitly.
+  // User accounts are customer-facing by design. Any attempt to grant
+  // administrative/staff permissions to a user is ignored server-side.
   const permissions = role === 'user'
-    ? Array.from(new Set([...parsed.data.permissions, 'catalog.view', 'orders.place']))
+    ? ['catalog.view', 'orders.place']
     : parsed.data.permissions
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     phone,
     password,
     phone_confirm: true,
-    user_metadata: {
-      full_name: fullName,
-      business_id: auth.profile.business_id,
-      role,
-    },
+    user_metadata: { full_name: fullName, business_id: auth.profile.business_id, role },
   })
 
   if (createError || !created.user) {
@@ -104,12 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: permissionError.message }, { status: 500 })
   }
 
-  const rows = (permissionRows ?? []).map((permission) => ({
-    profile_id: created.user!.id,
-    permission_id: permission.id,
-    granted_by: auth.user.id,
-  }))
-
+  const rows = (permissionRows ?? []).map((permission) => ({ profile_id: created.user!.id, permission_id: permission.id, granted_by: auth.user.id }))
   if (rows.length > 0) {
     const { error: grantError } = await admin.from('profile_permissions').insert(rows)
     if (grantError) {
@@ -127,10 +111,7 @@ export async function POST(request: Request) {
     metadata: { role, permissions },
   })
 
-  return NextResponse.json({
-    message: `${role === 'staff' ? 'Staff' : 'User'} account created.`,
-    memberId: created.user.id,
-  }, { status: 201 })
+  return NextResponse.json({ message: `${role === 'staff' ? 'Staff' : 'User'} account created.`, memberId: created.user.id }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
@@ -155,7 +136,6 @@ export async function PATCH(request: Request) {
 
   const admin = createAdminClient()
   let update: Record<string, unknown> = {}
-
   if (action === 'activate') update = { is_active: true }
   if (action === 'deactivate') update = { is_active: false }
   if (action === 'role') {
@@ -170,6 +150,23 @@ export async function PATCH(request: Request) {
     .eq('business_id', auth.profile.business_id)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+  if (action === 'role' && role === 'user') {
+    const { data: portalPermissions } = await admin
+      .from('permissions')
+      .select('id')
+      .in('code', ['catalog.view', 'orders.place'])
+
+    const allowedIds = (portalPermissions ?? []).map((permission) => permission.id)
+    if (allowedIds.length) {
+      await admin.from('profile_permissions').delete().eq('profile_id', profileId).not('permission_id', 'in', `(${allowedIds.join(',')})`)
+    } else {
+      await admin.from('profile_permissions').delete().eq('profile_id', profileId)
+    }
+
+    const rows = allowedIds.map((permission_id) => ({ profile_id: profileId, permission_id, granted_by: auth.user.id }))
+    if (rows.length) await admin.from('profile_permissions').upsert(rows, { onConflict: 'profile_id,permission_id' })
+  }
 
   await admin.from('audit_logs').insert({
     business_id: auth.profile.business_id,
