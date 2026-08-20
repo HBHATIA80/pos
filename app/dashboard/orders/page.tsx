@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Image as ImageIcon, Minus, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react'
+import { CheckCircle2, Image as ImageIcon, Minus, Plus, Search, ShoppingCart, Trash2, WalletCards } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type Product = {
@@ -17,12 +18,26 @@ type Order = {
   id: string
   invoice_no: string
   status: 'draft' | 'completed' | 'void'
+  order_channel?: string | null
+  order_status?: 'placed' | 'accepted' | 'packed' | 'out_for_delivery' | 'delivered' | 'cancelled' | null
   grand_total: number
   created_at: string
   sales_invoice_items?: { product_name: string; quantity: number; unit_price: number }[]
 }
 
 const money = (value: number) => `₹${Number(value || 0).toFixed(2)}`
+
+const orderStatusLabel = (status: Order['order_status']) => {
+  switch (status) {
+    case 'accepted': return 'Accepted'
+    case 'packed': return 'Packed'
+    case 'out_for_delivery': return 'Out for delivery'
+    case 'delivered': return 'Delivered'
+    case 'cancelled': return 'Cancelled'
+    case 'placed': return 'Placed'
+    default: return 'Waiting for shop'
+  }
+}
 
 export default function OrdersPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -127,9 +142,15 @@ export default function OrdersPage() {
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Shop & Place Order</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Browse available products, see the selling price, add items to your cart, and send your order to the shop.</p>
           </div>
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search product or SKU" className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+          <div className="flex w-full max-w-md gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search product or SKU" className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            </div>
+            <Link href="/dashboard/my-ledger" className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50" title="Open my ledger">
+              <WalletCards className="h-4 w-4" />
+              <span className="hidden sm:inline">My Ledger</span>
+            </Link>
           </div>
         </div>
       </section>
@@ -174,8 +195,32 @@ export default function OrdersPage() {
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-semibold text-slate-900">My orders</h2></div>
-        {!orders.length ? <div className="p-8 text-center text-sm text-slate-500">No orders yet.</div> : <div className="divide-y divide-slate-100">{orders.map((order) => <div key={order.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-900">{order.invoice_no}</p><p className="text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p></div><div className="flex items-center gap-4"><span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold capitalize text-amber-700">{order.status}</span><span className="font-bold text-slate-900">{money(order.grand_total)}</span></div></div>)}</div>}
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 className="font-semibold text-slate-900">My orders</h2><p className="mt-1 text-xs text-slate-500">Track what the shop has done with each order.</p></div>
+            <Link href="/dashboard/my-ledger" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"><WalletCards className="h-4 w-4" /> View my ledger</Link>
+          </div>
+        </div>
+        {!orders.length ? <div className="p-8 text-center text-sm text-slate-500">No orders yet.</div> : <div className="divide-y divide-slate-100">{orders.map((order) => {
+          const lifecycle = order.order_channel === 'customer_portal' ? order.order_status : null
+          return <div key={order.id} className="px-5 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold text-slate-900">{order.invoice_no}</p>
+                <p className="text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${lifecycle === 'delivered' ? 'bg-green-50 text-green-700' : lifecycle === 'cancelled' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{orderStatusLabel(lifecycle)}</span>
+                <span className="font-bold text-slate-900">{money(order.grand_total)}</span>
+              </div>
+            </div>
+            {lifecycle && <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span className="font-medium text-slate-600">Shop action:</span>
+              <span>{orderStatusLabel(lifecycle)}</span>
+              {lifecycle === 'delivered' && <span className="text-green-700">· Added to your ledger</span>}
+            </div>}
+          </div>
+        })}</div>}
       </section>
     </div>
   )
