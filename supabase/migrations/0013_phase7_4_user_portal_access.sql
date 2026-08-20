@@ -7,20 +7,21 @@ values
   ('orders.place', 'Place orders', 'orders', 'Place product orders from the customer portal.', 85)
 on conflict (code) do nothing;
 
--- Existing user accounts receive the portal permissions automatically.
+-- Existing user accounts are customer-facing accounts only.
+-- Remove any previously granted management permissions, then grant the two
+-- permissions required by the customer portal.
+delete from public.profile_permissions pp
+using public.profiles p
+where pp.profile_id = p.id
+  and p.role = 'user';
+
 insert into public.profile_permissions (profile_id, permission_id)
 select p.id, perm.id
 from public.profiles p
 cross join public.permissions perm
 where p.role = 'user'
   and p.is_active = true
-  and perm.code in ('catalog.view', 'orders.place')
-  and not exists (
-    select 1
-    from public.profile_permissions pp
-    where pp.profile_id = p.id
-      and pp.permission_id = perm.id
-  );
+  and perm.code in ('catalog.view', 'orders.place');
 
 -- Harden catalog masters: users can browse products, not the underlying admin masters.
 drop policy if exists "business members can view categories" on public.catalog_categories;
