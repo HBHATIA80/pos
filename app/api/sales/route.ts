@@ -70,6 +70,8 @@ export async function GET() {
         id,
         invoice_no,
         status,
+        order_channel,
+        order_status,
         party_id,
         subtotal,
         discount_amount,
@@ -272,7 +274,7 @@ export async function PATCH(request: Request) {
       {
         error:
           error.message ||
-          `Unable to ${action.data} sale`,
+          'Unable to update sale',
       },
       { status: 400 }
     )
