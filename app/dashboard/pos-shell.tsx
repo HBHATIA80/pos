@@ -61,6 +61,7 @@ const financeNav: NavItem[] = [
 
 const userNav: NavItem[] = [
   { label: 'Shop & Orders', href: '/dashboard/orders', icon: ShoppingCart },
+  { label: 'My Ledger', href: '/dashboard/my-ledger', icon: WalletCards },
 ]
 
 function NavSection({
@@ -322,15 +323,26 @@ export default function POSShell({ children, profile, businessName }: Props) {
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
           <div className="mx-auto grid max-w-lg grid-cols-2 gap-1">
             {isCustomer ? (
-              <Link
-                href="/dashboard/orders"
-                className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${
-                  pathname === '/dashboard/orders' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'
-                }`}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span className="text-[10px] font-medium">Shop & Orders</span>
-              </Link>
+              <>
+                <Link
+                  href="/dashboard/orders"
+                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${
+                    pathname === '/dashboard/orders' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'
+                  }`}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="text-[10px] font-medium">Shop & Orders</span>
+                </Link>
+                <Link
+                  href="/dashboard/my-ledger"
+                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 ${
+                    pathname === '/dashboard/my-ledger' ? 'bg-blue-50 text-blue-700' : 'text-slate-500'
+                  }`}
+                >
+                  <WalletCards className="h-5 w-5" />
+                  <span className="text-[10px] font-medium">My Ledger</span>
+                </Link>
+              </>
             ) : (
               <>
                 <Link
