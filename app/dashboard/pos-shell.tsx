@@ -24,7 +24,7 @@ const financeNav: NavItem[] = [
   { label: 'Payments', href: '/dashboard/payments', icon: CreditCard, comingSoon: true },
   { label: 'Receipts', href: '/dashboard/receipts', icon: ReceiptText, comingSoon: true },
   { label: 'Expenses', href: '/dashboard/expenses', icon: WalletCards, comingSoon: true },
-  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText, comingSoon: true },
+  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },
   { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true, comingSoon: true },
 ]
 function NavSection({ title, items, role, pathname, onNavigate }: { title: string; items: NavItem[]; role: Props['profile']['role']; pathname: string; onNavigate: () => void }) {
