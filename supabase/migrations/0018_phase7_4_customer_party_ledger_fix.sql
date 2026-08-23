@@ -18,6 +18,7 @@ do $$
 declare
   v_profile record;
   v_party_id uuid;
+  v_match_count integer;
 begin
   for v_profile in
     select id, business_id, full_name, phone
@@ -30,25 +31,45 @@ begin
     v_party_id := null;
 
     if v_profile.phone is not null then
-      select min(p.id)
-      into v_party_id
+      select count(*)
+      into v_match_count
       from public.parties p
       where p.business_id = v_profile.business_id
         and p.party_type in ('customer', 'both')
         and p.is_active = true
-        and p.phone = v_profile.phone
-      having count(*) = 1;
+        and p.phone = v_profile.phone;
+
+      if v_match_count = 1 then
+        select p.id
+        into v_party_id
+        from public.parties p
+        where p.business_id = v_profile.business_id
+          and p.party_type in ('customer', 'both')
+          and p.is_active = true
+          and p.phone = v_profile.phone
+        limit 1;
+      end if;
     end if;
 
     if v_party_id is null then
-      select min(p.id)
-      into v_party_id
+      select count(*)
+      into v_match_count
       from public.parties p
       where p.business_id = v_profile.business_id
         and p.party_type in ('customer', 'both')
         and p.is_active = true
-        and lower(trim(p.name)) = lower(trim(v_profile.full_name))
-      having count(*) = 1;
+        and lower(trim(p.name)) = lower(trim(v_profile.full_name));
+
+      if v_match_count = 1 then
+        select p.id
+        into v_party_id
+        from public.parties p
+        where p.business_id = v_profile.business_id
+          and p.party_type in ('customer', 'both')
+          and p.is_active = true
+          and lower(trim(p.name)) = lower(trim(v_profile.full_name))
+        limit 1;
+      end if;
     end if;
 
     if v_party_id is not null then
@@ -105,30 +126,44 @@ begin
   v_party_id := v_profile.party_id;
 
   if v_party_id is null and v_profile.phone is not null then
-    select count(*), min(p.id)
-    into v_match_count, v_party_id
+    select count(*)
+    into v_match_count
     from public.parties p
     where p.business_id = new.business_id
       and p.party_type in ('customer', 'both')
       and p.is_active = true
       and p.phone = v_profile.phone;
 
-    if v_match_count <> 1 then
-      v_party_id := null;
+    if v_match_count = 1 then
+      select p.id
+      into v_party_id
+      from public.parties p
+      where p.business_id = new.business_id
+        and p.party_type in ('customer', 'both')
+        and p.is_active = true
+        and p.phone = v_profile.phone
+      limit 1;
     end if;
   end if;
 
   if v_party_id is null then
-    select count(*), min(p.id)
-    into v_match_count, v_party_id
+    select count(*)
+    into v_match_count
     from public.parties p
     where p.business_id = new.business_id
       and p.party_type in ('customer', 'both')
       and p.is_active = true
       and lower(trim(p.name)) = lower(trim(v_profile.full_name));
 
-    if v_match_count <> 1 then
-      v_party_id := null;
+    if v_match_count = 1 then
+      select p.id
+      into v_party_id
+      from public.parties p
+      where p.business_id = new.business_id
+        and p.party_type in ('customer', 'both')
+        and p.is_active = true
+        and lower(trim(p.name)) = lower(trim(v_profile.full_name))
+      limit 1;
     end if;
   end if;
 
@@ -169,8 +204,6 @@ for each row
 execute function public.assign_customer_order_party();
 
 revoke execute on function public.assign_customer_order_party() from public, anon, authenticated;
-
-grant execute on function public.assign_customer_order_party() to authenticated;
 
 comment on column public.profiles.party_id is
 'Customer portal party link. Customer ledger ownership follows this party, not created_by.';
