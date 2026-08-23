@@ -3,17 +3,15 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const CUSTOMER_PORTAL_PATHS = ['/dashboard/orders', '/dashboard/my-ledger']
 
+// Keep middleware aligned with the server/browser clients when Vercel project
+// variables are missing. Environment variables still take precedence.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sgymvcjvbmtgodzinxdz.supabase.co'
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_GIYTy0RkTg24mMx4PmswCw_e1n8fVEh'
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!url || !key) {
-    return response
-  }
-
-  const supabase = createServerClient(url, key, {
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
