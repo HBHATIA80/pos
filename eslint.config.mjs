@@ -10,5 +10,8 @@ export default [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     ignores: ['.next/**', 'node_modules/**'],
+    rules: {
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]
