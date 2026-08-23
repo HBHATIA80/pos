@@ -32,7 +32,10 @@ function createServerAdminClient() {
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
@@ -40,9 +43,17 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profileError) return NextResponse.json({ error: profileError.message || 'Unable to load customer profile' }, { status: 400 })
-  if (!profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (profile.role !== 'user') return NextResponse.json({ error: 'Customer ledger is only available to customer portal users.' }, { status: 403 })
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message || 'Unable to load customer profile' }, { status: 400 })
+  }
+
+  if (!profile?.is_active || !profile.business_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (profile.role !== 'user') {
+    return NextResponse.json({ error: 'Customer ledger is only available to customer portal users.' }, { status: 403 })
+  }
 
   const params = request.nextUrl.searchParams
   const fromValue = params.get('from')
@@ -50,24 +61,30 @@ export async function GET(request: NextRequest) {
   const fromDate = parseDate(fromValue)
   const toDate = parseDate(toValue)
 
-  if (fromValue && !fromDate) return NextResponse.json({ error: 'Invalid From date. Use YYYY-MM-DD.' }, { status: 400 })
-  if (toValue && !toDate) return NextResponse.json({ error: 'Invalid To date. Use YYYY-MM-DD.' }, { status: 400 })
-  if (fromDate && toDate && fromDate > toDate) return NextResponse.json({ error: 'From date cannot be after To date.' }, { status: 400 })
+  if (fromValue && !fromDate) {
+    return NextResponse.json({ error: 'Invalid From date. Use YYYY-MM-DD.' }, { status: 400 })
+  }
+  if (toValue && !toDate) {
+    return NextResponse.json({ error: 'Invalid To date. Use YYYY-MM-DD.' }, { status: 400 })
+  }
+  if (fromDate && toDate && fromDate > toDate) {
+    return NextResponse.json({ error: 'From date cannot be after To date.' }, { status: 400 })
+  }
 
   const admin = createServerAdminClient()
 
-  // Resolve the customer party inside the authenticated customer's business.
-  // The fallback matching is intentionally done server-side and only within
-  // this business. Phone matching ignores formatting differences such as
-  // +91, spaces and hyphens; name matching ignores repeated whitespace/case.
+  // Resolve the customer's party inside the authenticated business. Prefer
+  // the explicit profile link, then use phone/name as recovery for older data.
   const { data: parties, error: partyError } = await admin
     .from('parties')
-    .select('id,name,phone,party_type,is_active')
+    .select('id,name,phone,email,party_type,is_active')
     .eq('business_id', profile.business_id)
     .in('party_type', ['customer', 'both'])
     .eq('is_active', true)
 
-  if (partyError) return NextResponse.json({ error: partyError.message || 'Unable to load customer party' }, { status: 400 })
+  if (partyError) {
+    return NextResponse.json({ error: partyError.message || 'Unable to load customer party' }, { status: 400 })
+  }
 
   let partyId: string | null = null
   let partyName: string | null = null
@@ -82,32 +99,30 @@ export async function GET(request: NextRequest) {
 
   if (!partyId) {
     const phone = normalizePhone(profile.phone)
-    const phoneMatches = phone
+    const matches = phone
       ? (parties ?? []).filter((party) => normalizePhone(party.phone) === phone)
       : []
-
-    if (phoneMatches.length === 1) {
-      partyId = phoneMatches[0].id
-      partyName = phoneMatches[0].name
+    if (matches.length === 1) {
+      partyId = matches[0].id
+      partyName = matches[0].name
     }
   }
 
   if (!partyId) {
     const name = normalizeName(profile.full_name)
-    const nameMatches = name
+    const matches = name
       ? (parties ?? []).filter((party) => normalizeName(party.name) === name)
       : []
-
-    if (nameMatches.length === 1) {
-      partyId = nameMatches[0].id
-      partyName = nameMatches[0].name
+    if (matches.length === 1) {
+      partyId = matches[0].id
+      partyName = matches[0].name
     }
   }
 
-  // Customer ledger data is read with a server-only privileged client after
-  // authentication and business/party scoping have been established above.
-  // This prevents stale RLS policies from making a valid customer's ledger
-  // appear empty while still preventing access to another business/customer.
+  // IMPORTANT: a customer's own portal orders historically have party_id = null.
+  // Never replace the created_by condition with party_id. The ledger must include
+  // BOTH the customer's own portal orders AND shop-entered sales linked to the
+  // customer's party.
   let invoiceQuery = admin
     .from('sales_invoices')
     .select(`
@@ -118,14 +133,22 @@ export async function GET(request: NextRequest) {
     .eq('business_id', profile.business_id)
     .or('status.eq.completed,order_status.eq.delivered')
 
-  if (partyId) invoiceQuery = invoiceQuery.eq('party_id', partyId)
-  else invoiceQuery = invoiceQuery.eq('created_by', user.id)
+  if (partyId) {
+    invoiceQuery = invoiceQuery.or(`created_by.eq.${user.id},party_id.eq.${partyId}`)
+  } else {
+    invoiceQuery = invoiceQuery.eq('created_by', user.id)
+  }
 
-  const { data: invoices, error: invoiceError } = await invoiceQuery.order('completed_at', { ascending: true, nullsFirst: false })
-  if (invoiceError) return NextResponse.json({ error: invoiceError.message || 'Unable to load customer ledger' }, { status: 400 })
+  const { data: invoices, error: invoiceError } = await invoiceQuery
+    .order('completed_at', { ascending: true, nullsFirst: false })
+
+  if (invoiceError) {
+    return NextResponse.json({ error: invoiceError.message || 'Unable to load customer ledger' }, { status: 400 })
+  }
 
   const invoiceRows = invoices ?? []
   const invoiceIds = invoiceRows.map((invoice) => invoice.id)
+
   const payments = invoiceIds.length
     ? await admin
         .from('sale_payments')
@@ -136,11 +159,21 @@ export async function GET(request: NextRequest) {
         .order('paid_at', { ascending: true })
     : { data: [], error: null }
 
-  if (payments.error) return NextResponse.json({ error: payments.error.message || 'Unable to load customer ledger payments' }, { status: 400 })
+  if (payments.error) {
+    return NextResponse.json({ error: payments.error.message || 'Unable to load customer ledger payments' }, { status: 400 })
+  }
 
   const paymentRows = payments.data ?? []
   const rawEntries = invoiceRows.flatMap((invoice) => {
-    const rows: Array<{ id: string; type: 'purchase' | 'payment'; date: string; reference: string; description: string; debit: number; credit: number }> = [{
+    const rows: Array<{
+      id: string
+      type: 'purchase' | 'payment'
+      date: string
+      reference: string
+      description: string
+      debit: number
+      credit: number
+    }> = [{
       id: invoice.id,
       type: 'purchase',
       date: invoice.completed_at ?? invoice.sold_at ?? invoice.created_at,
@@ -188,7 +221,6 @@ export async function GET(request: NextRequest) {
         runningBalance += entry.debit - entry.credit
       }
     }
-    runningBalance = Math.max(runningBalance, 0)
   }
 
   const entries = rawEntries
@@ -219,13 +251,17 @@ export async function GET(request: NextRequest) {
     })
     .reverse()
 
-  const purchaseTotal = entries.filter((entry) => entry.type === 'purchase').reduce((sum, entry) => sum + entry.debit, 0)
-  const paidTotal = entries.filter((entry) => entry.type === 'payment').reduce((sum, entry) => sum + entry.credit, 0)
+  const purchaseTotal = entries
+    .filter((entry) => entry.type === 'purchase')
+    .reduce((sum, entry) => sum + entry.debit, 0)
+  const paidTotal = entries
+    .filter((entry) => entry.type === 'payment')
+    .reduce((sum, entry) => sum + entry.credit, 0)
 
   return NextResponse.json({
     customer: {
       id: user.id,
-      name: partyName ?? profile.full_name ?? 'Customer',
+      name: partyName || profile.full_name || 'Customer',
       party_id: partyId,
     },
     filters: { from: fromValue || null, to: toValue || null },
