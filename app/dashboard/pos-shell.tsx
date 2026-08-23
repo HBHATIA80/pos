@@ -87,7 +87,10 @@ export default function POSShell({ children, profile, businessName }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const closeMobile = () => setMobileOpen(false)
-  const adminItems: NavItem[] = [{ label: 'Team', href: '/dashboard/team', icon: Users }]
+  const adminItems: NavItem[] = [
+    { label: 'Team', href: '/dashboard/team', icon: Users },
+    { label: 'Shop Code', href: '/dashboard/shop-code', icon: Store },
+  ]
   const isCustomer = profile.role === 'user'
   const desktopNav = isCustomer ? userNav : mainNav
   const desktopFinance = isCustomer ? [] : financeNav
