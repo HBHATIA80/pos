@@ -113,7 +113,7 @@ declare
   v_party_id uuid;
   v_match_count integer;
 begin
-  if new.order_channel <> 'customer_portal' or new.party_id is not null then
+  if coalesce(new.order_channel, '') <> 'customer_portal' or new.party_id is not null then
     return new;
   end if;
 
