@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const CUSTOMER_PORTAL_PATHS = ['/dashboard/orders', '/dashboard/my-ledger']
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -24,7 +26,9 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     return response
@@ -38,8 +42,11 @@ export async function updateSession(request: NextRequest) {
 
   if (profile?.role === 'user' && profile.is_active) {
     const pathname = request.nextUrl.pathname
+    const isCustomerPortalPath = CUSTOMER_PORTAL_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`),
+    )
 
-    if (pathname === '/dashboard' || (pathname.startsWith('/dashboard/') && !pathname.startsWith('/dashboard/orders'))) {
+    if (!isCustomerPortalPath) {
       const redirectUrl = request.nextUrl.clone()
       redirectUrl.pathname = '/dashboard/orders'
       redirectUrl.search = ''
