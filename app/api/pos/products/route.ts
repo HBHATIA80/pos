@@ -12,9 +12,33 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profileError || !profile?.is_active || !profile.business_id) {
+  if (profileError || !profile?.is_active) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  let businessId = profile.business_id
+
+  // Customer accounts are authorized per active shop membership. This keeps
+  // the catalog tied to the shop the customer joined, including multi-shop
+  // customer accounts, instead of relying only on the profile pointer.
+  if (profile.role === 'user') {
+    const { data: membership, error: membershipError } = await supabase
+      .from('customer_business_memberships')
+      .select('business_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('is_primary', { ascending: false })
+      .order('joined_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (membershipError) {
+      return NextResponse.json({ error: membershipError.message || 'Unable to load customer shop' }, { status: 400 })
+    }
+    businessId = membership?.business_id ?? null
+  }
+
+  if (!businessId) return NextResponse.json({ error: 'No active shop is connected to this account.' }, { status: 403 })
 
   const params = request.nextUrl.searchParams
   const q = (params.get('q') || '').trim()
@@ -23,12 +47,10 @@ export async function GET(request: NextRequest) {
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
 
-  // Shared authenticated catalog endpoint for admin, staff and customer portal.
-  // RLS enforces the same business boundary and active-catalog visibility.
   let query = supabase
     .from('products')
     .select('id, sku, barcode, name, purchase_price, sale_price, current_stock, reorder_level, category_id, subcategory_id, brand_id, unit_id')
-    .eq('business_id', profile.business_id)
+    .eq('business_id', businessId)
     .eq('is_active', true)
     .order('name', { ascending: true })
     .limit(limit)
