@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-
-function createServerAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!url || !key) {
-    throw new Error('Supabase service role configuration is missing.')
-  }
-
-  return createAdminClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-}
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -37,14 +23,9 @@ export async function GET(request: NextRequest) {
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
 
-  // This endpoint is used by both the POS workspace (admin/staff) and the
-  // customer portal. Authentication and business scoping are enforced above.
-  // Use the server-only admin client for the catalog read so catalog visibility
-  // does not depend on role-specific RLS policies. The service-role key never
-  // reaches the browser.
-  const admin = createServerAdminClient()
-
-  let query = admin
+  // Shared authenticated catalog endpoint for admin, staff and customer portal.
+  // RLS enforces the same business boundary and active-catalog visibility.
+  let query = supabase
     .from('products')
     .select('id, sku, barcode, name, purchase_price, sale_price, current_stock, reorder_level, category_id, subcategory_id, brand_id, unit_id')
     .eq('business_id', profile.business_id)
