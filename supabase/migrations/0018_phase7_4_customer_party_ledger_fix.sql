@@ -238,8 +238,6 @@ using (
 -- Apply the same party boundary to invoice lines.
 drop policy if exists "sales members can view permitted invoice items" on public.sales_invoice_items;
 
-authorize;
-
 create policy "sales members can view permitted invoice items"
 on public.sales_invoice_items
 for select
