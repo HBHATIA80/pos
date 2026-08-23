@@ -30,10 +30,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (profile.role !== 'user') {
-    return NextResponse.json({ error: 'Customer product catalog is only available to portal users.' }, { status: 403 })
-  }
-
   const params = request.nextUrl.searchParams
   const q = (params.get('q') || '').trim()
   const limit = Math.min(Math.max(Number(params.get('limit') || 30), 1), 50)
@@ -41,10 +37,11 @@ export async function GET(request: NextRequest) {
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
 
-  // This route already authenticates the customer and locks the query to the
-  // customer's business. Use the server-only admin client for the catalog read
-  // so a stale/misconfigured customer RLS policy cannot make a valid catalog
-  // appear empty. The service-role key is never exposed to the browser.
+  // This endpoint is used by both the POS workspace (admin/staff) and the
+  // customer portal. Authentication and business scoping are enforced above.
+  // Use the server-only admin client for the catalog read so catalog visibility
+  // does not depend on role-specific RLS policies. The service-role key never
+  // reaches the browser.
   const admin = createServerAdminClient()
 
   let query = admin
@@ -65,7 +62,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
   if (error) {
-    console.error('GET /api/pos/products customer catalog error:', error)
+    console.error('GET /api/pos/products catalog error:', error)
     return NextResponse.json({ error: error.message || 'Unable to load products' }, { status: 400 })
   }
 
