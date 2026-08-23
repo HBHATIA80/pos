@@ -38,8 +38,17 @@ export async function updateSession(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle()
 
+  const pathname = request.nextUrl.pathname
+
+  // API routes perform their own authentication/authorization and must never
+  // be redirected to a customer portal page. Redirecting an API GET causes
+  // fetch() to follow the 307 and parse the HTML page as JSON, which makes a
+  // valid customer membership look like an empty shop list.
+  if (pathname.startsWith('/api/')) {
+    return response
+  }
+
   if (profile?.role === 'user' && profile.is_active) {
-    const pathname = request.nextUrl.pathname
     const isCustomerPortalPath = CUSTOMER_PORTAL_PATHS.some(
       (path) => pathname === path || pathname.startsWith(`${path}/`),
     )
