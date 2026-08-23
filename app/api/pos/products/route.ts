@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+
+function createServerAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    throw new Error('Supabase service role configuration is missing.')
+  }
+
+  return createAdminClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -27,7 +41,13 @@ export async function GET(request: NextRequest) {
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
 
-  let query = supabase
+  // This route already authenticates the customer and locks the query to the
+  // customer's business. Use the server-only admin client for the catalog read
+  // so a stale/misconfigured customer RLS policy cannot make a valid catalog
+  // appear empty. The service-role key is never exposed to the browser.
+  const admin = createServerAdminClient()
+
+  let query = admin
     .from('products')
     .select('id, sku, barcode, name, purchase_price, sale_price, current_stock, reorder_level, category_id, subcategory_id, brand_id, unit_id')
     .eq('business_id', profile.business_id)
