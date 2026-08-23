@@ -30,6 +30,14 @@ function createAdminClient() {
   })
 }
 
+function normalizePhone(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '')
+}
+
+function normalizeName(value: string | null | undefined) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 async function requireAdmin() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -90,6 +98,59 @@ export async function POST(request: Request) {
 
   if (createError || !created.user) {
     return NextResponse.json({ error: createError?.message ?? 'Unable to create account.' }, { status: 400 })
+  }
+
+  if (role === 'user') {
+    const { data: parties, error: partyLookupError } = await admin
+      .from('parties')
+      .select('id,name,phone,party_type,is_active')
+      .eq('business_id', auth.profile.business_id)
+      .in('party_type', ['customer', 'both'])
+      .eq('is_active', true)
+
+    if (partyLookupError) {
+      await admin.auth.admin.deleteUser(created.user.id)
+      return NextResponse.json({ error: partyLookupError.message }, { status: 500 })
+    }
+
+    const phoneMatches = (parties ?? []).filter((party) => normalizePhone(party.phone) === normalizePhone(phone) && normalizePhone(phone) !== '')
+    const nameMatches = (parties ?? []).filter((party) => normalizeName(party.name) === normalizeName(fullName))
+
+    let partyId: string | null = null
+    if (phoneMatches.length === 1) partyId = phoneMatches[0].id
+    else if (nameMatches.length === 1) partyId = nameMatches[0].id
+    else if (phoneMatches.length === 0 && nameMatches.length === 0) {
+      const { data: createdParty, error: partyCreateError } = await admin
+        .from('parties')
+        .insert({
+          business_id: auth.profile.business_id,
+          party_type: 'customer',
+          name: fullName,
+          phone,
+          created_by: auth.user.id,
+        })
+        .select('id')
+        .single()
+
+      if (partyCreateError) {
+        await admin.auth.admin.deleteUser(created.user.id)
+        return NextResponse.json({ error: partyCreateError.message }, { status: 500 })
+      }
+      partyId = createdParty.id
+    }
+
+    if (partyId) {
+      const { error: profileLinkError } = await admin
+        .from('profiles')
+        .update({ party_id: partyId })
+        .eq('id', created.user.id)
+        .eq('business_id', auth.profile.business_id)
+
+      if (profileLinkError) {
+        await admin.auth.admin.deleteUser(created.user.id)
+        return NextResponse.json({ error: profileLinkError.message }, { status: 500 })
+      }
+    }
   }
 
   if (permissions.length > 0) {
