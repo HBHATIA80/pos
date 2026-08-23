@@ -11,6 +11,12 @@ create index if not exists profiles_business_party_idx
   on public.profiles (business_id, party_id)
   where party_id is not null;
 
+-- Portal users must not be able to choose/change their own party link. The
+-- system-owned trigger below is the only path that assigns it.
+revoke update (party_id)
+on public.profiles
+from authenticated, anon;
+
 -- Backfill portal users to an unambiguous existing customer party.
 -- Prefer phone, then exact normalized name. If either value matches multiple
 -- parties, leave the profile unlinked rather than guessing the customer.
