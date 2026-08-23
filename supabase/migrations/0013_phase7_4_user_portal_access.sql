@@ -7,13 +7,14 @@ values
   ('orders.place', 'Place orders', 'orders', 'Place product orders from the customer portal.', 85)
 on conflict (code) do nothing;
 
--- Existing user accounts are customer-facing accounts only.
--- Remove any previously granted management permissions, then grant the two
--- permissions required by the customer portal.
+-- User accounts have exactly the customer-portal permissions. Any elevated
+-- permission accidentally granted in an older account is removed here.
 delete from public.profile_permissions pp
-using public.profiles p
+using public.profiles p, public.permissions perm
 where pp.profile_id = p.id
-  and p.role = 'user';
+  and pp.permission_id = perm.id
+  and p.role = 'user'
+  and perm.code not in ('catalog.view', 'orders.place');
 
 insert into public.profile_permissions (profile_id, permission_id)
 select p.id, perm.id
@@ -21,14 +22,17 @@ from public.profiles p
 cross join public.permissions perm
 where p.role = 'user'
   and p.is_active = true
-  and perm.code in ('catalog.view', 'orders.place');
+  and perm.code in ('catalog.view', 'orders.place')
+  and not exists (
+    select 1 from public.profile_permissions pp
+    where pp.profile_id = p.id and pp.permission_id = perm.id
+  );
 
 -- Harden catalog masters: users can browse products, not the underlying admin masters.
 drop policy if exists "business members can view categories" on public.catalog_categories;
 drop policy if exists "business members can view subcategories" on public.catalog_subcategories;
 drop policy if exists "business members can view brands" on public.catalog_brands;
 drop policy if exists "business members can view units" on public.catalog_units;
-
 drop policy if exists "business members can view available products" on public.products;
 drop policy if exists "business members can view products" on public.products;
 
@@ -64,7 +68,7 @@ to authenticated
 using (business_id = public.current_business_id() and public.has_permission('catalog.manage'));
 
 -- Sales become an order channel for ordinary users. They can create draft orders,
--- but the server/database ignores client prices and discounts for those orders.
+-- but the database ignores client prices and discounts for those orders.
 create or replace function public.create_sales_invoice(payload jsonb)
 returns public.sales_invoices
 language plpgsql
@@ -89,16 +93,10 @@ declare
   v_line_total numeric(14,2);
   v_is_order boolean := false;
 begin
-  if v_business_id is null or v_user_id is null then
-    raise exception 'Unauthorized';
-  end if;
-
-  if not public.has_permission('sales.manage') and not public.has_permission('orders.place') then
-    raise exception 'Sales permission required';
-  end if;
+  if v_business_id is null or v_user_id is null then raise exception 'Unauthorized'; end if;
+  if not public.has_permission('sales.manage') and not public.has_permission('orders.place') then raise exception 'Sales permission required'; end if;
 
   v_is_order := public.has_permission('orders.place') and not public.has_permission('sales.manage');
-
   if v_is_order then
     v_status := 'draft';
     v_party_id := null;
@@ -107,22 +105,14 @@ begin
   end if;
 
   if v_party_id is not null then
-    select * into v_party
-    from public.parties
-    where id = v_party_id
-      and business_id = v_business_id
-      and is_active = true;
+    select * into v_party from public.parties where id = v_party_id and business_id = v_business_id and is_active = true;
     if not found then raise exception 'Customer not found or inactive'; end if;
     if v_party.party_type not in ('customer','both') then raise exception 'Selected party is not a customer'; end if;
   end if;
 
-  if jsonb_typeof(coalesce(payload->'items','null')) <> 'array'
-     or jsonb_array_length(payload->'items') = 0 then
-    raise exception 'At least one product is required';
-  end if;
+  if jsonb_typeof(coalesce(payload->'items','null')) <> 'array' or jsonb_array_length(payload->'items') = 0 then raise exception 'At least one product is required'; end if;
 
-  insert into public.sales_invoices
-    (business_id, invoice_no, party_id, status, notes, sold_at, completed_at, created_by)
+  insert into public.sales_invoices (business_id, invoice_no, party_id, status, notes, sold_at, completed_at, created_by)
   values (
     v_business_id,
     'SI-' || lpad(nextval('public.sales_invoice_number_seq')::text, 8, '0'),
@@ -132,16 +122,10 @@ begin
     case when v_status = 'completed' then now() else null end,
     case when v_status = 'completed' then now() else null end,
     v_user_id
-  )
-  returning * into v_invoice;
+  ) returning * into v_invoice;
 
   for v_item in select * from jsonb_array_elements(payload->'items') loop
-    select p.* into v_product
-    from public.products p
-    where p.id = nullif(v_item->>'product_id','')::uuid
-      and p.business_id = v_business_id
-      and p.is_active = true;
-
+    select p.* into v_product from public.products p where p.id = nullif(v_item->>'product_id','')::uuid and p.business_id = v_business_id and p.is_active = true;
     if not found then raise exception 'Product not found or inactive'; end if;
 
     v_quantity := coalesce((v_item->>'quantity')::numeric, 0);
@@ -160,8 +144,7 @@ begin
     v_line_total := round((v_quantity * v_unit_price) - v_item_discount, 2);
     if v_line_total < 0 then raise exception 'Discount cannot exceed the line value'; end if;
 
-    insert into public.sales_invoice_items
-      (invoice_id, product_id, sku, product_name, unit_name, quantity, unit_price, discount_amount, line_total)
+    insert into public.sales_invoice_items (invoice_id, product_id, sku, product_name, unit_name, quantity, unit_price, discount_amount, line_total)
     values (
       v_invoice.id,
       v_product.id,
@@ -182,9 +165,7 @@ begin
   if v_grand_total < 0 then raise exception 'Invoice total cannot be negative'; end if;
 
   update public.sales_invoices
-  set subtotal = v_subtotal,
-      discount_amount = v_discount,
-      grand_total = v_grand_total
+  set subtotal = v_subtotal, discount_amount = v_discount, grand_total = v_grand_total
   where id = v_invoice.id
   returning * into v_invoice;
 
@@ -225,8 +206,7 @@ on public.sales_invoice_items for select
 to authenticated
 using (
   exists (
-    select 1
-    from public.sales_invoices i
+    select 1 from public.sales_invoices i
     where i.id = invoice_id
       and i.business_id = public.current_business_id()
       and (
@@ -242,8 +222,7 @@ on public.sales_invoice_items for insert
 to authenticated
 with check (
   exists (
-    select 1
-    from public.sales_invoices i
+    select 1 from public.sales_invoices i
     where i.id = invoice_id
       and i.business_id = public.current_business_id()
       and i.status = 'draft'

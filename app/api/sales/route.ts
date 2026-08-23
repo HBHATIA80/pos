@@ -18,18 +18,8 @@ const saleSchema = z.object({
 
 async function getContext() {
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return {
-      supabase,
-      user: null,
-      profile: null,
-    }
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { supabase, user: null, profile: null }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -37,250 +27,96 @@ async function getContext() {
     .eq('id', user.id)
     .maybeSingle()
 
-  return {
-    supabase,
-    user,
-    profile,
-  }
+  return { supabase, user, profile }
 }
 
-/**
- * GET /api/sales
- *
- * Returns recent sales for the current business.
- */
 export async function GET() {
   const { supabase, user, profile } = await getContext()
-
-  if (
-    !user ||
-    !profile?.is_active ||
-    !profile.business_id
-  ) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
+  if (!user || !profile?.is_active || !profile.business_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('sales_invoices')
-    .select(
-      `
-        id,
-        invoice_no,
-        status,
-        order_channel,
-        order_status,
-        party_id,
-        subtotal,
-        discount_amount,
-        grand_total,
-        notes,
-        sold_at,
-        completed_at,
-        created_at,
-        parties(
-          id,
-          name,
-          party_type
-        ),
-        sales_invoice_items(
-          id,
-          product_id,
-          sku,
-          product_name,
-          unit_name,
-          quantity,
-          unit_price,
-          discount_amount,
-          line_total
-        )
-      `
-    )
+    .select(`
+      id,
+      invoice_no,
+      status,
+      party_id,
+      subtotal,
+      discount_amount,
+      grand_total,
+      notes,
+      sold_at,
+      completed_at,
+      created_at,
+      created_by,
+      parties(id,name,party_type),
+      sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)
+    `)
     .eq('business_id', profile.business_id)
-    .order('created_at', {
-      ascending: false,
-    })
+    .order('created_at', { ascending: false })
     .limit(100)
 
-  if (error) {
-    console.error(
-      'GET /api/sales error:',
-      error
-    )
+  if (profile.role === 'user') query = query.eq('created_by', user.id)
 
-    return NextResponse.json(
-      {
-        error:
-          error.message ||
-          'Unable to load sales',
-      },
-      { status: 400 }
-    )
+  const { data, error } = await query
+  if (error) {
+    console.error('GET /api/sales error:', error)
+    return NextResponse.json({ error: error.message || 'Unable to load sales' }, { status: 400 })
   }
 
-  return NextResponse.json({
-    invoices: data ?? [],
-  })
+  return NextResponse.json({ invoices: data ?? [] })
 }
 
-/**
- * POST /api/sales
- *
- * Creates a sale/invoice.
- *
- * The database RPC performs the actual transaction.
- */
 export async function POST(request: Request) {
-  const { supabase, user, profile } =
-    await getContext()
-
-  if (
-    !user ||
-    !profile?.is_active ||
-    !profile.business_id
-  ) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
+  const { supabase, user, profile } = await getContext()
+  if (!user || !profile?.is_active || !profile.business_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request
-    .json()
-    .catch(() => null)
-
-  const parsed = saleSchema.safeParse(
-    body?.data
-  )
-
+  const body = await request.json().catch(() => null)
+  const parsed = saleSchema.safeParse(body?.data)
   if (!parsed.success) {
-    console.error(
-      'POST /api/sales validation error:',
-      parsed.error
-    )
-
-    return NextResponse.json(
-      {
-        error:
-          parsed.error.issues[0]?.message ??
-          'Invalid sale',
-      },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid sale' }, { status: 400 })
   }
 
-  const { data, error } =
-    await supabase.rpc(
-      'create_sales_invoice',
-      {
-        payload: parsed.data,
-      }
-    )
+  // Customer-facing accounts may place orders only. The database RPC also
+  // enforces draft status and authoritative sale prices for this role.
+  const payload = profile.role === 'user'
+    ? { ...parsed.data, party_id: null, status: 'draft' as const }
+    : parsed.data
 
+  const { data, error } = await supabase.rpc('create_sales_invoice', { payload })
   if (error) {
-    console.error(
-      'POST /api/sales RPC error:',
-      error
-    )
-
-    return NextResponse.json(
-      {
-        error:
-          error.message ||
-          'Unable to save sale',
-      },
-      { status: 400 }
-    )
+    console.error('POST /api/sales RPC error:', error)
+    return NextResponse.json({ error: error.message || 'Unable to save sale' }, { status: 400 })
   }
 
-  return NextResponse.json(
-    {
-      invoice: data,
-    },
-    { status: 201 }
-  )
+  return NextResponse.json({ invoice: data }, { status: 201 })
 }
 
-/**
- * PATCH /api/sales
- *
- * Completes or voids an existing invoice.
- *
- * Body:
- * {
- *   id: "invoice uuid",
- *   action: "complete" | "void"
- * }
- */
 export async function PATCH(request: Request) {
-  const { supabase, user, profile } =
-    await getContext()
-
-  if (
-    !user ||
-    !profile?.is_active ||
-    !profile.business_id
-  ) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
+  const { supabase, user, profile } = await getContext()
+  if (!user || !profile?.is_active || !profile.business_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request
-    .json()
-    .catch(() => null)
-
-  const id = z
-    .string()
-    .uuid()
-    .safeParse(body?.id)
-
-  const action = z
-    .enum(['complete', 'void'])
-    .safeParse(body?.action)
-
-  if (!id.success || !action.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid sales action',
-      },
-      { status: 400 }
-    )
+  if (profile.role === 'user') {
+    return NextResponse.json({ error: 'Customer accounts cannot complete or void sales.' }, { status: 403 })
   }
 
-  const functionName =
-    action.data === 'complete'
-      ? 'complete_sales_invoice'
-      : 'void_sales_invoice'
+  const body = await request.json().catch(() => null)
+  const id = z.string().uuid().safeParse(body?.id)
+  const action = z.enum(['complete', 'void']).safeParse(body?.action)
+  if (!id.success || !action.success) return NextResponse.json({ error: 'Invalid sales action' }, { status: 400 })
 
-  const { data, error } =
-    await supabase.rpc(
-      functionName,
-      {
-        invoice_id: id.data,
-      }
-    )
-
+  const functionName = action.data === 'complete' ? 'complete_sales_invoice' : 'void_sales_invoice'
+  const { data, error } = await supabase.rpc(functionName, { invoice_id: id.data })
   if (error) {
-    console.error(
-      `PATCH /api/sales ${action.data} RPC error:`,
-      error
-    )
-
-    return NextResponse.json(
-      {
-        error:
-          error.message ||
-          'Unable to update sale',
-      },
-      { status: 400 }
-    )
+    console.error(`PATCH /api/sales ${action.data} RPC error:`, error)
+    return NextResponse.json({ error: error.message || `Unable to ${action.data} sale` }, { status: 400 })
   }
 
-  return NextResponse.json({
-    invoice: data,
-  })
+  return NextResponse.json({ invoice: data })
 }
