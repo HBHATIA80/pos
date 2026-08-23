@@ -205,6 +205,102 @@ execute function public.assign_customer_order_party();
 
 revoke execute on function public.assign_customer_order_party() from public, anon, authenticated;
 
+-- Customer portal users may read invoices and invoice lines for their linked
+-- party, regardless of whether the invoice was entered by the customer or by
+-- admin/staff. They still cannot see other customers' invoices.
+drop policy if exists "sales members can view permitted invoices" on public.sales_invoices;
+
+create policy "sales members can view permitted invoices"
+on public.sales_invoices
+for select
+to authenticated
+using (
+  business_id = public.current_business_id()
+  and (
+    public.has_permission('sales.view')
+    or public.has_permission('sales.manage')
+    or (
+      public.has_permission('orders.place')
+      and (
+        created_by = auth.uid()
+        or party_id = (
+          select p.party_id
+          from public.profiles p
+          where p.id = auth.uid()
+            and p.is_active = true
+          limit 1
+        )
+      )
+    )
+  )
+);
+
+-- Apply the same party boundary to invoice lines.
+drop policy if exists "sales members can view permitted invoice items" on public.sales_invoice_items;
+
+authorize;
+
+create policy "sales members can view permitted invoice items"
+on public.sales_invoice_items
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.sales_invoices i
+    where i.id = invoice_id
+      and i.business_id = public.current_business_id()
+      and (
+        public.has_permission('sales.view')
+        or public.has_permission('sales.manage')
+        or (
+          public.has_permission('orders.place')
+          and (
+            i.created_by = auth.uid()
+            or i.party_id = (
+              select p.party_id
+              from public.profiles p
+              where p.id = auth.uid()
+                and p.is_active = true
+              limit 1
+            )
+          )
+        )
+      )
+  )
+);
+
+-- Payments follow the invoice's party as well, so staff-entered payments for
+-- this customer are visible in the customer's ledger.
+drop policy if exists "customer users can view own sale payments" on public.sale_payments;
+
+create policy "customer users can view own sale payments"
+on public.sale_payments
+for select
+to authenticated
+using (
+  business_id = public.current_business_id()
+  and (
+    public.current_user_role() in ('admin', 'staff')
+    or exists (
+      select 1
+      from public.sales_invoices i
+      where i.id = sale_payments.invoice_id
+        and i.business_id = public.current_business_id()
+        and (
+          i.created_by = auth.uid()
+          or i.party_id = (
+            select p.party_id
+            from public.profiles p
+            where p.id = auth.uid()
+              and p.is_active = true
+            limit 1
+          )
+        )
+    )
+  )
+);
+
 comment on column public.profiles.party_id is
 'Customer portal party link. Customer ledger ownership follows this party, not created_by.';
 
