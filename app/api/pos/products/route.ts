@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
   const categoryId = params.get('category_id')
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
-  const includeFacets = params.get('include_facets') === '1'
+  // Facets are lightweight and required by the customer catalog UI. Return them on every catalog request so a follow-up search/filter request cannot race the initial facet load and clear the dropdowns.
+  const includeFacets = true
 
   let businessId = profile.business_id
   if (profile.role === 'user') {
