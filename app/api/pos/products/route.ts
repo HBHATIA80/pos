@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -16,7 +17,6 @@ export async function GET(request: NextRequest) {
   const categoryId = params.get('category_id')
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
-  const includeFacets = true
 
   let businessId = profile.business_id
   if (profile.role === 'user') {
@@ -37,9 +37,17 @@ export async function GET(request: NextRequest) {
   if (subcategoryId) query = query.eq('subcategory_id', subcategoryId)
   if (brandId) query = query.eq('brand_id', brandId)
 
-  const [productsResult, facetsResult] = await Promise.all([
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const facetsClient = supabaseUrl && serviceRoleKey
+    ? createSupabaseClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    : supabase
+
+  const [productsResult, categoriesResult, subcategoriesResult, brandsResult] = await Promise.all([
     query,
-    includeFacets ? supabase.rpc('get_customer_catalog_facets', { p_business_id: businessId }) : Promise.resolve({ data: null, error: null }),
+    facetsClient.from('catalog_categories').select('id,name').eq('business_id', businessId).eq('is_active', true).order('name'),
+    facetsClient.from('catalog_subcategories').select('id,name,category_id').eq('business_id', businessId).eq('is_active', true).order('name'),
+    facetsClient.from('catalog_brands').select('id,name').eq('business_id', businessId).eq('is_active', true).order('name'),
   ])
 
   const { data, count, error } = productsResult
@@ -47,9 +55,9 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/pos/products catalog error:', error)
     return NextResponse.json({ error: error.message || 'Unable to load products' }, { status: 400 })
   }
-  if (facetsResult.error) {
-    console.error('GET /api/pos/products facets error:', facetsResult.error)
-    return NextResponse.json({ error: facetsResult.error.message || 'Unable to load product filters' }, { status: 400 })
+  if (categoriesResult.error || subcategoriesResult.error || brandsResult.error) {
+    console.error('GET /api/pos/products facets error:', categoriesResult.error || subcategoriesResult.error || brandsResult.error)
+    return NextResponse.json({ error: 'Unable to load product filters' }, { status: 400 })
   }
 
   const total = count ?? 0
@@ -59,6 +67,10 @@ export async function GET(request: NextRequest) {
     offset,
     limit,
     hasMore: offset + (data?.length ?? 0) < total,
-    facets: facetsResult.data || { categories: [], subcategories: [], brands: [] },
+    facets: {
+      categories: categoriesResult.data || [],
+      subcategories: subcategoriesResult.data || [],
+      brands: brandsResult.data || [],
+    },
   })
 }
