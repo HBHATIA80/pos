@@ -113,3 +113,20 @@ textarea:focus {
 .btn-secondary:hover {
   background: #f8fafc;
 }
+
+/* Customer catalog: show availability, never inventory quantity. */
+.group > div:last-child > p.text-emerald-600,
+.group > div:last-child > p.text-red-500 {
+  font-size: 0;
+  line-height: 1.25rem;
+}
+
+.group > div:last-child > p.text-emerald-600::after {
+  content: "Available";
+  font-size: 0.6875rem;
+}
+
+.group > div:last-child > p.text-red-500::after {
+  content: "Out of stock";
+  font-size: 0.6875rem;
+}
