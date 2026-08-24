@@ -16,44 +16,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let businessId = profile.business_id
-
-  // Customer accounts are authorized per active shop membership. This keeps
-  // the catalog tied to the shop the customer joined, including multi-shop
-  // customer accounts, instead of relying only on the profile pointer.
-  if (profile.role === 'user') {
-    const { data: membership, error: membershipError } = await supabase
-      .from('customer_business_memberships')
-      .select('business_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .order('is_primary', { ascending: false })
-      .order('joined_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-
-    if (membershipError) {
-      return NextResponse.json({ error: membershipError.message || 'Unable to load customer shop' }, { status: 400 })
-    }
-    businessId = membership?.business_id ?? null
-  }
-
-  if (!businessId) return NextResponse.json({ error: 'No active shop is connected to this account.' }, { status: 403 })
-
   const params = request.nextUrl.searchParams
+  const requestedBusinessId = params.get('business_id')
   const q = (params.get('q') || '').trim()
   const limit = Math.min(Math.max(Number(params.get('limit') || 30), 1), 50)
+  const offset = Math.max(Number(params.get('offset') || 0), 0)
   const categoryId = params.get('category_id')
   const subcategoryId = params.get('subcategory_id')
   const brandId = params.get('brand_id')
 
+  let businessId = profile.business_id
+
+  if (profile.role === 'user') {
+    if (!requestedBusinessId) return NextResponse.json({ error: 'Shop selection is required.' }, { status: 400 })
+
+    const { data: membership, error: membershipError } = await supabase
+      .from('customer_business_memberships')
+      .select('business_id')
+      .eq('user_id', user.id)
+      .eq('business_id', requestedBusinessId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (membershipError) return NextResponse.json({ error: membershipError.message || 'Unable to validate shop' }, { status: 400 })
+    if (!membership) return NextResponse.json({ error: 'You are not connected to this shop.' }, { status: 403 })
+    businessId = membership.business_id
+  }
+
+  if (!businessId) return NextResponse.json({ error: 'No active shop is connected to this account.' }, { status: 403 })
+
   let query = supabase
     .from('products')
-    .select('id, sku, barcode, name, purchase_price, sale_price, current_stock, reorder_level, category_id, subcategory_id, brand_id, unit_id')
+    .select('id,sku,barcode,name,purchase_price,sale_price,current_stock,reorder_level,category_id,subcategory_id,brand_id,unit_id', { count: 'exact' })
     .eq('business_id', businessId)
     .eq('is_active', true)
     .order('name', { ascending: true })
-    .limit(limit)
+    .range(offset, offset + limit - 1)
 
   if (q) {
     const escaped = q.replace(/[%_]/g, '\\$&')
@@ -63,11 +61,12 @@ export async function GET(request: NextRequest) {
   if (subcategoryId) query = query.eq('subcategory_id', subcategoryId)
   if (brandId) query = query.eq('brand_id', brandId)
 
-  const { data, error } = await query
+  const { data, count, error } = await query
   if (error) {
     console.error('GET /api/pos/products catalog error:', error)
     return NextResponse.json({ error: error.message || 'Unable to load products' }, { status: 400 })
   }
 
-  return NextResponse.json({ products: data || [] })
+  const total = count ?? 0
+  return NextResponse.json({ products: data || [], total, offset, limit, hasMore: offset + (data?.length ?? 0) < total })
 }
