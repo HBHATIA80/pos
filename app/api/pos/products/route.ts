@@ -54,9 +54,29 @@ export async function GET(request: NextRequest) {
   if (subcategoryId) query = query.eq('subcategory_id', subcategoryId)
   if (brandId) query = query.eq('brand_id', brandId)
 
-  const [productsResult, facetsResult] = await Promise.all([
+  // Read catalog masters through the same authenticated client as products.
+  // Customer-specific RLS policies authorize only connected shops, so the
+  // shopping page does not depend on a second service-role client or secret.
+  const [productsResult, categoriesResult, subcategoriesResult, brandsResult] = await Promise.all([
     query,
-    supabase.rpc('get_customer_catalog_facets', { p_business_uuid: businessId }),
+    supabase
+      .from('catalog_categories')
+      .select('id,name')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    supabase
+      .from('catalog_subcategories')
+      .select('id,name,category_id')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    supabase
+      .from('catalog_brands')
+      .select('id,name')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
   ])
 
   const { data, count, error } = productsResult
@@ -64,12 +84,26 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/pos/products catalog error:', error)
     return NextResponse.json({ error: error.message || 'Unable to load products' }, { status: 400 })
   }
-  if (facetsResult.error) {
-    console.error('GET /api/pos/products facets error:', facetsResult.error)
-    return NextResponse.json({ error: facetsResult.error.message || 'Unable to load product filters' }, { status: 400 })
+
+  let categories = categoriesResult.data ?? []
+  let subcategories = subcategoriesResult.data ?? []
+  let brands = brandsResult.data ?? []
+
+  // Safe database-side fallback if a deployment has stale catalog RLS
+  // metadata. The RPC independently validates the authenticated membership.
+  if (categoriesResult.error || subcategoriesResult.error || brandsResult.error || (!categories.length && !subcategories.length && !brands.length)) {
+    const facetsResult = await supabase.rpc('get_customer_catalog_facets', { p_business_uuid: businessId })
+    if (!facetsResult.error && facetsResult.data) {
+      categories = Array.isArray(facetsResult.data.categories) ? facetsResult.data.categories : categories
+      subcategories = Array.isArray(facetsResult.data.subcategories) ? facetsResult.data.subcategories : subcategories
+      brands = Array.isArray(facetsResult.data.brands) ? facetsResult.data.brands : brands
+    }
   }
 
-  const facets = facetsResult.data || { categories: [], subcategories: [], brands: [] }
+  if (categoriesResult.error && !categories.length) console.error('Customer category facet query failed:', categoriesResult.error.message)
+  if (subcategoriesResult.error && !subcategories.length) console.error('Customer subcategory facet query failed:', subcategoriesResult.error.message)
+  if (brandsResult.error && !brands.length) console.error('Customer brand facet query failed:', brandsResult.error.message)
+
   const total = count ?? 0
   return NextResponse.json({
     products: data || [],
@@ -78,9 +112,9 @@ export async function GET(request: NextRequest) {
     limit,
     hasMore: offset + (data?.length ?? 0) < total,
     facets: {
-      categories: Array.isArray(facets.categories) ? facets.categories : [],
-      subcategories: Array.isArray(facets.subcategories) ? facets.subcategories : [],
-      brands: Array.isArray(facets.brands) ? facets.brands : [],
+      categories,
+      subcategories,
+      brands,
     },
-  })
+  }, { headers: { 'Cache-Control': 'no-store' } })
 }
