@@ -41,6 +41,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { data: invoices, error: invoiceError } = await supabase.from('sales_invoices').select('id,invoice_no,grand_total,status,completed_at,sold_at,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').order('completed_at', { ascending: true })
   if (invoiceError) return NextResponse.json({ error: invoiceError.message }, { status: 400 })
 
+  const { data: purchases, error: purchaseError } = await supabase.from('purchase_invoices').select('id,invoice_no,grand_total,status,purchased_at,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').order('purchased_at', { ascending: true })
+  if (purchaseError) return NextResponse.json({ error: purchaseError.message }, { status: 400 })
+
   const { data: payments, error: paymentError } = await supabase.from('sale_payments').select('id,invoice_id,payment_method,amount,reference_no,notes,paid_at,status,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'active').order('paid_at', { ascending: true })
   if (paymentError) return NextResponse.json({ error: paymentError.message }, { status: 400 })
 
@@ -50,16 +53,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const openingMaster = signedOpening(Number(party.opening_balance ?? 0), party.opening_balance_type)
   let openingBalance = openingMaster
   for (const invoice of invoices ?? []) { const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at; if (date < startAt) openingBalance += Number(invoice.grand_total ?? 0) }
+  for (const purchase of purchases ?? []) { const date = purchase.purchased_at ?? purchase.created_at; if (date < startAt) openingBalance -= Number(purchase.grand_total ?? 0) }
   for (const payment of payments ?? []) { if (payment.paid_at < startAt) openingBalance -= Number(payment.amount ?? 0) }
   for (const voucher of vouchers ?? []) { if (voucher.paid_at < startAt) openingBalance += voucher.voucher_type === 'payment' ? Number(voucher.amount ?? 0) : -Number(voucher.amount ?? 0) }
 
-  const entries: Array<{ id: string; date: string; type: 'opening' | 'invoice' | 'payment' | 'receipt_voucher' | 'payment_voucher'; description: string; reference: string; debit: number; credit: number; balance: number; payment_method?: string; notes?: string }> = []
+  const entries: Array<{ id: string; date: string; type: 'opening' | 'invoice' | 'purchase' | 'payment' | 'receipt_voucher' | 'payment_voucher'; description: string; reference: string; debit: number; credit: number; balance: number; payment_method?: string; notes?: string }> = []
   entries.push({ id: `opening-${party.id}-${rawStart}`, date: startAt, type: 'opening', description: 'Opening Balance', reference: '', debit: openingBalance > 0 ? openingBalance : 0, credit: openingBalance < 0 ? Math.abs(openingBalance) : 0, balance: openingBalance })
 
   for (const invoice of invoices ?? []) {
     const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
     if (date < startAt || (endExclusive && date >= endExclusive.toISOString())) continue
     entries.push({ id: invoice.id, date, type: 'invoice', description: `Sales Invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, debit: Number(invoice.grand_total ?? 0), credit: 0, balance: 0 })
+  }
+  for (const purchase of purchases ?? []) {
+    const date = purchase.purchased_at ?? purchase.created_at
+    if (date < startAt || (endExclusive && date >= endExclusive.toISOString())) continue
+    entries.push({ id: purchase.id, date, type: 'purchase', description: `Purchase Invoice ${purchase.invoice_no}`, reference: purchase.invoice_no, debit: 0, credit: Number(purchase.grand_total ?? 0), balance: 0 })
   }
   for (const payment of payments ?? []) {
     if (payment.paid_at < startAt || (endExclusive && payment.paid_at >= endExclusive.toISOString())) continue
