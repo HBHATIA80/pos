@@ -22,12 +22,13 @@ A mobile-ready and desktop-ready POS platform for shop administration, staff ope
 - **Phase 8 — Purchasing & Inventory:** purchase invoices, stock movement audit trail, stock updates on completed purchases/sales and low-stock monitoring.
 - **Phase 9 — Accounts:** payment register, printable receipts and expense register.
 - **Phase 10 — Analysis:** admin business KPIs, sales/expense analysis, stock valuation and low-stock reporting.
+- **Phase 11 — Inventory Control:** manual stock adjustments, physical-count reconciliation, movement history and controlled inventory permissions.
 
 ## Current production status
 
-The customer portal and admin workspace are live. The Accounts and Operations modules are now available from the sidebar instead of being marked **Soon**.
+The customer portal and admin workspace are live. Operations, Accounts, Analysis and Inventory Control are available from the admin workspace.
 
-Database migrations live under `supabase/migrations/`. The latest source migration is `0023_phase8_inventory_purchases_expenses.sql`.
+Database migrations live under `supabase/migrations/`. The latest source migration is `0024_phase11_inventory_control.sql`.
 
 ## Local development
 
