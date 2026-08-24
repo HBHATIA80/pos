@@ -85,18 +85,25 @@ export async function POST(request: Request) {
       throw new Error(`Unable to create subcategory: ${name}`)
     }
 
-    const skus = rows.map(r => text(r.SKU || r.sku)).filter(Boolean)
-    const { data: existingProducts } = await supabase.from('products').select('id,sku,current_stock').eq('business_id', businessId).in('sku', skus)
+    // products_business_sku_unique is a UNIQUE expression index on
+    // (business_id, lower(trim(sku))), so it cannot be used directly as
+    // Supabase's onConflict="business_id,sku" target. Load existing SKUs,
+    // attach their IDs, and upsert by the primary key instead.
+    const { data: existingProducts } = await supabase.from('products').select('id,sku,current_stock').eq('business_id', businessId)
     const existingBySku = new Map((existingProducts ?? []).map(p => [key(p.sku), p]))
 
     const errors: { row: number; message: string }[] = []
     const payload: Record<string, unknown>[] = []
+    const seenSkus = new Set<string>()
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i]
       const rowNumber = i + 2
       const sku = text(r.SKU || r.sku)
       const name = text(r['Product Name'] || r.name || r.Name)
+      const skuKey = key(sku)
       if (!sku || !name) { errors.push({ row: rowNumber, message: 'SKU and Product Name are required' }); continue }
+      if (seenSkus.has(skuKey)) { errors.push({ row: rowNumber, message: `Duplicate SKU in Excel: ${sku}` }); continue }
+      seenSkus.add(skuKey)
       try {
         const unitName = text(r.Unit || r['Unit Name'])
         const categoryName = text(r.Category)
@@ -107,9 +114,10 @@ export async function POST(request: Request) {
         const categoryRow = await ensureCategory(categoryName)
         const subRow = subcategoryName ? await ensureSubcategory(subcategoryName, categoryRow ?? (() => { throw new Error('A category is required when adding a new subcategory.') })()) : null
         const brandRow = await ensureBrand(brandName)
-        const existing = existingBySku.get(key(sku))
+        const existing = existingBySku.get(skuKey)
         const openingStock = num(r['Opening Stock'] ?? r.opening_stock)
         payload.push({
+          ...(existing ? { id: existing.id } : {}),
           business_id: businessId,
           sku,
           barcode: text(r.Barcode || r.barcode) || null,
@@ -133,7 +141,7 @@ export async function POST(request: Request) {
     }
     if (errors.length) return NextResponse.json({ error: 'Some Excel values could not be prepared.', errors, validRows: payload.length }, { status: 422 })
 
-    const { data, error } = await supabase.from('products').upsert(payload, { onConflict: 'business_id,sku', ignoreDuplicates: false }).select('id')
+    const { data, error } = await supabase.from('products').upsert(payload, { onConflict: 'id', ignoreDuplicates: false }).select('id')
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ imported: data?.length ?? payload.length, message: `${data?.length ?? payload.length} products imported or updated successfully. Missing categories, subcategories, brands and units were created automatically. Existing stock was preserved.` })
   } catch (error) {
