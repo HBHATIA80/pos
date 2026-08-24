@@ -3,7 +3,14 @@ import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/server'
 
 const workbookHeaders = ['SKU', 'Barcode', 'Product Name', 'Description', 'Category', 'Subcategory', 'Brand', 'Unit', 'Purchase Price', 'Sale Price', 'Opening Stock', 'Current Stock', 'Reorder Level', 'Active']
-const clean = (value: unknown) => String(value ?? '').trim()
+type ProductRow = {
+  sku: string; barcode: string | null; name: string; description: string | null; purchase_price: number; sale_price: number; opening_stock: number; current_stock: number; reorder_level: number; is_active: boolean
+  catalog_categories: { name: string } | null
+  catalog_subcategories: { name: string } | null
+  catalog_brands: { name: string } | null
+  catalog_units: { name: string; short_name: string } | null
+}
+type SubcategoryRow = { id: string; name: string; code: string | null; category_id: string; is_active: boolean; catalog_categories: { name: string } | null }
 
 export async function GET() {
   const supabase = await createClient()
@@ -16,15 +23,17 @@ export async function GET() {
   }
 
   const businessId = profile.business_id
-  const [{ data: products }, { data: categories }, { data: subcategories }, { data: brands }, { data: units }] = await Promise.all([
-    supabase.from('products').select('sku,barcode,name,description,category_id,subcategory_id,brand_id,unit_id,purchase_price,sale_price,opening_stock,current_stock,reorder_level,is_active,catalog_categories(name),catalog_subcategories(name),catalog_brands(name),catalog_units(name,short_name)').eq('business_id', businessId).order('name'),
+  const [{ data: rawProducts }, { data: categories }, { data: rawSubcategories }, { data: brands }, { data: units }] = await Promise.all([
+    supabase.from('products').select('sku,barcode,name,description,purchase_price,sale_price,opening_stock,current_stock,reorder_level,is_active,catalog_categories(name),catalog_subcategories(name),catalog_brands(name),catalog_units(name,short_name)').eq('business_id', businessId).order('name'),
     supabase.from('catalog_categories').select('id,name,code,is_active').eq('business_id', businessId).order('name'),
     supabase.from('catalog_subcategories').select('id,name,code,category_id,is_active,catalog_categories(name)').eq('business_id', businessId).order('name'),
     supabase.from('catalog_brands').select('id,name,code,is_active').eq('business_id', businessId).order('name'),
     supabase.from('catalog_units').select('id,name,short_name,decimal_places,is_active').eq('business_id', businessId).order('name'),
   ])
+  const products = (rawProducts ?? []) as unknown as ProductRow[]
+  const subcategories = (rawSubcategories ?? []) as unknown as SubcategoryRow[]
 
-  const productRows = (products ?? []).map((p: any) => ({
+  const productRows = products.map(p => ({
     SKU: p.sku,
     Barcode: p.barcode ?? '',
     'Product Name': p.name,
@@ -56,7 +65,7 @@ export async function GET() {
 
   const subcategorySheet = XLSX.utils.aoa_to_sheet([
     ['Subcategory ID', 'Subcategory', 'Category', 'Category ID', 'Code', 'Active'],
-    ...(subcategories ?? []).map((s: any) => [s.id, s.name, s.catalog_categories?.name ?? '', s.category_id, s.code ?? '', s.is_active ? 'Yes' : 'No']),
+    ...subcategories.map(s => [s.id, s.name, s.catalog_categories?.name ?? '', s.category_id, s.code ?? '', s.is_active ? 'Yes' : 'No']),
   ])
   subcategorySheet['!cols'] = [{ wch: 38 }, { wch: 28 }, { wch: 28 }, { wch: 38 }, { wch: 18 }, { wch: 12 }]
   XLSX.utils.book_append_sheet(workbook, subcategorySheet, 'Subcategories')
