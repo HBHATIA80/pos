@@ -1,0 +1,25 @@
+'use client'
+import { useRef, useState } from 'react'
+import { ArrowLeft, CheckCircle2, Download, FileSpreadsheet, Upload } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+export default function ProductImportPage() {
+  const input = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<{ imported?: number; error?: string; errors?: { row: number; message: string }[] } | null>(null)
+  async function upload() {
+    if (!file) return toast.error('Choose an Excel file first.')
+    setBusy(true); setResult(null)
+    try { const form = new FormData(); form.append('file', file); const response = await fetch('/api/catalog/import', { method: 'POST', body: form }); const body = await response.json(); setResult(body); if (!response.ok) toast.error(body.error || 'Import failed'); else toast.success(body.message || 'Products imported') }
+    catch { toast.error('Unable to upload the Excel file.') } finally { setBusy(false) }
+  }
+  return <div className="mx-auto max-w-4xl space-y-6">
+    <div className="flex items-center gap-3"><a href="/dashboard/products" className="rounded-xl border p-2 hover:bg-slate-50"><ArrowLeft className="h-5 w-5" /></a><div><p className="text-xs font-black uppercase tracking-[.18em] text-indigo-600">BIZBook Catalog</p><h1 className="text-3xl font-black">Import Products from Excel</h1><p className="text-sm text-slate-500">Built for bulk catalog entry by shop admins and staff.</p></div></div>
+    <section className="rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-6 text-white shadow-xl"><div className="flex items-start gap-4"><div className="rounded-2xl bg-white/15 p-3"><FileSpreadsheet className="h-7 w-7" /></div><div><h2 className="text-xl font-black">Upload up to 5,000 products</h2><p className="mt-1 text-sm text-indigo-100">Searchable catalog, category and subcategory mapping, pricing, opening stock and reorder levels.</p></div></div><a href="/api/catalog/import/template" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-black text-indigo-700"><Download className="h-4 w-4" /> Download Excel template</a></section>
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-black">1. Prepare your Excel</h2><p className="mt-1 text-sm text-slate-500">Use the template and enter Category, Subcategory and Unit names exactly as they exist in your BIZBook masters. This prevents accidental duplicate masters.</p><div className="mt-5 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center"><input ref={input} type="file" accept=".xlsx,.xls" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} /><button type="button" onClick={() => input.current?.click()} className="mx-auto flex min-h-12 items-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-black text-white"><Upload className="h-4 w-4" /> Choose Excel file</button><p className="mt-3 text-sm font-semibold text-slate-600">{file ? file.name : 'XLSX or XLS · maximum 10 MB'}</p></div><button type="button" disabled={!file || busy} onClick={() => void upload()} className="mt-5 min-h-12 w-full rounded-xl bg-indigo-600 px-5 text-sm font-black text-white disabled:opacity-50">{busy ? 'Validating & importing…' : 'Upload & Import Products'}</button></section>
+    {result?.imported !== undefined && <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800"><CheckCircle2 className="h-6 w-6" /><div><div className="font-black">{result.imported.toLocaleString('en-IN')} products imported</div><div className="text-sm">The catalog is now available for live search.</div></div></div>}
+    {result?.errors?.length ? <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5"><h3 className="font-black text-rose-800">Excel validation errors</h3><div className="mt-3 max-h-72 overflow-auto space-y-2 text-sm text-rose-700">{result.errors.map(error => <div key={`${error.row}-${error.message}`}><b>Row {error.row}:</b> {error.message}</div>)}</div></section> : null}
+    <section className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600"><b>Excel columns:</b> SKU, Barcode, Product Name, Description, Category, Subcategory, Brand, Unit, Purchase Price, Sale Price, Opening Stock, Reorder Level, Active.</section>
+  </div>
+}
