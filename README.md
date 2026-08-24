@@ -28,7 +28,7 @@ A mobile-ready and desktop-ready POS platform for shop administration, staff ope
 
 The customer portal and admin workspace are live. Operations, Accounts, Analysis and Inventory Control are available from the admin workspace.
 
-Database migrations live under `supabase/migrations/`. The latest source migrations are `0024_phase11_inventory_control.sql` and `0025_phase11_inventory_security_hardening.sql`.
+Database migrations live under `supabase/migrations/`. Phase 11 source migrations are `0024_phase11_inventory_control.sql`, `0025_phase11_inventory_security_hardening.sql`, and `0026_phase11_inventory_rpc_anon_revoke.sql`.
 
 ## Local development
 
