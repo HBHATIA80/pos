@@ -16,17 +16,14 @@ export async function GET(request: NextRequest) {
   const subcategoryId = params.get('subcategory_id') || null
   const brandId = params.get('brand_id') || null
 
-  const { data, error } = await supabase.rpc('marketplace_products', {
-    p_q: q,
-    p_limit: limit + 1,
-    p_offset: offset,
-    p_category_id: categoryId,
-    p_subcategory_id: subcategoryId,
-    p_brand_id: brandId,
-  })
-  if (error) return NextResponse.json({ error: error.message || 'Unable to load marketplace' }, { status: 400 })
+  const [productsResult, facetsResult] = await Promise.all([
+    supabase.rpc('marketplace_products', { p_q: q, p_limit: limit + 1, p_offset: offset, p_category_id: categoryId, p_subcategory_id: subcategoryId, p_brand_id: brandId }),
+    supabase.rpc('marketplace_facets'),
+  ])
+  if (productsResult.error) return NextResponse.json({ error: productsResult.error.message || 'Unable to load marketplace' }, { status: 400 })
+  if (facetsResult.error) return NextResponse.json({ error: facetsResult.error.message || 'Unable to load marketplace filters' }, { status: 400 })
 
-  const rows = (data || []) as Array<Record<string, unknown>>
+  const rows = (productsResult.data || []) as Array<Record<string, unknown>>
   const hasMore = rows.length > limit
   const products = (hasMore ? rows.slice(0, limit) : rows).map(row => ({
     id: row.product_id,
@@ -47,5 +44,5 @@ export async function GET(request: NextRequest) {
     current_stock: Number(row.current_stock || 0),
   }))
 
-  return NextResponse.json({ products, offset, limit, hasMore })
+  return NextResponse.json({ products, facets: facetsResult.data || { categories: [], subcategories: [], brands: [] }, offset, limit, hasMore })
 }
