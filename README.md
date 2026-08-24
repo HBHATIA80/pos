@@ -23,12 +23,13 @@ A mobile-ready and desktop-ready POS platform for shop administration, staff ope
 - **Phase 9 — Accounts:** payment register, printable receipts and expense register.
 - **Phase 10 — Analysis:** admin business KPIs, sales/expense analysis, stock valuation and low-stock reporting.
 - **Phase 11 — Inventory Control:** manual stock adjustments, physical-count reconciliation, movement history and controlled inventory permissions.
+- **Phase 12 — Payment & Receipt Vouchers:** Busy-style receipt/payment forms, party advances, supplier payments, cash/bank/UPI/card/cheque/other modes, account/narration fields, voucher numbering and party-ledger integration.
 
 ## Current production status
 
 The customer portal and admin workspace are live. Operations, Accounts, Analysis and Inventory Control are available from the admin workspace.
 
-Database migrations live under `supabase/migrations/`. Phase 11 source migrations are `0024_phase11_inventory_control.sql`, `0025_phase11_inventory_security_hardening.sql`, and `0026_phase11_inventory_rpc_anon_revoke.sql`.
+Database migrations live under `supabase/migrations/`. Phase 12 source migration is `0027_phase12_account_vouchers.sql`.
 
 ## Local development
 
