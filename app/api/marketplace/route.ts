@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from '@/lib/next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 type MarketplaceRow = { product_id: string; business_id: string; shop_name: string; shop_code: string | null; product_name: string; sku: string | null; barcode: string | null; sale_price: number; image_url: string | null; category_id: string | null; current_stock: number }
