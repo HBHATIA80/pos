@@ -1,106 +1,28 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, History, PackageCheck, RefreshCw } from 'lucide-react'
+import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, Boxes, History, PackageCheck, RefreshCw, Search, TrendingDown, TrendingUp } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-type Product = {
-  id: string
-  sku: string
-  name: string
-  current_stock: number
-  reorder_level: number
-  catalog_units?: { short_name?: string } | null
+type Product={id:string;sku:string;name:string;current_stock:number;reorder_level:number;catalog_units?:{short_name?:string}|null}
+type Movement={id:string;product_id:string;movement_type:string;quantity:number;notes:string|null;created_at:string;reference_type?:string|null;products?:{name?:string;sku?:string}|null}
+type Analysis={product_id:string;sku:string;name:string;current_stock:number;reorder_level:number;purchase_price:number;sale_price:number;sold_units:number;purchased_units:number;sales_value:number;purchase_value:number;stock_cost_value:number;stock_retail_value:number;last_movement_at:string|null}
+type Summary={products:number;lowStock:number;outOfStock:number;totalUnits:number;stockCostValue:number;stockRetailValue:number;soldUnits:number;purchasedUnits:number;salesValue:number;purchaseValue:number}
+const money=(v:number)=>`₹${Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2})}`
+
+export default function InventoryPage(){
+ const[products,setProducts]=useState<Product[]>([]),[movements,setMovements]=useState<Movement[]>([]),[analysis,setAnalysis]=useState<Analysis[]>([]),[summary,setSummary]=useState<Summary>({products:0,lowStock:0,outOfStock:0,totalUnits:0,stockCostValue:0,stockRetailValue:0,soldUnits:0,purchasedUnits:0,salesValue:0,purchaseValue:0}),[productId,setProductId]=useState(''),[direction,setDirection]=useState<'in'|'out'>('in'),[quantity,setQuantity]=useState('1'),[notes,setNotes]=useState(''),[search,setSearch]=useState(''),[filter,setFilter]=useState<'all'|'low'|'out'|'fast'>('all'),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[tab,setTab]=useState<'stock'|'analysis'|'movements'>('stock')
+ async function load(){setLoading(true);try{const [inventory,stats]=await Promise.all([fetch('/api/inventory',{cache:'no-store'}),fetch('/api/inventory-analysis',{cache:'no-store'})]);const a=await inventory.json(),b=await stats.json();if(!inventory.ok)throw Error(a.error);if(!stats.ok)throw Error(b.error);setProducts(a.products??[]);setMovements(a.movements??[]);setAnalysis(b.analysis??[]);setSummary(b.summary??summary);if(!productId&&a.products?.[0]?.id)setProductId(a.products[0].id)}catch(e){toast.error(e instanceof Error?e.message:'Unable to load inventory')}finally{setLoading(false)}}
+ useEffect(()=>{void load()},[])
+ const selected=useMemo(()=>products.find(p=>p.id===productId),[products,productId]); const visible=useMemo(()=>analysis.filter(p=>{const q=search.toLowerCase();const match=!q||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q);const state=filter==='all'||(filter==='out'&&Number(p.current_stock)<=0)||(filter==='low'&&Number(p.current_stock)<=Number(p.reorder_level))||(filter==='fast'&&Number(p.sold_units)>0);return match&&state}),[analysis,search,filter])
+ async function adjust(){setSaving(true);const r=await fetch('/api/inventory',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:productId,direction,quantity,notes})});const d=await r.json().catch(()=>({}));setSaving(false);if(!r.ok)return toast.error(d.error??'Adjustment failed');toast.success(`Stock ${direction==='in'?'added':'removed'} successfully`);setNotes('');await load()}
+ return <div className="mx-auto max-w-7xl space-y-5">
+  <section className="rounded-[28px] bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-5 text-white shadow-lg sm:p-7"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold">Inventory intelligence</span><h1 className="mt-3 text-3xl font-black sm:text-4xl">Stock control & analysis</h1><p className="mt-2 max-w-2xl text-sm text-emerald-50">Sales reduce stock automatically. Purchases increase stock. Voids, returns and physical adjustments stay traceable.</p></div><button onClick={()=>void load()} className="min-h-11 rounded-2xl bg-white/15 px-4 text-sm font-bold"><RefreshCw className="mr-2 inline h-4 w-4"/>Refresh</button></div><div className="mt-6 flex gap-2 overflow-x-auto"><button onClick={()=>setTab('stock')} className={`rounded-xl px-4 py-2.5 text-sm font-bold ${tab==='stock'?'bg-white text-emerald-700':'bg-white/10'}`}>Stock</button><button onClick={()=>setTab('analysis')} className={`rounded-xl px-4 py-2.5 text-sm font-bold ${tab==='analysis'?'bg-white text-emerald-700':'bg-white/10'}`}>Analysis</button><button onClick={()=>setTab('movements')} className={`rounded-xl px-4 py-2.5 text-sm font-bold ${tab==='movements'?'bg-white text-emerald-700':'bg-white/10'}`}>Movement history</button></div></section>
+  <div className="grid grid-cols-2 gap-3 lg:grid-cols-4"><Metric icon={<Boxes/>} label="Stock value" value={money(summary.stockCostValue)} sub={`${summary.totalUnits.toLocaleString('en-IN')} units`}/><Metric icon={<AlertTriangle/>} label="Low stock" value={summary.lowStock.toLocaleString('en-IN')} sub={`${summary.outOfStock} out of stock`} tone="amber"/><Metric icon={<TrendingDown/>} label="Sold units" value={summary.soldUnits.toLocaleString('en-IN')} sub={money(summary.salesValue)} tone="violet"/><Metric icon={<TrendingUp/>} label="Purchased units" value={summary.purchasedUnits.toLocaleString('en-IN')} sub={money(summary.purchaseValue)} tone="blue"/></div>
+  {tab==='stock'&&<><section className="rounded-2xl border bg-white p-4 shadow-sm"><div className="mb-4 flex items-center gap-3"><PackageCheck className="h-5 w-5 text-emerald-600"/><div><h2 className="font-bold">Stock adjustment</h2><p className="text-xs text-slate-500">Use for physical counts, damage, wastage or corrections—not for normal sales/purchases.</p></div></div><div className="grid gap-3 md:grid-cols-5"><select value={productId} onChange={e=>setProductId(e.target.value)} className="min-h-11 rounded-xl border px-3 text-sm md:col-span-2"><option value="">Select product</option>{products.map(p=><option key={p.id} value={p.id}>{p.name} · {p.sku}</option>)}</select><select value={direction} onChange={e=>setDirection(e.target.value as 'in'|'out')} className="min-h-11 rounded-xl border px-3 text-sm"><option value="in">Add stock</option><option value="out">Remove stock</option></select><input type="number" min="0.001" step="0.001" value={quantity} onChange={e=>setQuantity(e.target.value)} className="min-h-11 rounded-xl border px-3 text-sm" placeholder="Quantity"/><button disabled={saving||!productId} onClick={adjust} className="min-h-11 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white disabled:opacity-50">{saving?'Saving…':direction==='in'?'Add stock':'Remove stock'}</button></div>{selected&&<p className="mt-3 text-xs text-slate-500">Current: <b>{selected.current_stock} {selected.catalog_units?.short_name??''}</b> · Reorder at <b>{selected.reorder_level}</b></p>}<input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Reason / reference (physical count, damaged, correction...)" className="mt-3 min-h-11 w-full rounded-xl border px-3 text-sm"/></section><ProductTable rows={visible} search={search} setSearch={setSearch} filter={filter} setFilter={setFilter}/></>}
+  {tab==='analysis'&&<section className="rounded-2xl border bg-white shadow-sm"><div className="border-b p-5"><h2 className="font-bold">Stock analysis</h2><p className="mt-1 text-xs text-slate-500">Current quantity, purchasing, sales, valuation and movement velocity.</p></div><div className="overflow-x-auto"><table className="min-w-[1000px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Product</th><th className="px-5 py-3">Current</th><th className="px-5 py-3">Purchased</th><th className="px-5 py-3">Sold</th><th className="px-5 py-3">Cost value</th><th className="px-5 py-3">Retail value</th><th className="px-5 py-3">Last movement</th></tr></thead><tbody className="divide-y">{visible.map(p=><tr key={p.product_id}><td className="px-5 py-4"><b>{p.name}</b><div className="text-xs text-slate-400">{p.sku}</div></td><td className="px-5 py-4 font-bold">{p.current_stock}</td><td className="px-5 py-4">{p.purchased_units}</td><td className="px-5 py-4">{p.sold_units}</td><td className="px-5 py-4">{money(p.stock_cost_value)}</td><td className="px-5 py-4">{money(p.stock_retail_value)}</td><td className="px-5 py-4 text-xs text-slate-500">{p.last_movement_at?new Date(p.last_movement_at).toLocaleDateString():'—'}</td></tr>)}</tbody></table></div></section>}
+  {tab==='movements'&&<section className="rounded-2xl border bg-white shadow-sm"><div className="border-b p-5"><h2 className="font-bold">Complete movement history</h2><p className="mt-1 text-xs text-slate-500">Every automatic sale/purchase movement and manual correction.</p></div><div className="overflow-x-auto"><table className="min-w-[850px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Product</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Qty</th><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Date</th></tr></thead><tbody className="divide-y">{movements.map(m=><tr key={m.id}><td className="px-5 py-3 font-medium">{m.products?.name??'Product'}<div className="text-xs text-slate-400">{m.products?.sku}</div></td><td className="px-5 py-3 capitalize">{m.movement_type.replaceAll('_',' ')}</td><td className="px-5 py-3 font-bold">{m.quantity}</td><td className="px-5 py-3 text-xs text-slate-500">{m.reference_type??'manual'}</td><td className="px-5 py-3 text-xs text-slate-500">{new Date(m.created_at).toLocaleString()}</td></tr>)}</tbody></table></div></section>}
+ </div>
 }
-
-type Movement = {
-  id: string
-  product_id: string
-  movement_type: string
-  quantity: number
-  notes: string | null
-  created_at: string
-  products?: { name?: string; sku?: string } | null
-}
-
-export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [movements, setMovements] = useState<Movement[]>([])
-  const [productId, setProductId] = useState('')
-  const [direction, setDirection] = useState<'in' | 'out'>('in')
-  const [quantity, setQuantity] = useState('1')
-  const [notes, setNotes] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-
-  async function load() {
-    setLoading(true)
-    const response = await fetch('/api/inventory', { cache: 'no-store' })
-    const data = await response.json()
-    if (response.ok) {
-      setProducts(data.products ?? [])
-      setMovements(data.movements ?? [])
-      if (!productId && data.products?.[0]?.id) setProductId(data.products[0].id)
-    } else setMessage(data.error ?? 'Unable to load inventory')
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [])
-
-  const selected = useMemo(() => products.find((item) => item.id === productId), [products, productId])
-  const lowStock = products.filter((item) => Number(item.current_stock) <= Number(item.reorder_level))
-
-  async function adjust() {
-    setMessage('')
-    setSaving(true)
-    const response = await fetch('/api/inventory', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, direction, quantity, notes }),
-    })
-    const data = await response.json()
-    setSaving(false)
-    if (!response.ok) return setMessage(data.error ?? 'Adjustment failed')
-    setMessage(`Stock adjusted successfully: ${direction === 'in' ? '+' : '-'}${quantity}`)
-    setNotes('')
-    await load()
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-blue-600">Phase 11 · Inventory Control</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">Stock & adjustments</h1>
-          <p className="mt-1 text-sm text-slate-500">Reconcile physical stock without changing completed sales or purchases.</p>
-        </div>
-        <button onClick={load} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"><RefreshCw className="h-4 w-4" /> Refresh</button>
-      </div>
-
-      {message && <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">{message}</div>}
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Active products</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div>
-        <div className="rounded-2xl border border-amber-200 bg-white p-5"><p className="text-sm text-slate-500">Low stock</p><p className="mt-2 text-3xl font-bold text-amber-600">{lowStock.length}</p></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Recent movements</p><p className="mt-2 text-3xl font-bold">{movements.length}</p></div>
-      </div>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><PackageCheck className="h-5 w-5" /></span><div><h2 className="font-bold">Manual stock adjustment</h2><p className="text-xs text-slate-500">Use this only after a physical count or reconciliation.</p></div></div>
-        <div className="grid gap-4 md:grid-cols-4">
-          <label className="md:col-span-2"><span className="mb-1.5 block text-xs font-semibold text-slate-500">Product</span><select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Select product</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.sku}</option>)}</select></label>
-          <label><span className="mb-1.5 block text-xs font-semibold text-slate-500">Direction</span><select value={direction} onChange={(e) => setDirection(e.target.value as 'in' | 'out')} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="in">Add stock</option><option value="out">Remove stock</option></select></label>
-          <label><span className="mb-1.5 block text-xs font-semibold text-slate-500">Quantity</span><input type="number" min="0.001" step="0.001" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" /></label>
-          <label className="md:col-span-3"><span className="mb-1.5 block text-xs font-semibold text-slate-500">Reason / notes</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Physical count, damaged goods, correction..." className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" /></label>
-          <div className="flex items-end"><button disabled={saving || !productId} onClick={adjust} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{direction === 'in' ? <ArrowDownToLine className="h-4 w-4" /> : <ArrowUpFromLine className="h-4 w-4" />}{saving ? 'Saving...' : 'Apply adjustment'}</button></div>
-        </div>
-        {selected && <p className="mt-3 text-xs text-slate-500">Current stock: <span className="font-semibold text-slate-800">{selected.current_stock} {selected.catalog_units?.short_name ?? ''}</span> · Reorder level: {selected.reorder_level}</p>}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center gap-3 border-b border-slate-100 p-5"><History className="h-5 w-5 text-slate-500" /><div><h2 className="font-bold">Stock movement history</h2><p className="text-xs text-slate-500">Sales, purchases, voids and manual adjustments.</p></div></div>
-        <div className="overflow-x-auto">{loading ? <div className="p-6 text-sm text-slate-500">Loading inventory...</div> : <table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Product</th><th className="px-5 py-3">Movement</th><th className="px-5 py-3">Qty</th><th className="px-5 py-3">Notes</th><th className="px-5 py-3">Date</th></tr></thead><tbody className="divide-y divide-slate-100">{movements.map((movement) => <tr key={movement.id}><td className="px-5 py-3 font-medium">{movement.products?.name ?? 'Product'}<span className="ml-2 text-xs text-slate-400">{movement.products?.sku}</span></td><td className="px-5 py-3 capitalize">{movement.movement_type.replaceAll('_', ' ')}</td><td className="px-5 py-3 font-semibold">{movement.quantity}</td><td className="px-5 py-3 text-slate-500">{movement.notes ?? '—'}</td><td className="whitespace-nowrap px-5 py-3 text-slate-500">{new Date(movement.created_at).toLocaleString()}</td></tr>)}</tbody></table>}</div>
-      </section>
-    </div>
-  )
-}
+function Metric({icon,label,value,sub,tone='green'}:{icon:React.ReactNode;label:string;value:string;sub:string;tone?:string}){const cls=tone==='amber'?'bg-amber-50 text-amber-700':tone==='violet'?'bg-violet-50 text-violet-700':tone==='blue'?'bg-blue-50 text-blue-700':'bg-emerald-50 text-emerald-700';return <div className="rounded-2xl border bg-white p-4 shadow-sm"><div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${cls}`}>{icon}</div><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 text-xl font-black tracking-tight">{value}</p><p className="mt-1 text-xs text-slate-400">{sub}</p></div>}
+function ProductTable({rows,search,setSearch,filter,setFilter}:{rows:Analysis[];search:string;setSearch:(v:string)=>void;filter:'all'|'low'|'out'|'fast';setFilter:(v:'all'|'low'|'out'|'fast')=>void}){return <section className="rounded-2xl border bg-white shadow-sm"><div className="flex flex-col gap-3 border-b p-4 sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search stock by product or SKU…" className="min-h-11 w-full rounded-xl border bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-emerald-500"/></div><select value={filter} onChange={e=>setFilter(e.target.value as typeof filter)} className="min-h-11 rounded-xl border px-3 text-sm"><option value="all">All stock</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="fast">Sold items</option></select></div><div className="overflow-x-auto"><table className="min-w-[750px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Product</th><th className="px-5 py-3">Stock</th><th className="px-5 py-3">Reorder</th><th className="px-5 py-3">Sold</th><th className="px-5 py-3">Purchased</th><th className="px-5 py-3">State</th></tr></thead><tbody className="divide-y">{rows.map(p=><tr key={p.product_id}><td className="px-5 py-4"><b>{p.name}</b><div className="text-xs text-slate-400">{p.sku}</div></td><td className="px-5 py-4 font-black">{p.current_stock}</td><td className="px-5 py-4">{p.reorder_level}</td><td className="px-5 py-4">{p.sold_units}</td><td className="px-5 py-4">{p.purchased_units}</td><td className="px-5 py-4">{Number(p.current_stock)<=0?<span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700">Out</span>:Number(p.current_stock)<=Number(p.reorder_level)?<span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">Low</span>:<span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">Healthy</span>}</td></tr>)}</tbody></table></div></section>}
