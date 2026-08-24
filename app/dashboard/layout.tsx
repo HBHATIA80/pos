@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import POSShell from './pos-shell'
+import CustomerCatalogGuard from './customer-catalog-guard'
 
 type Props = {
   children: React.ReactNode
@@ -33,15 +34,18 @@ export default async function DashboardLayout({ children }: Props) {
     : { data: null }
 
   return (
-    <POSShell
-      profile={{
-        fullName: profile.full_name,
-        role: profile.role,
-        phone: profile.phone,
-      }}
-      businessName={business?.name ?? 'My Shop'}
-    >
-      {children}
-    </POSShell>
+    <>
+      <CustomerCatalogGuard role={profile.role} />
+      <POSShell
+        profile={{
+          fullName: profile.full_name,
+          role: profile.role,
+          phone: profile.phone,
+        }}
+        businessName={business?.name ?? 'My Shop'}
+      >
+        {children}
+      </POSShell>
+    </>
   )
 }
