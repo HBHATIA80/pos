@@ -50,7 +50,7 @@ export default function OrdersPage() {
     if (next.length && !shopId) setShopId(next.find((shop: Shop) => shop.is_primary)?.business_id ?? next[0].business_id)
   }
 
-  async function loadProducts(nextQuery = search, append = false, withFacets = false) {
+  async function loadProducts(nextQuery = search, append = false) {
     if (!shopId) return
     const id = ++requestId.current
     if (append) setLoadingMore(true); else setLoadingProducts(true)
@@ -60,7 +60,6 @@ export default function OrdersPage() {
       if (categoryId) params.set('category_id', categoryId)
       if (subcategoryId) params.set('subcategory_id', subcategoryId)
       if (brandId) params.set('brand_id', brandId)
-      if (withFacets) params.set('include_facets', '1')
       const response = await fetch(`/api/pos/products?${params.toString()}`, { cache: 'no-store' })
       const body = await response.json().catch(() => ({}))
       if (id !== requestId.current) return
@@ -68,9 +67,9 @@ export default function OrdersPage() {
       setProducts(current => append ? [...current, ...(body.products ?? [])] : (body.products ?? []))
       setHasMore(Boolean(body.hasMore))
       if (body.facets) {
-        setCategories(body.facets.categories ?? [])
-        setSubcategories(body.facets.subcategories ?? [])
-        setBrands(body.facets.brands ?? [])
+        setCategories(Array.isArray(body.facets.categories) ? body.facets.categories : [])
+        setSubcategories(Array.isArray(body.facets.subcategories) ? body.facets.subcategories : [])
+        setBrands(Array.isArray(body.facets.brands) ? body.facets.brands : [])
       }
     } catch (error) {
       if (id === requestId.current) toast.error(error instanceof Error ? error.message : 'Unable to load products')
@@ -95,16 +94,15 @@ export default function OrdersPage() {
   useEffect(() => { void boot() }, [])
   useEffect(() => {
     if (!shopId) return
-    setProducts([]); setCart([]); setCategoryId(''); setSubcategoryId(''); setBrandId('')
-    void loadProducts('', false, true)
+    setProducts([]); setCart([]); setCategories([]); setSubcategories([]); setBrands([]); setCategoryId(''); setSubcategoryId(''); setBrandId('')
     void loadOrders(shopId)
   }, [shopId])
   useEffect(() => {
     if (!shopId) return
     if (searchTimer.current) clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => { void loadProducts(search, false, false) }, 220)
+    searchTimer.current = setTimeout(() => { void loadProducts(search) }, 220)
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current) }
-  }, [search, categoryId, subcategoryId, brandId])
+  }, [shopId, search, categoryId, subcategoryId, brandId])
 
   function add(product: Product) {
     setCart(current => {
@@ -149,7 +147,7 @@ export default function OrdersPage() {
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5"><div><h2 className="font-bold text-slate-950">Products</h2><p className="mt-0.5 text-xs text-slate-500">Out-of-stock products can still be ordered; the shop can verify stock before fulfillment.</p></div><PackageSearch className="h-5 w-5 text-indigo-500" /></div>
         {loadingProducts && !products.length ? <div className="flex items-center justify-center py-16 text-sm text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin text-indigo-600" /> Finding products…</div> : !products.length ? <div className="p-12 text-center"><PackageSearch className="mx-auto h-10 w-10 text-slate-300" /><p className="mt-3 font-semibold text-slate-800">No matching products</p><p className="mt-1 text-sm text-slate-500">Try another product name, SKU, barcode or filter.</p></div> : <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:p-4 xl:grid-cols-4">{products.map(product => { const inCart = cart.find(item => item.id === product.id)?.quantity ?? 0; const stock = Number(product.current_stock); return <article key={product.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"><div className="relative flex aspect-square items-center justify-center overflow-hidden bg-slate-50">{product.image_url ? <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" onError={event => { event.currentTarget.style.display = 'none' }} /> : <ImageIcon className="h-10 w-10 text-indigo-200" />}{inCart > 0 && <span className="absolute right-2 top-2 inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-indigo-600 px-2 text-xs font-bold text-white shadow">{inCart}</span>}</div><div className="p-3"><h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-slate-900">{product.name}</h3><p className="mt-1 truncate text-[11px] text-slate-400">{product.sku || product.barcode || 'No code'}</p><div className="mt-3 flex items-end justify-between gap-2"><div><p className="text-[10px] uppercase tracking-wide text-slate-400">Price</p><p className="text-base font-black text-indigo-700">{money(product.sale_price)}</p></div><button type="button" onClick={() => add(product)} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-indigo-600 px-3 text-white shadow-sm hover:bg-indigo-700" aria-label={`Add ${product.name}`}><Plus className="h-5 w-5" /><span className="ml-1 hidden sm:inline text-xs font-bold">Add</span></button></div><p className={`mt-2 text-[11px] font-medium ${stock > 0 ? 'text-emerald-600' : 'text-indigo-600'}`}>{stock > 0 ? `${stock} available` : 'Available to order'}</p></div></article> })}</div>}
-        {hasMore && <div className="border-t border-slate-100 p-4 text-center"><button type="button" onClick={() => void loadProducts(search, true, false)} disabled={loadingMore} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 disabled:opacity-50">{loadingMore && <Loader2 className="h-4 w-4 animate-spin" />} Load more products</button></div>}
+        {hasMore && <div className="border-t border-slate-100 p-4 text-center"><button type="button" onClick={() => void loadProducts(search, true)} disabled={loadingMore} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 disabled:opacity-50">{loadingMore && <Loader2 className="h-4 w-4 animate-spin" />} Load more products</button></div>}
       </section>
       <aside className={`${cartOpen ? 'fixed inset-x-0 bottom-0 z-50 lg:static' : 'hidden lg:block'} lg:sticky lg:top-20 lg:h-fit`}>{cartOpen && <button type="button" className="fixed inset-0 -z-10 bg-slate-950/40 lg:hidden" onClick={() => setCartOpen(false)} aria-label="Close cart" />}<div className="overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl lg:rounded-2xl lg:shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-4"><div><p className="text-xs font-bold uppercase tracking-wide text-indigo-600">Your cart</p><p className="mt-1 font-black text-slate-950">{itemCount} items</p></div><button type="button" onClick={() => setCartOpen(false)} className="rounded-xl p-2 text-slate-400 lg:hidden"><X className="h-5 w-5" /></button></div>{!cart.length ? <div className="p-10 text-center"><ShoppingCart className="mx-auto h-10 w-10 text-slate-300" /><p className="mt-3 font-bold text-slate-800">Your cart is empty</p><p className="mt-1 text-sm text-slate-500">Search products above and tap Add.</p></div> : <><div className="max-h-[45vh] divide-y overflow-y-auto">{cart.map(item => <div key={item.id} className="flex gap-3 p-4"><div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-50">{item.image_url ? <img src={item.image_url} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="m-4 h-6 w-6 text-slate-300" />}</div><div className="min-w-0 flex-1"><p className="line-clamp-2 text-sm font-bold text-slate-900">{item.name}</p><p className="mt-1 text-xs text-slate-500">{money(item.sale_price)} each</p><div className="mt-2 flex items-center gap-2"><button type="button" onClick={() => changeQuantity(item.id, -1)} className="rounded-lg border p-1.5"><Minus className="h-3.5 w-3.5" /></button><span className="min-w-7 text-center text-sm font-bold">{item.quantity}</span><button type="button" onClick={() => changeQuantity(item.id, 1)} className="rounded-lg border p-1.5"><Plus className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setCart(current => current.filter(x => x.id !== item.id))} className="ml-auto rounded-lg p-1.5 text-slate-400"><Trash2 className="h-4 w-4" /></button></div></div><p className="font-black text-slate-900">{money(item.quantity * Number(item.sale_price))}</p></div>)}</div><div className="border-t p-4"><div className="flex items-center justify-between text-sm"><span className="font-semibold text-slate-500">Order total</span><span className="text-xl font-black text-indigo-700">{money(total)}</span></div><button type="button" disabled={saving} onClick={() => void placeOrder()} className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-black text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Place order <ArrowRight className="h-4 w-4" /></button></div></>}</div></aside>
     </div>
