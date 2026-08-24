@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
   if (profileError || !profile?.is_active) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (profile.role !== 'user') return NextResponse.json({ error: 'This endpoint is for customer accounts.' }, { status: 403 })
 
-  const { data, error } = await supabase.rpc('get_customer_catalog_facets', { p_business_id: businessId })
+  // The database function uses p_business_uuid; keep this endpoint aligned
+  // with the actual RPC signature so it cannot silently fail on a typo.
+  const { data, error } = await supabase.rpc('get_customer_catalog_facets', { p_business_uuid: businessId })
   if (error) {
     console.error('GET /api/customer/catalog-facets error:', error)
     return NextResponse.json({ error: error.message || 'Unable to load product filters' }, { status: 400 })
