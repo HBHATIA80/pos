@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   const [productsResult, facetsResult] = await Promise.all([
     query,
-    supabase.rpc('get_customer_catalog_facets', { p_business_id: businessId }),
+    supabase.rpc('get_customer_catalog_facets', { p_business_uuid: businessId }),
   ])
 
   const { data, count, error } = productsResult
