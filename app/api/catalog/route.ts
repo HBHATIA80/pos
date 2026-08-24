@@ -8,6 +8,7 @@ const productSchema = z.object({ sku: z.string().trim().min(1).max(80), barcode:
 const unitSchema = z.object({ name: z.string().trim().min(1).max(60), short_name: z.string().trim().min(1).max(20), decimal_places: z.coerce.number().int().min(0).max(6), is_active: z.boolean().optional() })
 function cleanOptional(value?: string | null) { return value?.trim() || null }
 async function getContext() { const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser(); if (!user) return { supabase, user: null, profile: null }; const { data: profile } = await supabase.from('profiles').select('id,business_id,role,is_active').eq('id', user.id).maybeSingle(); return { supabase, user, profile } }
+function canManageCatalog(profile: { role?: string | null } | null) { return profile?.role === 'admin' || profile?.role === 'staff' }
 
 export async function GET(request: Request) {
   const { supabase, user, profile } = await getContext()
@@ -17,8 +18,10 @@ export async function GET(request: Request) {
   if (!entity.success) return NextResponse.json({ error: 'Invalid catalog entity' }, { status: 400 })
   const businessId = profile.business_id
   if (entity.data === 'products') {
+    const id = url.searchParams.get('id')
     const q = (url.searchParams.get('q') || '').trim(); const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 50), 1), 100); const offset = Math.max(Number(url.searchParams.get('offset') || 0), 0); const categoryId = url.searchParams.get('category_id'); const brandId = url.searchParams.get('brand_id')
     let query = supabase.from('products').select('id,sku,barcode,name,description,category_id,subcategory_id,brand_id,unit_id,purchase_price,sale_price,opening_stock,current_stock,reorder_level,image_url,is_active,marketplace_enabled,catalog_categories(id,name),catalog_subcategories(id,name),catalog_brands(id,name),catalog_units(id,name,short_name,decimal_places)', { count: 'exact' }).eq('business_id', businessId).order('name').range(offset, offset + limit - 1)
+    if (id) query = query.eq('id', id)
     if (q) { const escaped = q.replace(/[%_]/g, '\\$&'); query = query.or(`name.ilike.%${escaped}%,sku.ilike.%${escaped}%,barcode.ilike.%${escaped}%`) }
     if (categoryId) query = query.eq('category_id', categoryId); if (brandId) query = query.eq('brand_id', brandId)
     const { data, count, error } = await query; if (error) return NextResponse.json({ error: error.message }, { status: 400 })
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const { supabase, user, profile } = await getContext(); if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!canManageCatalog(profile)) return NextResponse.json({ error: 'Only admin or staff can edit catalog items' }, { status: 403 })
   const body = await request.json().catch(() => null); const entity = entitySchema.safeParse(body?.entity); const id = z.string().uuid().safeParse(body?.id); if (!entity.success || !id.success) return NextResponse.json({ error: 'Invalid catalog update' }, { status: 400 })
   const payload = body?.data ?? {}
   if (entity.data === 'products' && 'marketplace_enabled' in payload) {
