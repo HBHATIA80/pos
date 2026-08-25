@@ -105,7 +105,10 @@ export default function BulkDeletePanel() {
           <input value={search} onChange={event => setSearch(event.target.value)} placeholder={`Search ${labels[entity].toLowerCase()} records…`} className="min-h-10 rounded-xl border px-3 text-sm outline-none focus:border-rose-400" />
         </div>
         <div className="flex items-center justify-between border-b bg-slate-50 px-4 py-2 text-xs">
-          <label className="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? selected.filter(id => !selectable.some(row => row.id === id)) : Array.from(new Set([...selected, ...selectable.map(row => row.id)]))} disabled={!selectable.length || loading} /><CheckSquare className="h-4 w-4" /> Select all safe records</label>
+          <label className="flex items-center gap-2 font-bold text-slate-700">
+            <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? selected.filter(id => !selectable.some(row => row.id === id)) : Array.from(new Set([...selected, ...selectable.map(row => row.id)])))} disabled={!selectable.length || loading} />
+            <CheckSquare className="h-4 w-4" /> Select all safe records
+          </label>
           <span className="font-bold text-slate-500">{selected.length} selected</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
