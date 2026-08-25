@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { BarChart3, Package, ShoppingCart, Users, WalletCards } from 'lucide-react'
+import { Package, ShoppingCart, Users, WalletCards } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import DashboardAnalytics from './dashboard-analytics'
+import StaffDashboard from './staff-dashboard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,6 +12,7 @@ export default async function DashboardPage() {
   if (!profile?.is_active) return null
 
   if (profile.role === 'admin') return <div className="mx-auto max-w-[1500px] space-y-6"><DashboardAnalytics /></div>
+  if (profile.role === 'staff') return <div className="mx-auto max-w-[1500px] space-y-6"><StaffDashboard /></div>
 
   const cards = [
     { title:'Products', description:'Manage products, brands, categories and stock.', icon:Package, href:'/dashboard/products' },
