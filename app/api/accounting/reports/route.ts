@@ -16,17 +16,19 @@ export async function GET(request: Request) {
   const end = url.searchParams.get('end') || new Date().toISOString().slice(0, 10)
   const businessId = profile.business_id
 
-  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }] = await Promise.all([
+  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }] = await Promise.all([
     supabase.from('accounting_posted_lines').select('*').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date'),
     supabase.from('accounts').select('id,name,account_code,account_nature,account_group_id,party_id,opening_balance,opening_balance_type,is_party_account,is_active').eq('business_id', businessId).eq('is_active', true).order('name'),
     supabase.from('account_groups').select('id,name,code,nature,parent_id').eq('business_id', businessId).eq('is_active', true),
     supabase.from('stock_analysis').select('product_id,name,sku,current_stock,purchase_price,sale_price,stock_cost_value,stock_retail_value').eq('business_id', businessId).eq('is_active', true),
+    supabase.from('sales_invoices').select('sold_at,sales_invoice_items(product_id,quantity,cost_unit_price)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).gte('sold_at', iso(start)).lte('sold_at', iso(end, true)).order('sold_at'),
   ])
-  for (const e of [linesError, accountsError, groupsError, productsError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
+  for (const e of [linesError, accountsError, groupsError, productsError, salesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
 
   const rows = lines ?? []
   const acc = accounts ?? []
   const groupRows = groups ?? []
+  const productCost = new Map((products ?? []).map(p => [p.product_id, n(p.purchase_price)]))
   const accountMeta = new Map(acc.map(a => [a.id, { ...a, group: groupRows.find(g => g.id === a.account_group_id)?.name || '' }]))
   const balance = new Map<string, { debit: number; credit: number; name: string; code: string | null; nature: string; group: string; party_id: string | null }>()
   for (const a of acc) balance.set(a.id, { debit: n(a.opening_balance_type === 'debit' ? a.opening_balance : 0), credit: n(a.opening_balance_type === 'credit' ? a.opening_balance : 0), name: a.name, code: a.account_code, nature: a.account_nature, group: groupRows.find(g => g.id === a.account_group_id)?.name || '', party_id: a.party_id })
@@ -40,15 +42,22 @@ export async function GET(request: Request) {
     const net = x.debit - x.credit
     return { id, ...x, debit: net > 0 ? net : 0, credit: net < 0 ? Math.abs(net) : 0, balance: Math.abs(net), balance_type: net > 0 ? 'debit' : net < 0 ? 'credit' : 'zero' }
   }).filter(x => x.balance > 0.005)
-  const pnlAccounts = trialBalance.filter(x => x.nature === 'income' || x.nature === 'expense')
-  const income = pnlAccounts.filter(x => x.nature === 'income').reduce((s, x) => s + x.credit - x.debit, 0)
-  const totalExpense = pnlAccounts.filter(x => x.nature === 'expense').reduce((s, x) => s + x.debit - x.credit, 0)
-  const sales = pnlAccounts.filter(x => x.group.toLowerCase().includes('sales')).reduce((s, x) => s + x.credit - x.debit, 0)
-  const purchases = pnlAccounts.filter(x => x.group.toLowerCase().includes('purchase')).reduce((s, x) => s + x.debit - x.credit, 0)
-  // Purchases are trading/inventory cost. They belong in gross profit and must not also be counted as operating expenses.
-  const operatingExpense = Math.max(totalExpense - purchases, 0)
-  const grossProfit = sales - purchases
+  const allPnlAccounts = trialBalance.filter(x => x.nature === 'income' || x.nature === 'expense')
+  const purchaseAccounts = allPnlAccounts.filter(x => x.nature === 'expense' && x.group.toLowerCase().includes('purchase'))
+  const pnlAccounts = allPnlAccounts.filter(x => !(x.nature === 'expense' && x.group.toLowerCase().includes('purchase')))
+  const income = allPnlAccounts.filter(x => x.nature === 'income').reduce((s, x) => s + x.credit - x.debit, 0)
+  const totalLedgerExpense = allPnlAccounts.filter(x => x.nature === 'expense').reduce((s, x) => s + x.debit - x.credit, 0)
+  const sales = allPnlAccounts.filter(x => x.group.toLowerCase().includes('sales')).reduce((s, x) => s + x.credit - x.debit, 0)
+  const purchases = purchaseAccounts.reduce((s, x) => s + x.debit - x.credit, 0)
+  const operatingExpense = Math.max(totalLedgerExpense - purchases, 0)
   const otherIncome = Math.max(income - sales, 0)
+
+  // Purchases increase inventory; they are not an immediate P&L expense. P&L recognizes only the cost of goods actually sold.
+  const cogs = (salesRows ?? []).reduce((total, invoice) => {
+    const items = (invoice.sales_invoice_items ?? []) as Array<{ product_id: string; quantity: number; cost_unit_price: number | null }>
+    return total + items.reduce((sum, item) => sum + n(item.quantity) * (item.cost_unit_price == null ? (productCost.get(item.product_id) ?? 0) : n(item.cost_unit_price)), 0)
+  }, 0)
+  const grossProfit = sales - cogs
   const netProfit = grossProfit + otherIncome - operatingExpense
 
   const bsAccounts = trialBalance.filter(x => ['asset','liability','equity'].includes(x.nature))
@@ -68,12 +77,12 @@ export async function GET(request: Request) {
     old.debit += x.debit; old.credit += x.credit; byGroup.set(key, old)
   }
   const aging = trialBalance.filter(x => x.party_id && (x.nature === 'asset' || x.nature === 'liability')).map(x => ({ name: x.name, party_id: x.party_id, type: x.nature === 'asset' ? 'receivable' : 'payable', amount: x.balance }))
-  const topExpenses = pnlAccounts.filter(x => x.nature === 'expense' && !x.group.toLowerCase().includes('purchase')).sort((a,b) => (b.debit-b.credit)-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
+  const topExpenses = pnlAccounts.filter(x => x.nature === 'expense').sort((a,b) => (b.debit-b.credit)-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
 
-  const dailyMap = new Map<string, { sales:number; purchases:number; expenses:number; otherIncome:number; entries:number }>()
+  const dailyMap = new Map<string, { sales:number; purchases:number; cogs:number; expenses:number; otherIncome:number; entries:number }>()
   for (const r of rows) {
     const date = String(r.entry_date).slice(0, 10)
-    const m = dailyMap.get(date) || { sales:0, purchases:0, expenses:0, otherIncome:0, entries:0 }
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0 }
     const meta = accountMeta.get(r.account_id)
     const debit = n(r.debit), credit = n(r.credit)
     const group = (meta?.group || '').toLowerCase()
@@ -90,11 +99,18 @@ export async function GET(request: Request) {
     }
     dailyMap.set(date, m)
   }
-  const daily = [...dailyMap.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([date,m]) => ({ ...m, date, grossProfit: m.sales-m.purchases, netProfit: m.sales-m.purchases+m.otherIncome-m.expenses }))
+  for (const invoice of salesRows ?? []) {
+    const date = String(invoice.sold_at).slice(0, 10)
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0 }
+    const items = (invoice.sales_invoice_items ?? []) as Array<{ product_id: string; quantity: number; cost_unit_price: number | null }>
+    m.cogs += items.reduce((sum, item) => sum + n(item.quantity) * (item.cost_unit_price == null ? (productCost.get(item.product_id) ?? 0) : n(item.cost_unit_price)), 0)
+    dailyMap.set(date, m)
+  }
+  const daily = [...dailyMap.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([date,m]) => ({ ...m, date, grossProfit: m.sales-m.cogs, netProfit: m.sales-m.cogs+m.otherIncome-m.expenses }))
 
   return NextResponse.json({
     period: { start, end },
-    summary: { income, expense: operatingExpense, totalExpense, operatingExpense, sales, purchases, grossProfit, netProfit, otherIncome, assets, liabilities, equity, debtors, creditors, cash, bank, stock, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) },
+    summary: { income, expense: operatingExpense, totalExpense: totalLedgerExpense, operatingExpense, sales, purchases, costOfGoodsSold: cogs, grossProfit, netProfit, otherIncome, assets, liabilities, equity, debtors, creditors, cash, bank, stock, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) },
     trialBalance, pnlAccounts, balanceSheet: bsAccounts, groups: [...byGroup.entries()].map(([name,v])=>({name,...v})), aging, topExpenses, daily, stock: products ?? []
   })
 }
