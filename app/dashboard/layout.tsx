@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import POSShell from './pos-shell'
 import CustomerCatalogGuard from './customer-catalog-guard'
 import InvoiceViewer from './invoice-viewer'
+import BulkDeletePanel from './bulk-delete-panel'
 
 type Props = {
   children: React.ReactNode
@@ -50,6 +51,7 @@ export default async function DashboardLayout({ children }: Props) {
         {children}
       </POSShell>
       <InvoiceViewer enabled={canViewInvoices} />
+      <BulkDeletePanel />
     </>
   )
 }
