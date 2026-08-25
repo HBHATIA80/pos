@@ -15,6 +15,7 @@ export default function PurchasesPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<string[]>([])
   const [supplier, setSupplier] = useState('')
   const [supplierSearch, setSupplierSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
@@ -23,6 +24,7 @@ export default function PurchasesPage() {
   const [productLoading, setProductLoading] = useState(false)
   const [supplierLoading, setSupplierLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [showSupplierResults, setShowSupplierResults] = useState(false)
   const [showProductResults, setShowProductResults] = useState(false)
   const productInput = useRef<HTMLInputElement>(null)
@@ -53,7 +55,10 @@ export default function PurchasesPage() {
   async function loadPurchases() {
     const response = await fetch('/api/purchases', { cache: 'no-store' })
     const result = await response.json().catch(() => ({}))
-    if (response.ok) setPurchases(result.purchases || [])
+    if (response.ok) {
+      setPurchases(result.purchases || [])
+      setSelectedPurchaseIds(current => current.filter(id => (result.purchases || []).some((purchase: Purchase) => purchase.id === id)))
+    }
   }
 
   async function load() {
@@ -77,6 +82,8 @@ export default function PurchasesPage() {
   const selectedSupplier = suppliers.find(s => s.id === supplier)
   const total = useMemo(() => lines.reduce((sum, line) => sum + line.quantity * line.unit_price, 0), [lines])
   const itemCount = useMemo(() => lines.reduce((sum, line) => sum + line.quantity, 0), [lines])
+  const deletablePurchases = useMemo(() => purchases.filter(purchase => purchase.status === 'draft'), [purchases])
+  const allDeletableSelected = deletablePurchases.length > 0 && deletablePurchases.every(purchase => selectedPurchaseIds.includes(purchase.id))
 
   function addProduct(product: Product) {
     setLines(current => {
@@ -98,6 +105,39 @@ export default function PurchasesPage() {
     const numeric = Number(value)
     if (!Number.isFinite(numeric) || numeric < 0) return
     setLines(current => current.map(line => line.product_id === id ? { ...line, unit_price: numeric } : line))
+  }
+
+  function togglePurchase(id: string) {
+    const purchase = purchases.find(item => item.id === id)
+    if (!purchase || purchase.status !== 'draft') return toast.error('Only draft/test purchases can be deleted safely')
+    setSelectedPurchaseIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id])
+  }
+
+  function toggleAllDeletable() {
+    setSelectedPurchaseIds(current => allDeletableSelected ? current.filter(id => !deletablePurchases.some(purchase => purchase.id === id)) : Array.from(new Set([...current, ...deletablePurchases.map(purchase => purchase.id)])))
+  }
+
+  async function deleteSelectedPurchases() {
+    if (!selectedPurchaseIds.length || deleting) return
+    const selected = purchases.filter(purchase => selectedPurchaseIds.includes(purchase.id))
+    const confirmed = window.confirm(`Delete ${selected.length} selected draft purchase${selected.length === 1 ? '' : 's'}?\n\nThis removes only the selected draft/test records. Completed purchases are protected.`)
+    if (!confirmed) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch('/api/purchases', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedPurchaseIds }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Unable to delete selected purchases')
+      toast.success(`${result.deleted ?? selectedPurchaseIds.length} purchase${(result.deleted ?? selectedPurchaseIds.length) === 1 ? '' : 's'} deleted`)
+      setSelectedPurchaseIds([])
+      await loadPurchases()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to delete selected purchases')
+    } finally { setDeleting(false) }
   }
 
   async function save() {
@@ -165,6 +205,15 @@ export default function PurchasesPage() {
       </aside>
     </div>
 
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5"><div><h2 className="font-bold">Recent Purchases</h2><p className="text-xs text-slate-500">Latest supplier invoices</p></div><ShoppingBag className="h-5 w-5 text-slate-400" /></div>{loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" /></div> : <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="p-3">Invoice</th><th className="p-3">Supplier</th><th className="p-3">Date</th><th className="p-3 text-right">Amount</th><th className="p-3">Status</th></tr></thead><tbody className="divide-y">{purchases.slice(0, 15).map(p => <tr key={p.id} className="hover:bg-slate-50"><td className="p-3 font-bold">{p.invoice_no}</td><td className="p-3">{supplierName(p)}</td><td className="p-3 text-slate-500">{new Date(p.created_at).toLocaleString('en-IN')}</td><td className="p-3 text-right font-bold">{money(p.grand_total)}</td><td className="p-3"><span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{p.status}</span></td></tr>)}</tbody></table>{!purchases.length && <div className="p-10 text-center text-sm text-slate-500">No purchases yet.</div>}</div>}</section>
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div><h2 className="font-bold">Recent Purchases</h2><p className="text-xs text-slate-500">Select draft/test invoices and delete only those records. Completed purchases are protected.</p></div>
+        <div className="flex items-center gap-2">
+          {selectedPurchaseIds.length > 0 && <button type="button" onClick={() => void deleteSelectedPurchases()} disabled={deleting} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-rose-600 px-3 text-sm font-bold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"><Trash2 className="h-4 w-4" />{deleting ? 'Deleting…' : `Delete selected (${selectedPurchaseIds.length})`}</button>}
+          <ShoppingBag className="h-5 w-5 text-slate-400" />
+        </div>
+      </div>
+      {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" /></div> : <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="w-12 p-3 text-center"><input type="checkbox" checked={allDeletableSelected} onChange={toggleAllDeletable} disabled={!deletablePurchases.length} aria-label="Select all deletable draft purchases" /></th><th className="p-3">Invoice</th><th className="p-3">Supplier</th><th className="p-3">Date</th><th className="p-3 text-right">Amount</th><th className="p-3">Status</th></tr></thead><tbody className="divide-y">{purchases.slice(0, 15).map(p => { const canDelete = p.status === 'draft'; return <tr key={p.id} className={`hover:bg-slate-50 ${selectedPurchaseIds.includes(p.id) ? 'bg-rose-50/40' : ''}`}><td className="p-3 text-center"><input type="checkbox" checked={selectedPurchaseIds.includes(p.id)} onChange={() => togglePurchase(p.id)} disabled={!canDelete || deleting} aria-label={`Select ${p.invoice_no}`} title={canDelete ? 'Select this draft purchase' : 'Completed purchases cannot be deleted here'} /></td><td className="p-3 font-bold">{p.invoice_no}</td><td className="p-3">{supplierName(p)}</td><td className="p-3 text-slate-500">{new Date(p.created_at).toLocaleString('en-IN')}</td><td className="p-3 text-right font-bold">{money(p.grand_total)}</td><td className="p-3"><span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase ${canDelete ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{p.status}</span></td></tr> })}</tbody></table>{!purchases.length && <div className="p-10 text-center text-sm text-slate-500">No purchases yet.</div>}</div>}
+    </section>
   </div>
 }
