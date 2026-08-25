@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 type Product = { id: string; name: string; sku: string; barcode?: string | null; purchase_price: number; current_stock: number }
 type Party = { id: string; party_code?: string; name: string; phone?: string | null; party_type: 'customer' | 'supplier' | 'both' }
 type Line = { product_id: string; quantity: number; unit_price: number }
-type Purchase = { id: string; invoice_no: string; status: string; grand_total: number; created_at: string; party?: { name: string } | null }
+type Purchase = { id: string; invoice_no: string; status: string; grand_total: number; created_at: string; party?: Party | Party[] | null }
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -118,6 +118,11 @@ export default function PurchasesPage() {
     finally { setSaving(false) }
   }
 
+  const supplierName = (purchase: Purchase) => {
+    if (Array.isArray(purchase.party)) return purchase.party[0]?.name || 'Walk-in / Other'
+    return purchase.party?.name || 'Walk-in / Other'
+  }
+
   return <div className="mx-auto max-w-[1500px] space-y-4 pb-8">
     <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -160,6 +165,6 @@ export default function PurchasesPage() {
       </aside>
     </div>
 
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5"><div><h2 className="font-bold">Recent Purchases</h2><p className="text-xs text-slate-500">Latest supplier invoices</p></div><ShoppingBag className="h-5 w-5 text-slate-400" /></div>{loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" /></div> : <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="p-3">Invoice</th><th className="p-3">Supplier</th><th className="p-3">Date</th><th className="p-3 text-right">Amount</th><th className="p-3">Status</th></tr></thead><tbody className="divide-y">{purchases.slice(0, 15).map(p => <tr key={p.id} className="hover:bg-slate-50"><td className="p-3 font-bold">{p.invoice_no}</td><td className="p-3">{p.party?.name || 'Walk-in / Other'}</td><td className="p-3 text-slate-500">{new Date(p.created_at).toLocaleString('en-IN')}</td><td className="p-3 text-right font-bold">{money(p.grand_total)}</td><td className="p-3"><span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{p.status}</span></td></tr>)}</tbody></table>{!purchases.length && <div className="p-10 text-center text-sm text-slate-500">No purchases yet.</div>}</div>}</section>
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5"><div><h2 className="font-bold">Recent Purchases</h2><p className="text-xs text-slate-500">Latest supplier invoices</p></div><ShoppingBag className="h-5 w-5 text-slate-400" /></div>{loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" /></div> : <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="p-3">Invoice</th><th className="p-3">Supplier</th><th className="p-3">Date</th><th className="p-3 text-right">Amount</th><th className="p-3">Status</th></tr></thead><tbody className="divide-y">{purchases.slice(0, 15).map(p => <tr key={p.id} className="hover:bg-slate-50"><td className="p-3 font-bold">{p.invoice_no}</td><td className="p-3">{supplierName(p)}</td><td className="p-3 text-slate-500">{new Date(p.created_at).toLocaleString('en-IN')}</td><td className="p-3 text-right font-bold">{money(p.grand_total)}</td><td className="p-3"><span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{p.status}</span></td></tr>)}</tbody></table>{!purchases.length && <div className="p-10 text-center text-sm text-slate-500">No purchases yet.</div>}</div>}</section>
   </div>
 }
