@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import POSShell from './pos-shell'
 import CustomerCatalogGuard from './customer-catalog-guard'
+import InvoiceViewer from './invoice-viewer'
 
 type Props = {
   children: React.ReactNode
@@ -33,6 +34,8 @@ export default async function DashboardLayout({ children }: Props) {
         .maybeSingle()
     : { data: null }
 
+  const canViewInvoices = profile.role === 'admin' || profile.role === 'staff'
+
   return (
     <>
       <CustomerCatalogGuard role={profile.role} />
@@ -46,6 +49,7 @@ export default async function DashboardLayout({ children }: Props) {
       >
         {children}
       </POSShell>
+      <InvoiceViewer enabled={canViewInvoices} />
     </>
   )
 }
