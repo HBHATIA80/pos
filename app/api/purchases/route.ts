@@ -17,6 +17,7 @@ export async function GET() {
     .from('purchase_invoices')
     .select('id,invoice_no,status,subtotal,discount_amount,grand_total,notes,purchased_at,created_at,party_id,party:parties!purchase_invoices_party_id_fkey(id,name,phone)')
     .eq('business_id', profile.business_id)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
 
