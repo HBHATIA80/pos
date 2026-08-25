@@ -29,6 +29,16 @@ export async function GET(_request: Request, { params }: Params) {
   if (error) return NextResponse.json({ error: error.message || 'Unable to load invoice' }, { status: 400 })
   if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
 
-  const raw = invoice as any
-  return NextResponse.json({ invoice: { ...raw, kind, date: raw[dateColumn] ?? null, party: raw.parties ?? null, items: raw[itemsTable] ?? [], parties: undefined, [itemsTable]: undefined } })
+  const raw = invoice as unknown as Record<string, unknown>
+  return NextResponse.json({
+    invoice: {
+      ...raw,
+      kind,
+      date: raw[dateColumn] ?? null,
+      party: raw.parties ?? null,
+      items: raw[itemsTable] ?? [],
+      parties: undefined,
+      [itemsTable]: undefined,
+    },
+  })
 }
