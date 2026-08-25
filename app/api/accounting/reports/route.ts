@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   const rows = lines ?? []
   const acc = accounts ?? []
   const groupRows = groups ?? []
+  const accountMeta = new Map(acc.map(a => [a.id, { ...a, group: groupRows.find(g => g.id === a.account_group_id)?.name || '' }]))
   const balance = new Map<string, { debit: number; credit: number; name: string; code: string | null; nature: string; group: string; party_id: string | null }>()
   for (const a of acc) balance.set(a.id, { debit: n(a.opening_balance_type === 'debit' ? a.opening_balance : 0), credit: n(a.opening_balance_type === 'credit' ? a.opening_balance : 0), name: a.name, code: a.account_code, nature: a.account_nature, group: groupRows.find(g => g.id === a.account_group_id)?.name || '', party_id: a.party_id })
   for (const r of rows) {
@@ -39,7 +40,6 @@ export async function GET(request: Request) {
     const net = x.debit - x.credit
     return { id, ...x, debit: net > 0 ? net : 0, credit: net < 0 ? Math.abs(net) : 0, balance: Math.abs(net), balance_type: net > 0 ? 'debit' : net < 0 ? 'credit' : 'zero' }
   }).filter(x => x.balance > 0.005)
-
   const pnlAccounts = trialBalance.filter(x => x.nature === 'income' || x.nature === 'expense')
   const income = pnlAccounts.filter(x => x.nature === 'income').reduce((s, x) => s + x.credit - x.debit, 0)
   const expense = pnlAccounts.filter(x => x.nature === 'expense').reduce((s, x) => s + x.debit - x.credit, 0)
@@ -52,7 +52,6 @@ export async function GET(request: Request) {
   const assets = bsAccounts.filter(x => x.nature === 'asset').reduce((s, x) => s + x.debit - x.credit, 0)
   const liabilities = bsAccounts.filter(x => x.nature === 'liability').reduce((s, x) => s + x.credit - x.debit, 0)
   const equity = bsAccounts.filter(x => x.nature === 'equity').reduce((s, x) => s + x.credit - x.debit, 0) + netProfit
-
   const debtors = trialBalance.filter(x => x.party_id && x.nature === 'asset').reduce((s, x) => s + x.debit - x.credit, 0)
   const creditors = trialBalance.filter(x => x.party_id && x.nature === 'liability').reduce((s, x) => s + x.credit - x.debit, 0)
   const cash = trialBalance.filter(x => x.code === 'SYS_CASH').reduce((s, x) => s + x.debit - x.credit, 0)
@@ -65,9 +64,30 @@ export async function GET(request: Request) {
     const old = byGroup.get(key) || { nature: x.nature, debit: 0, credit: 0 }
     old.debit += x.debit; old.credit += x.credit; byGroup.set(key, old)
   }
-
   const aging = trialBalance.filter(x => x.party_id && (x.nature === 'asset' || x.nature === 'liability')).map(x => ({ name: x.name, party_id: x.party_id, type: x.nature === 'asset' ? 'receivable' : 'payable', amount: x.balance }))
-  const topExpenses = pnlAccounts.filter(x => x.nature === 'expense').sort((a,b) => b.debit-b.credit-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
+  const topExpenses = pnlAccounts.filter(x => x.nature === 'expense').sort((a,b) => (b.debit-b.credit)-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
 
-  return NextResponse.json({ period: { start, end }, summary: { income, expense, sales, purchases, grossProfit, netProfit, assets, liabilities, equity, debtors, creditors, cash, bank, stock, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) }, trialBalance, pnlAccounts, balanceSheet: bsAccounts, groups: [...byGroup.entries()].map(([name,v])=>({name,...v})), aging, topExpenses, stock: products ?? [] })
+  const dailyMap = new Map<string, { sales:number; purchases:number; expenses:number; otherIncome:number; entries:number }>()
+  for (const r of rows) {
+    const date = String(r.entry_date).slice(0, 10)
+    const m = dailyMap.get(date) || { sales:0, purchases:0, expenses:0, otherIncome:0, entries:0 }
+    const meta = accountMeta.get(r.account_id)
+    const debit = n(r.debit), credit = n(r.credit)
+    const group = (meta?.group || '').toLowerCase()
+    const nature = meta?.account_nature || ''
+    m.entries += 1
+    if (nature === 'income') {
+      const amount = credit - debit
+      if (group.includes('sales')) m.sales += amount
+      else m.otherIncome += amount
+    } else if (nature === 'expense') {
+      const amount = debit - credit
+      if (group.includes('purchase')) m.purchases += amount
+      else m.expenses += amount
+    }
+    dailyMap.set(date, m)
+  }
+  const daily = [...dailyMap.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([date,m]) => ({ ...m, date, grossProfit: m.sales-m.purchases, netProfit: m.sales-m.purchases+m.otherIncome-m.expenses }))
+
+  return NextResponse.json({ period: { start, end }, summary: { income, expense, sales, purchases, grossProfit, netProfit, assets, liabilities, equity, debtors, creditors, cash, bank, stock, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) }, trialBalance, pnlAccounts, balanceSheet: bsAccounts, groups: [...byGroup.entries()].map(([name,v])=>({name,...v})), aging, topExpenses, daily, stock: products ?? [] })
 }
