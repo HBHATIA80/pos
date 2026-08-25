@@ -79,6 +79,7 @@ export async function PATCH(request: Request, { params }: Params) {
     p_payload: {
       party_id: body.party_id ?? null,
       notes: typeof body.notes === 'string' ? body.notes : null,
+      date: typeof body.date === 'string' ? body.date : null,
       items: body.items,
     },
   })
