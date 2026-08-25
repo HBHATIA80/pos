@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
 async function context() {
@@ -46,4 +47,41 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ purchase: data })
   }
   return NextResponse.json({ error: 'Unsupported action' }, { status: 400 })
+}
+
+export async function DELETE(request: Request) {
+  const { supabase, user, profile } = await context()
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json().catch(() => null)
+  const parsed = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }).safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Select at least one valid purchase' }, { status: 400 })
+
+  const ids = [...new Set(parsed.data.ids)]
+  const { data: selected, error: lookupError } = await supabase
+    .from('purchase_invoices')
+    .select('id,invoice_no,status')
+    .eq('business_id', profile.business_id)
+    .is('deleted_at', null)
+    .in('id', ids)
+
+  if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 400 })
+  if ((selected?.length ?? 0) !== ids.length) return NextResponse.json({ error: 'One or more selected purchases were not found' }, { status: 404 })
+
+  const completed = (selected ?? []).filter((purchase) => purchase.status !== 'draft')
+  if (completed.length) {
+    return NextResponse.json({
+      error: `Only draft purchases can be deleted safely. Completed/void purchases must be handled through the invoice controls: ${completed.map((purchase) => purchase.invoice_no).join(', ')}`,
+    }, { status: 409 })
+  }
+
+  for (const purchase of selected ?? []) {
+    const { error } = await supabase.rpc('soft_delete_purchase_invoice', {
+      p_invoice_id: purchase.id,
+      p_reason: 'Deleted by admin/staff from selected purchase records',
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ deleted: ids.length })
 }
