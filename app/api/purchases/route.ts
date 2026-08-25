@@ -12,8 +12,16 @@ async function context() {
 export async function GET() {
   const { supabase, user, profile } = await context()
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { data, error } = await supabase.from('purchase_invoices').select('id,invoice_no,status,subtotal,discount_amount,grand_total,notes,purchased_at,created_at,party_id,parties(id,name,phone)').eq('business_id', profile.business_id).order('created_at', { ascending: false }).limit(100)
+
+  const { data, error } = await supabase
+    .from('purchase_invoices')
+    .select('id,invoice_no,status,subtotal,discount_amount,grand_total,notes,purchased_at,created_at,party_id,party:parties!purchase_invoices_party_id_fkey(id,name,phone)')
+    .eq('business_id', profile.business_id)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
   return NextResponse.json({ purchases: data ?? [] })
 }
 
