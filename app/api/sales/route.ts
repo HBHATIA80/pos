@@ -55,6 +55,7 @@ export async function GET() {
       sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)
     `)
     .eq('business_id', profile.business_id)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -81,8 +82,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid sale' }, { status: 400 })
   }
 
-  // Customer-facing accounts may place orders only. The database RPC also
-  // enforces draft status and authoritative sale prices for this role.
   const payload = profile.role === 'user'
     ? { ...parsed.data, party_id: null, status: 'draft' as const }
     : parsed.data
