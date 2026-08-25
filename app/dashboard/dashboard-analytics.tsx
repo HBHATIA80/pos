@@ -6,8 +6,8 @@ import { ArrowDownRight, ArrowUpRight, BarChart3, ChevronRight, CircleDollarSign
 
 type Day={date:string;sales:number;purchases:number;expenses:number;otherIncome:number;grossProfit:number;netProfit:number;entries:number}
 type Report={period:{start:string;end:string};summary:{sales:number;purchases:number;expense:number;grossProfit:number;netProfit:number;debtors:number;creditors:number;cash:number;bank:number;stock:number;income:number};daily:Day[]}
-const money=(n:number)=>`₹${Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})`
-const shortDate=(s:string)=>new Date(`${s}T12:00:00`).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
+const money=(n:number)=>`₹${Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})}`
+const shortDate=(s:string)=>new Date(s+'T12:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
 
 export default function DashboardAnalytics(){
  const [data,setData]=useState<Report|null>(null); const [loading,setLoading]=useState(true); const [days,setDays]=useState<7|14|30>(7); const [error,setError]=useState('')
