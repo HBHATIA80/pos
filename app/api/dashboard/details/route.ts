@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     if (type === 'grossprofit') return NextResponse.json({ type, rows: saleRows, summary: { sales: saleRows.reduce((s, row) => s + row.sales, 0), cogs: saleRows.reduce((s, row) => s + row.cogs, 0), grossProfit: saleRows.reduce((s, row) => s + row.gross_profit, 0) } })
 
     const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }] = await Promise.all([
-      supabase.from('accounting_posted_lines').select('id,entry_date,account_id,debit,credit,narration,reference_type,reference_id').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date', { ascending: false }).limit(500),
+      supabase.from('accounting_posted_lines').select('journal_line_id,entry_date,account_id,debit,credit,narration,voucher_type,voucher_no').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date', { ascending: false }).limit(500),
       supabase.from('accounts').select('id,name,account_code,account_nature,account_group_id').eq('business_id', businessId).eq('is_active', true),
       supabase.from('account_groups').select('id,name').eq('business_id', businessId).eq('is_active', true),
     ])
@@ -74,8 +74,9 @@ export async function GET(request: Request) {
       const isPurchase = nature === 'expense' && group.toLowerCase().includes('purchase')
       const isSales = nature === 'income' && group.toLowerCase().includes('sales')
       if (isPurchase || isSales) return []
-      if (nature === 'expense') return [{ kind: 'expense', id: line.id, date: line.entry_date, account: account.name, reference_type: line.reference_type, reference_id: line.reference_id, description: line.narration || 'Operating expense', amount: num(line.debit) - num(line.credit) }]
-      if (nature === 'income') return [{ kind: 'income', id: line.id, date: line.entry_date, account: account.name, reference_type: line.reference_type, reference_id: line.reference_id, description: line.narration || 'Other income', amount: num(line.credit) - num(line.debit) }]
+      const id = line.journal_line_id
+      if (nature === 'expense') return [{ kind: 'expense', id, date: line.entry_date, account: account.name, reference_type: line.voucher_type, reference_id: line.voucher_no, description: line.narration || 'Operating expense', amount: num(line.debit) - num(line.credit) }]
+      if (nature === 'income') return [{ kind: 'income', id, date: line.entry_date, account: account.name, reference_type: line.voucher_type, reference_id: line.voucher_no, description: line.narration || 'Other income', amount: num(line.credit) - num(line.debit) }]
       return []
     }).filter(row => row.amount !== 0)
 
@@ -109,11 +110,11 @@ export async function GET(request: Request) {
   if (type === 'cashbank') {
     const [{ data: accounts, error: accountsError }, { data: lines, error: linesError }] = await Promise.all([
       supabase.from('accounts').select('id,name,account_code').eq('business_id', businessId).eq('is_active', true).in('account_code', ['SYS_CASH','SYS_BANK']),
-      supabase.from('accounting_posted_lines').select('id,entry_date,account_id,debit,credit,narration,reference_type,reference_id').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date', { ascending: false }).limit(200),
+      supabase.from('accounting_posted_lines').select('journal_line_id,entry_date,account_id,debit,credit,narration,voucher_type,voucher_no').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date', { ascending: false }).limit(200),
     ])
     if (accountsError || linesError) return NextResponse.json({ error: accountsError?.message || linesError?.message }, { status: 400 })
     const map = new Map((accounts ?? []).map(a => [a.id, a]))
-    return NextResponse.json({ type, rows: (lines ?? []).filter(r => map.has(r.account_id)).map(r => ({ ...r, account: map.get(r.account_id)?.name || map.get(r.account_id)?.account_code || 'Cash / Bank' })) })
+    return NextResponse.json({ type, rows: (lines ?? []).filter(r => map.has(r.account_id)).map(r => ({ ...r, id: r.journal_line_id, account: map.get(r.account_id)?.name || map.get(r.account_id)?.account_code || 'Cash / Bank' })) })
   }
 
   return NextResponse.json({ error: 'Unsupported detail type' }, { status: 400 })
