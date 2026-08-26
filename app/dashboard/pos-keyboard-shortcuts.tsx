@@ -30,14 +30,17 @@ function focusFirst(selector: string) {
   }
 }
 
-function clickFirst(selector: string) {
-  document.querySelector<HTMLElement>(selector)?.click()
+function clickButtonByText(pattern: RegExp) {
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(item => pattern.test(item.textContent || ''))
+  button?.click()
 }
 
 export default function PosKeyboardShortcuts() {
+  const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const handler = (event: KeyboardEvent) => {
       if (!isBillingRoute()) return
 
@@ -45,80 +48,30 @@ export default function PosKeyboardShortcuts() {
       const tag = target?.tagName || ''
       const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
 
-      if (event.key === 'F1') {
-        event.preventDefault()
-        setOpen(true)
-        return
-      }
-
-      if (event.key === 'F2') {
-        event.preventDefault()
-        focusFirst('input[placeholder*="product" i], input[placeholder*="barcode" i]')
-        return
-      }
-
-      if (event.key === 'F3') {
-        event.preventDefault()
-        focusFirst('input[placeholder*="customer" i], input[placeholder*="supplier" i], input[placeholder*="party" i]')
-        return
-      }
-
-      if (event.key === 'F4') {
-        event.preventDefault()
-        focusFirst('input[type="number"]')
-        return
-      }
-
-      if (event.key === 'F6') {
-        event.preventDefault()
-        clickFirst('button:has(svg.lucide-history)')
-        return
-      }
-
-      if (event.altKey && event.key.toLowerCase() === 'r') {
-        event.preventDefault()
-        clickFirst('button:has(svg.lucide-refresh-cw)')
-        return
-      }
-
-      if (event.ctrlKey && event.key === 'Enter') {
-        event.preventDefault()
-        clickFirst('button:has(svg.lucide-check)')
-        return
-      }
-
-      if (event.ctrlKey && event.key.toLowerCase() === 'd') {
-        event.preventDefault()
-        clickFirst('button:has(svg.lucide-pause), button:has-text("Save as Draft")')
-        if (!document.activeElement || document.activeElement === document.body) {
-          const draft = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(button => /save as draft|hold/i.test(button.textContent || ''))
-          draft?.click()
-        }
-        return
-      }
+      if (event.key === 'F1') { event.preventDefault(); setOpen(true); return }
+      if (event.key === 'F2') { event.preventDefault(); focusFirst('input[placeholder*="product" i], input[placeholder*="barcode" i]'); return }
+      if (event.key === 'F3') { event.preventDefault(); focusFirst('input[placeholder*="customer" i], input[placeholder*="supplier" i], input[placeholder*="party" i]'); return }
+      if (event.key === 'F4') { event.preventDefault(); focusFirst('main input[type="number"]'); return }
+      if (event.key === 'F6') { event.preventDefault(); clickButtonByText(/latest 20 vouchers/i); return }
+      if (event.altKey && event.key.toLowerCase() === 'r') { event.preventDefault(); clickButtonByText(/^refresh$/i); return }
+      if (event.ctrlKey && event.key === 'Enter') { event.preventDefault(); clickButtonByText(/save & receive payment|complete purchase|checkout/i); return }
+      if (event.ctrlKey && event.key.toLowerCase() === 'd') { event.preventDefault(); clickButtonByText(/save as draft|hold/i); return }
 
       if (event.key === 'Enter' && typing) {
-        const parent = target?.closest('div.relative') || target?.parentElement
-        const firstResult = parent?.querySelector<HTMLElement>('button')
-        if (firstResult && ((target?.getAttribute('placeholder') || '').match(/product|barcode|customer|supplier|party/i))) {
-          event.preventDefault()
-          firstResult.click()
-          return
+        const placeholder = target?.getAttribute('placeholder') || ''
+        if (/product|barcode|customer|supplier|party/i.test(placeholder)) {
+          const parent = target?.closest('div.relative') || target?.parentElement
+          const firstResult = parent?.querySelector<HTMLElement>('button')
+          if (firstResult) { event.preventDefault(); firstResult.click(); return }
         }
       }
 
-      if (event.key === 'Escape') {
-        setOpen(false)
-        return
-      }
+      if (event.key === 'Escape') { setOpen(false); return }
 
-      // Keep Tab focused on the invoice form rather than browser/navigation controls.
-      // This gives desktop billing the expected POS-style field-to-field flow.
       if (event.key === 'Tab' && typing) {
         const root = document.querySelector<HTMLElement>('main')
         if (!root) return
-        const fields = Array.from(root.querySelectorAll<HTMLElement>('input:not([disabled]), select:not([disabled]), textarea:not([disabled])'))
-          .filter(field => field.offsetParent !== null)
+        const fields = Array.from(root.querySelectorAll<HTMLElement>('input:not([disabled]), select:not([disabled]), textarea:not([disabled])')).filter(field => field.offsetParent !== null)
         const index = fields.indexOf(target as HTMLElement)
         if (index < 0) return
         const nextIndex = event.shiftKey ? index - 1 : index + 1
@@ -129,12 +82,11 @@ export default function PosKeyboardShortcuts() {
         }
       }
     }
-
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  if (!isBillingRoute()) return null
+  if (!mounted || !isBillingRoute()) return null
 
   return <>
     <button type="button" onClick={() => setOpen(true)} className="fixed bottom-3 left-3 z-[90] hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white/95 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-lg backdrop-blur sm:flex" title="Keyboard shortcuts (F1)">
