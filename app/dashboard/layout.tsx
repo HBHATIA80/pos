@@ -5,6 +5,7 @@ import CustomerCatalogGuard from './customer-catalog-guard'
 import InvoiceViewer from './invoice-viewer'
 import BulkDeletePanel from './bulk-delete-panel'
 import InvoiceDateSelector from './invoice-date-selector'
+import PosKeyboardShortcuts from './pos-keyboard-shortcuts'
 
 type Props = {
   children: React.ReactNode
@@ -54,6 +55,7 @@ export default async function DashboardLayout({ children }: Props) {
       </POSShell>
       <InvoiceViewer enabled={canViewInvoices} />
       <BulkDeletePanel />
+      <PosKeyboardShortcuts />
     </>
   )
 }
