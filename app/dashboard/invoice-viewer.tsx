@@ -28,7 +28,7 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
     if (!enabled) return
     const mark = () => document.querySelectorAll<HTMLTableCellElement>('td').forEach((cell) => {
       const value = cell.textContent?.trim() || ''
-      if (/^(PI|SI)-\d{8}$/.test(value)) { cell.dataset.invoiceNumber = value; cell.style.cursor = 'pointer'; cell.title = 'Click to view invoice' }
+      if (/^(PI|SI)-\d{8,}$/.test(value)) { cell.dataset.invoiceNumber = value; cell.style.cursor = 'pointer'; cell.title = 'Click to view and edit invoice'; cell.style.color = 'rgb(109 40 217)'; cell.style.textDecoration = 'underline'; cell.style.textUnderlineOffset = '2px' }
     })
     const observer = new MutationObserver(mark); mark(); observer.observe(document.body, { subtree: true, childList: true, characterData: true }); return () => observer.disconnect()
   }, [enabled])
@@ -36,7 +36,10 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!enabled) return
     const onClick = async (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null; const cell = target?.closest('td') as HTMLTableCellElement | null; const invoiceNo = cell?.dataset.invoiceNumber || ''
+      const target = event.target as HTMLElement | null
+      const linked = target?.closest('[data-invoice-number]') as HTMLElement | null
+      const cell = target?.closest('td') as HTMLTableCellElement | null
+      const invoiceNo = linked?.dataset.invoiceNumber || cell?.dataset.invoiceNumber || ''
       if (!invoiceNo) return
       event.preventDefault(); event.stopPropagation(); const kind = invoiceNo.startsWith('PI-') ? 'purchase' : 'sale'; setLoading(true); setError(''); setInvoice(null); setEditing(false)
       try {
