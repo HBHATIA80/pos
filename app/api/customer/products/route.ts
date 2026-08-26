@@ -40,13 +40,31 @@ export async function GET(request: NextRequest) {
   if (subcategoryId) query = query.eq('subcategory_id', subcategoryId)
   if (brandId) query = query.eq('brand_id', brandId)
 
-  const { data, count, error } = await query
+  // Customer catalog facets are loaded through the membership-aware SECURITY DEFINER
+  // function because catalog master tables intentionally remain manager-only in RLS.
+  // The RPC validates that this customer is connected to the selected shop.
+  const [productsResult, facetsResult] = await Promise.all([
+    query,
+    supabase.rpc('get_customer_catalog_facets', { p_business_uuid: businessId }),
+  ])
+
+  const { data, count, error } = productsResult
   if (error) return NextResponse.json({ error: error.message || 'Unable to load products' }, { status: 400 })
+
   const products = (data || []).map((product) => {
     const stock = Number(product.current_stock || 0)
     const { current_stock: _currentStock, ...safeProduct } = product
     return { ...safeProduct, availability: stock > 0 ? 'available' : 'out_of_stock' }
   })
   const total = count ?? 0
-  return NextResponse.json({ products, total, offset, limit, hasMore: offset + products.length < total })
+  const facets = !facetsResult.error && facetsResult.data ? facetsResult.data : { categories: [], subcategories: [], brands: [] }
+
+  return NextResponse.json({
+    products,
+    total,
+    offset,
+    limit,
+    hasMore: offset + products.length < total,
+    facets,
+  }, { headers: { 'Cache-Control': 'no-store' } })
 }
