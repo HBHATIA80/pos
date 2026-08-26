@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
@@ -23,11 +24,14 @@ const itemSchema = z.object({
   discount_amount: z.coerce.number().min(0).default(0),
 })
 
+const invoiceDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid invoice date')
+
 const saleSchema = z.object({
   party_id: z.string().uuid().nullable().optional(),
   status: z.enum(['draft', 'completed']).default('draft'),
   notes: z.string().trim().max(1500).optional().or(z.literal('')),
   items: z.array(itemSchema).min(1),
+  invoice_date: invoiceDateSchema.optional(),
 })
 
 export async function GET() {
@@ -82,17 +86,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid sale' }, { status: 400 })
   }
 
+  const cookieStore = await cookies()
+  const selectedDate = parsed.data.invoice_date || cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
+  const dateParsed = invoiceDateSchema.safeParse(selectedDate)
+  if (!dateParsed.success) return NextResponse.json({ error: 'Invalid invoice date' }, { status: 400 })
+  if (selectedDate > new Date().toISOString().slice(0, 10)) return NextResponse.json({ error: 'Invoice date cannot be in the future' }, { status: 400 })
+
   const payload = profile.role === 'user'
     ? { ...parsed.data, party_id: null, status: 'draft' as const }
     : parsed.data
 
-  const { data, error } = await supabase.rpc('create_sales_invoice', { payload })
+  const { data, error } = await supabase.rpc('create_sales_invoice_with_date', {
+    payload,
+    invoice_date: selectedDate,
+  })
   if (error) {
     console.error('POST /api/sales RPC error:', error)
     return NextResponse.json({ error: error.message || 'Unable to save sale' }, { status: 400 })
   }
 
-  return NextResponse.json({ invoice: data }, { status: 201 })
+  return NextResponse.json({ invoice: data, invoice_date: selectedDate }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
