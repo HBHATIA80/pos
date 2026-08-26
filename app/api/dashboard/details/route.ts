@@ -6,7 +6,7 @@ const num = (v: unknown) => Number(v ?? 0)
 
 type PartyRow = { id: string; name: string; phone?: string | null; party_type?: string | null }
 type InvoiceItem = { id: string; product_id: string; sku: string; product_name: string; unit_name: string; quantity: number; unit_price: number; discount_amount: number; line_total: number; cost_unit_price?: number | null }
-type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; sold_at?: string | null; purchased_at?: string | null; completed_at?: string | null; created_at: string; parties?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[]; purchase_invoice_items?: InvoiceItem[] }
+type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; sold_at?: string | null; purchased_at?: string | null; completed_at?: string | null; created_at: string; parties?: PartyRow | PartyRow[] | null; party?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[]; purchase_invoice_items?: InvoiceItem[] }
 
 async function attachPartyNames<T extends { party_id?: string | null; parties?: unknown }>(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string, rows: T[]) {
   const partyIds = [...new Set(rows.map(row => row.party_id).filter((id): id is string => Boolean(id)))]
