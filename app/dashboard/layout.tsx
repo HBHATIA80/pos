@@ -4,6 +4,7 @@ import POSShell from './pos-shell'
 import CustomerCatalogGuard from './customer-catalog-guard'
 import InvoiceViewer from './invoice-viewer'
 import BulkDeletePanel from './bulk-delete-panel'
+import InvoiceDateSelector from './invoice-date-selector'
 
 type Props = {
   children: React.ReactNode
@@ -48,6 +49,7 @@ export default async function DashboardLayout({ children }: Props) {
         }}
         businessName={business?.name ?? 'My Shop'}
       >
+        <InvoiceDateSelector />
         {children}
       </POSShell>
       <InvoiceViewer enabled={canViewInvoices} />
