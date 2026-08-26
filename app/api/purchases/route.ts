@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
@@ -9,6 +10,8 @@ async function context() {
   const { data: profile } = await supabase.from('profiles').select('id,business_id,role,is_active').eq('id', user.id).maybeSingle()
   return { supabase, user, profile }
 }
+
+const invoiceDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid invoice date')
 
 export async function GET() {
   const { supabase, user, profile } = await context()
@@ -31,9 +34,19 @@ export async function POST(request: Request) {
   const { supabase, user, profile } = await context()
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => null)
-  const { data, error } = await supabase.rpc('create_purchase_invoice', { payload: body })
+
+  const cookieStore = await cookies()
+  const selectedDate = cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
+  const dateParsed = invoiceDateSchema.safeParse(selectedDate)
+  if (!dateParsed.success) return NextResponse.json({ error: 'Invalid invoice date' }, { status: 400 })
+  if (selectedDate > new Date().toISOString().slice(0, 10)) return NextResponse.json({ error: 'Invoice date cannot be in the future' }, { status: 400 })
+
+  const { data, error } = await supabase.rpc('create_purchase_invoice_with_date', {
+    payload: body,
+    invoice_date: selectedDate,
+  })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  return NextResponse.json({ purchase: data }, { status: 201 })
+  return NextResponse.json({ purchase: data, invoice_date: selectedDate }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
