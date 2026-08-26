@@ -4,9 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
-  if (!profile?.is_active || !profile.role) return NextResponse.json({ error: 'Active account required.' }, { status: 403 })
+
+  // Marketplace browsing is public. Product/shop metadata is intentionally
+  // available to guests, while price is returned only for authenticated users.
+  let canViewPrices = false
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_active')
+      .eq('id', user.id)
+      .maybeSingle()
+    canViewPrices = Boolean(profile?.is_active)
+  }
 
   const params = request.nextUrl.searchParams
   const q = (params.get('q') || '').trim()
@@ -17,9 +26,17 @@ export async function GET(request: NextRequest) {
   const brandId = params.get('brand_id') || null
 
   const [productsResult, facetsResult] = await Promise.all([
-    supabase.rpc('marketplace_products', { p_q: q, p_limit: limit + 1, p_offset: offset, p_category_id: categoryId, p_subcategory_id: subcategoryId, p_brand_id: brandId }),
+    supabase.rpc('marketplace_products', {
+      p_q: q,
+      p_limit: limit + 1,
+      p_offset: offset,
+      p_category_id: categoryId,
+      p_subcategory_id: subcategoryId,
+      p_brand_id: brandId,
+    }),
     supabase.rpc('marketplace_facets'),
   ])
+
   if (productsResult.error) return NextResponse.json({ error: productsResult.error.message || 'Unable to load marketplace' }, { status: 400 })
   if (facetsResult.error) return NextResponse.json({ error: facetsResult.error.message || 'Unable to load marketplace filters' }, { status: 400 })
 
@@ -33,7 +50,9 @@ export async function GET(request: NextRequest) {
     name: row.product_name,
     sku: row.sku,
     barcode: row.barcode,
-    sale_price: Number(row.sale_price || 0),
+    // Never send the real price to a guest. The UI blur is only presentation;
+    // the API response itself is also protected from price disclosure.
+    sale_price: canViewPrices ? Number(row.sale_price || 0) : null,
     image_url: row.image_url,
     category_id: row.category_id,
     subcategory_id: row.subcategory_id,
@@ -44,5 +63,12 @@ export async function GET(request: NextRequest) {
     current_stock: Number(row.current_stock || 0),
   }))
 
-  return NextResponse.json({ products, facets: facetsResult.data || { categories: [], subcategories: [], brands: [] }, offset, limit, hasMore })
+  return NextResponse.json({
+    products,
+    facets: facetsResult.data || { categories: [], subcategories: [], brands: [] },
+    offset,
+    limit,
+    hasMore,
+    canViewPrices,
+  }, { headers: { 'Cache-Control': 'no-store' } })
 }
