@@ -130,3 +130,120 @@ textarea:focus {
   content: "Out of stock";
   font-size: 0.6875rem;
 }
+
+/* -------------------------------------------------------------------------- */
+/* POS invoice workspace redesign                                             */
+/*                                                                            */
+/* The billing table is the primary work surface. Headers, search controls,  */
+/* and the totals card are deliberately compressed so more invoice rows fit  */
+/* above the fold.                                                            */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  /* Sales workspace */
+  div[class~="max-w-[1600px]"] {
+    max-width: none !important;
+    width: 100% !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Purchase workspace */
+  div[class~="max-w-[1500px]"] {
+    max-width: none !important;
+    width: 100% !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Make the invoice side dominant: 1fr + compact totals panel. */
+  div[class*="xl:grid-cols-[minmax(0,1fr)_390px]"] {
+    grid-template-columns: minmax(0, 1fr) 310px !important;
+    gap: 12px !important;
+  }
+
+  /* Shorter sales hero. */
+  div[class~="max-w-[1600px]"] > header {
+    margin-bottom: 10px !important;
+    border-radius: 20px !important;
+    padding: 13px 18px !important;
+  }
+
+  div[class~="max-w-[1600px]"] > header h1 {
+    font-size: 1.45rem !important;
+    line-height: 1.7rem !important;
+  }
+
+  div[class~="max-w-[1600px]"] > header p {
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact customer/product controls. */
+  div[class~="max-w-[1600px]"] main > section:first-child,
+  div[class~="max-w-[1500px]"] > div[class*="xl:grid-cols"] > section:first-child {
+    padding: 10px 12px !important;
+    border-radius: 18px !important;
+  }
+
+  div[class~="max-w-[1600px]"] main > section:first-child label,
+  div[class~="max-w-[1500px]"] > div[class*="xl:grid-cols"] > section:first-child label {
+    margin-bottom: 4px !important;
+    font-size: 9px !important;
+  }
+
+  div[class~="max-w-[1600px]"] main > section:first-child [class*="min-h-14"],
+  div[class~="max-w-[1500px]"] > div[class*="xl:grid-cols"] > section:first-child [class*="min-h-12"] {
+    min-height: 44px !important;
+  }
+
+  /* The invoice card gets the remaining viewport height. */
+  div[class~="max-w-[1600px]"] main > section:nth-child(2),
+  div[class~="max-w-[1500px]"] > div[class*="xl:grid-cols"] > section:first-child + section {
+    min-height: calc(100vh - 285px) !important;
+    border-radius: 18px !important;
+  }
+
+  /* Less padding in invoice toolbar. */
+  div[class~="max-w-[1600px]"] main > section:nth-child(2) > div:first-child,
+  div[class~="max-w-[1500px"]] > div[class*="xl:grid-cols"] > section:first-child + section > div:first-child {
+    padding: 9px 12px !important;
+  }
+
+  /* Compact table rows so substantially more products are visible. */
+  div[class~="max-w-[1600px]"] main > section:nth-child(2) table td,
+  div[class~="max-w-[1600px]"] main > section:nth-child(2) table th,
+  div[class~="max-w-[1500px"]] table td,
+  div[class~="max-w-[1500px"]] table th {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+  }
+
+  /* Give the invoice line-item area a dedicated scroll instead of growing the page. */
+  div[class~="max-w-[1600px"]] main > section:nth-child(2) > div:last-child,
+  div[class~="max-w-[1500px"]] > div[class*="xl:grid-cols"] > section:first-child + section > div:last-child {
+    max-height: calc(100vh - 365px) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Compact totals card; keep the important actions visible while scrolling. */
+  div[class*="xl:grid-cols-[minmax(0,1fr)_390px]"] > aside,
+  div[class*="xl:grid-cols-[minmax(0,1fr)_390px]"] > section:last-child {
+    position: sticky !important;
+    top: 10px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 30px) !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  /* On smaller screens prioritize the invoice table and remove excessive hero height. */
+  div[class~="max-w-[1600px]"] > header {
+    border-radius: 18px !important;
+    padding: 14px !important;
+  }
+
+  div[class~="max-w-[1600px]"] main > section:nth-child(2) {
+    border-radius: 18px !important;
+  }
+}
