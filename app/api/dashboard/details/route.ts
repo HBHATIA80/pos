@@ -3,6 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 
 const iso = (v: string | null, end = false) => `${v || new Date().toISOString().slice(0, 10)}${end ? 'T23:59:59.999Z' : 'T00:00:00.000Z'}`
 
+async function attachPartyNames<T extends { party_id?: string | null; parties?: unknown }>(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string, rows: T[]) {
+  const partyIds = [...new Set(rows.map(row => row.party_id).filter((id): id is string => Boolean(id)))]
+  if (!partyIds.length) return rows
+
+  const { data: parties } = await supabase.from('parties').select('id,name,phone,party_type').eq('business_id', businessId).in('id', partyIds)
+  const partyMap = new Map((parties ?? []).map(party => [party.id, party]))
+
+  return rows.map(row => ({
+    ...row,
+    party: row.parties || (row.party_id ? partyMap.get(row.party_id) ?? null : null),
+  }))
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,13 +32,13 @@ export async function GET(request: Request) {
   if (type === 'sales') {
     const { data, error } = await supabase.from('sales_invoices').select('id,invoice_no,status,party_id,subtotal,discount_amount,grand_total,notes,sold_at,completed_at,created_at,parties(id,name,phone,party_type),sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).is('deleted_at', null).gte('created_at', iso(start)).lte('created_at', iso(end, true)).order('created_at', { ascending: false }).limit(100)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ type, rows: data ?? [] })
+    return NextResponse.json({ type, rows: await attachPartyNames(supabase, businessId, data ?? []) })
   }
 
   if (type === 'purchases') {
     const { data, error } = await supabase.from('purchase_invoices').select('id,invoice_no,status,party_id,subtotal,discount_amount,grand_total,notes,purchased_at,completed_at,created_at,parties(id,name,phone,party_type),purchase_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).is('deleted_at', null).gte('created_at', iso(start)).lte('created_at', iso(end, true)).order('created_at', { ascending: false }).limit(100)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ type, rows: data ?? [] })
+    return NextResponse.json({ type, rows: await attachPartyNames(supabase, businessId, data ?? []) })
   }
 
   if (type === 'expenses') {
