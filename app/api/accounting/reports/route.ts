@@ -4,6 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 const n = (v: unknown) => Number(v ?? 0)
 const iso = (v: string | null, end = false) => `${v || new Date().toISOString().slice(0, 10)}${end ? 'T23:59:59.999Z' : 'T00:00:00.000Z'}`
 
+function signedOpening(amount: number, type: string | null) {
+  if (type === 'payable') return -Math.abs(amount)
+  if (type === 'receivable') return Math.abs(amount)
+  return 0
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -64,11 +70,56 @@ export async function GET(request: Request) {
   const assets = bsAccounts.filter(x => x.nature === 'asset').reduce((s, x) => s + x.debit - x.credit, 0)
   const liabilities = bsAccounts.filter(x => x.nature === 'liability').reduce((s, x) => s + x.credit - x.debit, 0)
   const equity = bsAccounts.filter(x => x.nature === 'equity').reduce((s, x) => s + x.credit - x.debit, 0) + netProfit
-  const debtors = trialBalance.filter(x => x.party_id && x.nature === 'asset').reduce((s, x) => s + x.debit - x.credit, 0)
-  const creditors = trialBalance.filter(x => x.party_id && x.nature === 'liability').reduce((s, x) => s + x.credit - x.debit, 0)
   const cash = trialBalance.filter(x => x.code === 'SYS_CASH').reduce((s, x) => s + x.debit - x.credit, 0)
   const bank = trialBalance.filter(x => x.code === 'SYS_BANK').reduce((s, x) => s + x.debit - x.credit, 0)
   const stock = (products ?? []).reduce((s, p) => s + n(p.stock_cost_value || n(p.current_stock) * n(p.purchase_price)), 0)
+
+  // Party receivables/payables must use the same source-of-truth calculation as the Party Ledger.
+  // The old implementation used accounting account balances restricted to the report date range,
+  // which made the dashboard disagree with the ledger (especially when the last 7 days were selected).
+  const [{ data: parties, error: partiesError }, { data: partySales, error: partySalesError }, { data: partyPurchases, error: partyPurchasesError }, { data: partyPayments, error: partyPaymentsError }, { data: partyVouchers, error: partyVouchersError }] = await Promise.all([
+    supabase.from('parties').select('id,name,party_type,opening_balance,opening_balance_type,is_active').eq('business_id', businessId),
+    supabase.from('sales_invoices').select('id,party_id,grand_total,status,completed_at,sold_at,created_at').eq('business_id', businessId).eq('status', 'completed').order('completed_at', { ascending: true }),
+    supabase.from('purchase_invoices').select('id,party_id,grand_total,status,purchased_at,created_at').eq('business_id', businessId).eq('status', 'completed').order('purchased_at', { ascending: true }),
+    supabase.from('sale_payments').select('id,party_id,amount,paid_at,status').eq('business_id', businessId).eq('status', 'active').order('paid_at', { ascending: true }),
+    supabase.from('account_vouchers').select('id,party_id,voucher_type,amount,paid_at,status').eq('business_id', businessId).eq('status', 'active').order('paid_at', { ascending: true }),
+  ])
+  for (const e of [partiesError, partySalesError, partyPurchasesError, partyPaymentsError, partyVouchersError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
+
+  const endExclusive = new Date(`${end}T00:00:00`)
+  endExclusive.setUTCDate(endExclusive.getUTCDate() + 1)
+  const endAt = endExclusive.toISOString()
+  const partyBalances = new Map<string, number>()
+  for (const party of parties ?? []) partyBalances.set(party.id, signedOpening(n(party.opening_balance), party.opening_balance_type))
+
+  for (const invoice of partySales ?? []) {
+    const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
+    if (!invoice.party_id || date >= endAt) continue
+    partyBalances.set(invoice.party_id, (partyBalances.get(invoice.party_id) ?? 0) + n(invoice.grand_total))
+  }
+  for (const purchase of partyPurchases ?? []) {
+    const date = purchase.purchased_at ?? purchase.created_at
+    if (!purchase.party_id || date >= endAt) continue
+    partyBalances.set(purchase.party_id, (partyBalances.get(purchase.party_id) ?? 0) - n(purchase.grand_total))
+  }
+  for (const payment of partyPayments ?? []) {
+    if (!payment.party_id || payment.paid_at >= endAt) continue
+    partyBalances.set(payment.party_id, (partyBalances.get(payment.party_id) ?? 0) - n(payment.amount))
+  }
+  for (const voucher of partyVouchers ?? []) {
+    if (!voucher.party_id || voucher.paid_at >= endAt) continue
+    const amount = n(voucher.amount)
+    partyBalances.set(voucher.party_id, (partyBalances.get(voucher.party_id) ?? 0) + (voucher.voucher_type === 'payment' ? amount : -amount))
+  }
+
+  const partyRows = (parties ?? []).map(party => ({
+    name: party.name,
+    party_id: party.id,
+    type: (partyBalances.get(party.id) ?? 0) >= 0 ? 'receivable' : 'payable',
+    amount: Math.abs(Number((partyBalances.get(party.id) ?? 0).toFixed(2))),
+  })).filter(x => x.amount > 0.005)
+  const debtors = partyRows.filter(x => x.type === 'receivable').reduce((s, x) => s + x.amount, 0)
+  const creditors = partyRows.filter(x => x.type === 'payable').reduce((s, x) => s + x.amount, 0)
 
   const byGroup = new Map<string, { nature: string; debit: number; credit: number }>()
   for (const x of trialBalance) {
@@ -76,7 +127,6 @@ export async function GET(request: Request) {
     const old = byGroup.get(key) || { nature: x.nature, debit: 0, credit: 0 }
     old.debit += x.debit; old.credit += x.credit; byGroup.set(key, old)
   }
-  const aging = trialBalance.filter(x => x.party_id && (x.nature === 'asset' || x.nature === 'liability')).map(x => ({ name: x.name, party_id: x.party_id, type: x.nature === 'asset' ? 'receivable' : 'payable', amount: x.balance }))
   const topExpenses = pnlAccounts.filter(x => x.nature === 'expense').sort((a,b) => (b.debit-b.credit)-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
 
   const dailyMap = new Map<string, { sales:number; purchases:number; cogs:number; expenses:number; otherIncome:number; entries:number }>()
@@ -111,6 +161,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     period: { start, end },
     summary: { income, expense: operatingExpense, totalExpense: totalLedgerExpense, operatingExpense, sales, purchases, costOfGoodsSold: cogs, grossProfit, netProfit, otherIncome, assets, liabilities, equity, debtors, creditors, cash, bank, stock, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) },
-    trialBalance, pnlAccounts, balanceSheet: bsAccounts, groups: [...byGroup.entries()].map(([name,v])=>({name,...v})), aging, topExpenses, daily, stock: products ?? []
+    trialBalance, pnlAccounts, balanceSheet: bsAccounts, groups: [...byGroup.entries()].map(([name,v])=>({name,...v})), aging: partyRows, topExpenses, daily, stock: products ?? []
   })
 }
