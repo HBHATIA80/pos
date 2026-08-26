@@ -2,20 +2,6 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
-const itemSchema = z.object({
-  product_id: z.string().uuid(),
-  quantity: z.coerce.number().positive(),
-  unit_price: z.coerce.number().min(0),
-  discount_amount: z.coerce.number().min(0).default(0),
-})
-
-const saleSchema = z.object({
-  party_id: z.string().uuid().nullable().optional(),
-  status: z.enum(['draft', 'completed']).default('draft'),
-  notes: z.string().trim().max(1500).optional().or(z.literal('')),
-  items: z.array(itemSchema).min(1),
-})
-
 async function getContext() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,6 +15,20 @@ async function getContext() {
 
   return { supabase, user, profile }
 }
+
+const itemSchema = z.object({
+  product_id: z.string().uuid(),
+  quantity: z.coerce.number().positive(),
+  unit_price: z.coerce.number().min(0),
+  discount_amount: z.coerce.number().min(0).default(0),
+})
+
+const saleSchema = z.object({
+  party_id: z.string().uuid().nullable().optional(),
+  status: z.enum(['draft', 'completed']).default('draft'),
+  notes: z.string().trim().max(1500).optional().or(z.literal('')),
+  items: z.array(itemSchema).min(1),
+})
 
 export async function GET() {
   const { supabase, user, profile } = await getContext()
@@ -118,4 +118,43 @@ export async function PATCH(request: Request) {
   }
 
   return NextResponse.json({ invoice: data })
+}
+
+export async function DELETE(request: Request) {
+  const { supabase, user, profile } = await getContext()
+  if (!user || !profile?.is_active || !profile.business_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await request.json().catch(() => null)
+  const parsed = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }).safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Select at least one valid sales invoice' }, { status: 400 })
+
+  const ids = [...new Set(parsed.data.ids)]
+  const { data: selected, error: lookupError } = await supabase
+    .from('sales_invoices')
+    .select('id,invoice_no,status')
+    .eq('business_id', profile.business_id)
+    .is('deleted_at', null)
+    .in('id', ids)
+
+  if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 400 })
+  if ((selected?.length ?? 0) !== ids.length) return NextResponse.json({ error: 'One or more selected sales invoices were not found' }, { status: 404 })
+
+  const nonDraft = (selected ?? []).filter(invoice => invoice.status !== 'draft')
+  if (nonDraft.length) {
+    return NextResponse.json({
+      error: `Only draft sales invoices can be deleted. Completed/void invoices are protected: ${nonDraft.map(invoice => invoice.invoice_no).join(', ')}`,
+    }, { status: 409 })
+  }
+
+  for (const invoice of selected ?? []) {
+    const { error } = await supabase.rpc('soft_delete_sale_invoice', {
+      p_invoice_id: invoice.id,
+      p_reason: 'Deleted by admin/staff from draft sales records',
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ deleted: ids.length })
 }
