@@ -30,6 +30,12 @@ export default async function DashboardLayout({ children }: Props) {
         .maybeSingle()
     : { data: null }
 
+  const { data: superAdminAccess } = await supabase
+    .from('platform_super_admins')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   const canViewInvoices = profile.role === 'admin' || profile.role === 'staff'
 
   return (
@@ -39,6 +45,7 @@ export default async function DashboardLayout({ children }: Props) {
         profile={{ fullName: profile.full_name, role: profile.role, phone: profile.phone }}
         businessName={business?.name ?? 'My Shop'}
         logoUrl={business?.logo_url ?? null}
+        isSuperAdmin={Boolean(superAdminAccess)}
       >
         <InvoiceDateSelector />
         {children}
