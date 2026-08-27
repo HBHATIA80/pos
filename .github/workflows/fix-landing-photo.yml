@@ -1,0 +1,35 @@
+name: Fit landing photo
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fit-photo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fit shop-owner image to hero height
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/page.tsx')
+          s = p.read_text()
+          old = 'className="relative z-10 h-auto w-[260px] max-w-full object-contain sm:w-[315px] lg:w-[330px] xl:w-[365px]"'
+          new = 'className="relative z-10 h-full w-auto max-w-full object-contain sm:max-w-[315px] lg:max-w-[330px] xl:max-w-[365px]"'
+          if old not in s:
+              raise SystemExit('landing image class not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          rm .github/workflows/fix-landing-photo.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/page.tsx .github/workflows/fix-landing-photo.yml
+          git commit -m 'fix: make landing photo fit full hero height'
+          git push
