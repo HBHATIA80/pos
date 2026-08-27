@@ -1,8 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Activity, AlertTriangle, Building2, CheckCircle2, ChevronDown, ChevronUp, CircleDollarSign, Database, Eye, Package, RefreshCw, Search, ShieldCheck, ShoppingCart, UserCheck, UserX, Users, XCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Activity, AlertTriangle, Building2, CheckCircle2, ChevronDown, ChevronUp, CircleDollarSign, Database, LogOut, RefreshCw, Search, ShieldCheck, ShoppingCart, UserCheck, UserX, Users, X, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
 
 type Shop = { id:string; name:string; code:string|null; phone:string|null; address:string|null; status:string; created_at:string; owner:{id:string;full_name:string;phone:string|null;role:string;is_active:boolean}|null; users:number; activeUsers:number; customers:number; products:number; lowStock:number; salesCount:number; salesTotal:number; purchaseCount:number; purchaseTotal:number; expenseTotal:number }
 type UserRow = { id:string; full_name:string; phone:string|null; role:string; business_id:string|null; is_active:boolean; created_at:string }
@@ -13,25 +15,76 @@ const money = (value:number) => new Intl.NumberFormat('en-IN',{style:'currency',
 const date = (value:string) => new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})
 
 export default function SuperAdminConsole(){
+  const router = useRouter()
+  const supabase = useMemo(() => createSupabaseClient(), [])
   const [data,setData]=useState<Data|null>(null)
   const [loading,setLoading]=useState(true)
   const [search,setSearch]=useState('')
   const [tab,setTab]=useState<'shops'|'users'|'activity'>('shops')
   const [busy,setBusy]=useState<string|null>(null)
   const [expanded,setExpanded]=useState<string|null>(null)
+  const [loggingOut,setLoggingOut]=useState(false)
+
+  const fetchControlCenter = useCallback(async () => {
+    const request = () => fetch('/api/super-admin',{cache:'no-store',credentials:'include'})
+
+    let response = await request()
+    let body: {error?:string} & Partial<Data> = await response.json().catch(() => ({}))
+
+    // If the browser has an expired access token, refresh the Supabase session
+    // once and retry. This keeps the server-side cookie/session authorization intact.
+    if (response.status === 401) {
+      const { data: refreshed, error } = await supabase.auth.refreshSession()
+      if (error || !refreshed.session) {
+        await supabase.auth.signOut({ scope:'local' }).catch(() => undefined)
+        router.replace('/login')
+        throw new Error('Your session has expired. Please sign in again.')
+      }
+      response = await request()
+      body = await response.json().catch(() => ({}))
+    }
+
+    if (!response.ok) throw new Error(body.error || 'Unable to load control center')
+    return body as Data
+  },[router,supabase])
 
   const load=useCallback(async()=>{
     setLoading(true)
-    try{ const r=await fetch('/api/super-admin',{cache:'no-store'}); const body=await r.json(); if(!r.ok) throw new Error(body.error||'Unable to load control center'); setData(body) }
-    catch(e){ toast.error(e instanceof Error?e.message:'Unable to load control center') }
-    finally{ setLoading(false) }
-  },[])
+    try{
+      const nextData = await fetchControlCenter()
+      setData(nextData)
+    }catch(e){
+      toast.error(e instanceof Error?e.message:'Unable to load control center')
+    }finally{
+      setLoading(false)
+    }
+  },[fetchControlCenter])
+
   useEffect(()=>{ void load() },[load])
+
+  async function logout(){
+    if(loggingOut) return
+    setLoggingOut(true)
+    try{
+      const { error } = await supabase.auth.signOut({ scope:'local' })
+      if(error) throw error
+      router.replace('/login')
+      router.refresh()
+    }catch(e){
+      toast.error(e instanceof Error?e.message:'Unable to log out safely')
+      setLoggingOut(false)
+    }
+  }
+
+  function exitConsole(){
+    router.replace('/dashboard')
+  }
 
   const filteredShops=useMemo(()=>{
     const q=search.trim().toLowerCase(); if(!q) return data?.shops??[]
     return (data?.shops??[]).filter(s=>[s.name,s.code,s.phone,s.owner?.full_name,s.owner?.phone].some(v=>String(v??'').toLowerCase().includes(q)))
   },[data,search])
+
   const filteredUsers=useMemo(()=>{
     const q=search.trim().toLowerCase(); if(!q) return data?.users??[]
     return (data?.users??[]).filter(u=>[u.full_name,u.phone,u.role,u.business_id].some(v=>String(v??'').toLowerCase().includes(q)))
@@ -39,7 +92,7 @@ export default function SuperAdminConsole(){
 
   async function control(action:string,targetId:string){
     setBusy(targetId)
-    try{ const r=await fetch('/api/super-admin',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({action,targetId})}); const body=await r.json(); if(!r.ok) throw new Error(body.error||'Action failed'); toast.success(body.message); await load() }
+    try{ const r=await fetch('/api/super-admin',{method:'PATCH',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify({action,targetId})}); const body=await r.json(); if(!r.ok) throw new Error(body.error||'Action failed'); toast.success(body.message); await load() }
     catch(e){ toast.error(e instanceof Error?e.message:'Action failed') }
     finally{ setBusy(null) }
   }
@@ -52,9 +105,14 @@ export default function SuperAdminConsole(){
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-6 py-8 text-white sm:px-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div><div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold"><ShieldCheck className="h-4 w-4"/> SUPER ADMIN</div><h1 className="mt-3 text-3xl font-black tracking-tight">BIZYBUK.IN Platform Control</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">One control center for every shop, user, customer, transaction and platform activity. This view is restricted to your designated super admin account.</p></div>
-          <button onClick={()=>void load()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/15"><RefreshCw className="h-4 w-4"/> Refresh</button>
+          <div className="min-w-0"><div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold"><ShieldCheck className="h-4 w-4"/> SUPER ADMIN</div><h1 className="mt-3 text-3xl font-black tracking-tight">BIZYBUK.IN Platform Control</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">One control center for every shop, user, customer, transaction and platform activity. This view is restricted to your designated super admin account.</p></div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button type="button" onClick={()=>void load()} disabled={loading} title="Refresh platform data" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${loading?'animate-spin':''}`}/> Refresh</button>
+            <button type="button" onClick={exitConsole} title="Exit Super Admin console" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"><X className="h-4 w-4"/> Close</button>
+            <button type="button" onClick={()=>void logout()} disabled={loggingOut} title="Sign out securely" className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"><LogOut className="h-4 w-4"/> {loggingOut?'Signing out…':'Logout'}</button>
+          </div>
         </div>
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-slate-300"><span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 font-semibold text-emerald-300">Authenticated</span><span>Refresh automatically retries once after session expiry.</span></div>
       </div>
       <div className="grid grid-cols-2 gap-px bg-slate-200 sm:grid-cols-4 lg:grid-cols-8">
         <Metric icon={Building2} label="Shops" value={m.shops}/><Metric icon={CheckCircle2} label="Active shops" value={m.activeShops}/><Metric icon={Users} label="Users" value={m.users}/><Metric icon={UserCheck} label="Customers" value={m.customers}/><Metric icon={ShoppingCart} label="Sales" value={money(m.salesTotal)} /><Metric icon={CircleDollarSign} label="Purchases" value={money(m.purchaseTotal)} /><Metric icon={Database} label="Expenses" value={money(m.expenseTotal)}/><Metric icon={AlertTriangle} label="Low stock" value={m.lowStock}/>
