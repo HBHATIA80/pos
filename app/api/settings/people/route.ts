@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 
@@ -9,13 +8,6 @@ const updateSchema = z.object({
   phone: z.string().trim().regex(/^\+?[1-9]\d{7,14}$/, 'Enter a valid mobile number in international format.'),
   address: z.string().trim().max(500).optional().default(''),
 })
-
-function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceRoleKey) throw new Error('Supabase service role configuration is missing.')
-  return createSupabaseAdmin(url, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })
-}
 
 async function requireAdmin() {
   const supabase = await createServerClient()
@@ -39,10 +31,8 @@ export async function GET() {
   const auth = await requireAdmin()
   if ('error' in auth) return auth.error
 
-  // Use a SECURITY DEFINER RPC for the read path so Settings does not depend
-  // on SUPABASE_SERVICE_ROLE_KEY being exposed to the deployment environment.
   const { data, error } = await auth.supabase.rpc('admin_list_people', {
-    p_business_id: auth.profile.business_id,
+    p_target_business_id: auth.profile.business_id,
   })
 
   if (error) return NextResponse.json({ error: error.message || 'Unable to load people.' }, { status: 500 })
@@ -58,9 +48,7 @@ export async function PATCH(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid request.' }, { status: 400 })
 
   const { profileId, fullName, phone, address } = parsed.data
-  const admin = createAdminClient()
-
-  const { data: target, error: targetError } = await admin
+  const { data: target, error: targetError } = await auth.supabase
     .from('profiles')
     .select('id, business_id, role, party_id, full_name, phone, address')
     .eq('id', profileId)
@@ -69,7 +57,7 @@ export async function PATCH(request: Request) {
 
   if (targetError || !target) return NextResponse.json({ error: 'Person not found.' }, { status: 404 })
 
-  const { error: profileError } = await admin
+  const { error: profileError } = await auth.supabase
     .from('profiles')
     .update({ full_name: fullName, phone, address: address || null })
     .eq('id', profileId)
@@ -77,19 +65,8 @@ export async function PATCH(request: Request) {
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 })
 
-  const { error: authError } = await admin.auth.admin.updateUserById(profileId, {
-    phone,
-    phone_confirm: true,
-    user_metadata: { full_name: fullName },
-  })
-
-  if (authError) {
-    await admin.from('profiles').update({ full_name: target.full_name, phone: target.phone, address: target.address }).eq('id', profileId)
-    return NextResponse.json({ error: authError.message }, { status: 400 })
-  }
-
   if (target.party_id) {
-    const { error: partyError } = await admin
+    const { error: partyError } = await auth.supabase
       .from('parties')
       .update({ name: fullName, phone, address: address || null })
       .eq('id', target.party_id)
@@ -98,7 +75,7 @@ export async function PATCH(request: Request) {
     if (partyError) return NextResponse.json({ error: partyError.message }, { status: 400 })
   }
 
-  await admin.from('audit_logs').insert({
+  await auth.supabase.from('audit_logs').insert({
     business_id: auth.profile.business_id,
     actor_id: auth.user.id,
     action: 'settings.person_updated',
