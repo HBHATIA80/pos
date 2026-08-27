@@ -32,51 +32,22 @@ async function requireAdmin() {
     return { error: NextResponse.json({ error: 'Admin access required.' }, { status: 403 }) }
   }
 
-  return { user, profile }
+  return { user, profile, supabase }
 }
 
 export async function GET() {
   const auth = await requireAdmin()
   if ('error' in auth) return auth.error
 
-  const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('profiles')
-    .select('id, full_name, phone, address, role, is_active, party_id, created_at, updated_at')
-    .eq('business_id', auth.profile.business_id)
-    .order('created_at', { ascending: true })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  const partyIds = (data ?? []).map((profile) => profile.party_id).filter(Boolean) as string[]
-  let parties: Record<string, { name: string; phone: string | null; address: string | null }> = {}
-
-  if (partyIds.length) {
-    const { data: partyRows, error: partyError } = await admin
-      .from('parties')
-      .select('id, name, phone, address')
-      .in('id', partyIds)
-      .eq('business_id', auth.profile.business_id)
-
-    if (partyError) return NextResponse.json({ error: partyError.message }, { status: 500 })
-    parties = Object.fromEntries((partyRows ?? []).map((party) => [party.id, party]))
-  }
-
-  const people = (data ?? []).map((profile) => {
-    const party = profile.party_id ? parties[profile.party_id] : null
-    return {
-      id: profile.id,
-      full_name: profile.full_name,
-      phone: profile.phone,
-      address: party?.address ?? profile.address ?? '',
-      role: profile.role,
-      is_active: profile.is_active,
-      party_id: profile.party_id,
-      created_at: profile.created_at,
-    }
+  // Use a SECURITY DEFINER RPC for the read path so Settings does not depend
+  // on SUPABASE_SERVICE_ROLE_KEY being exposed to the deployment environment.
+  const { data, error } = await auth.supabase.rpc('admin_list_people', {
+    p_business_id: auth.profile.business_id,
   })
 
-  return NextResponse.json({ people })
+  if (error) return NextResponse.json({ error: error.message || 'Unable to load people.' }, { status: 500 })
+
+  return NextResponse.json({ people: data ?? [] }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function PATCH(request: Request) {
