@@ -6,6 +6,9 @@
   --brand-blue: #155eef;
   --brand-blue-dark: #0b3ca8;
   --brand-ink: #07111f;
+  --brand-soft: #eff6ff;
+  --surface: #ffffff;
+  --line: #e2e8f0;
 }
 
 * { box-sizing: border-box; }
@@ -17,13 +20,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 input, select, textarea { outline: none; }
 input:focus, select:focus, textarea:focus { outline: none; }
-
 a { -webkit-tap-highlight-color: transparent; }
 
 /* BIZYBUK.IN brand language */
@@ -34,27 +37,35 @@ a { -webkit-tap-highlight-color: transparent; }
   color: #fff; font-size: 18px; font-weight: 1000; font-style: italic; letter-spacing: -.08em;
   box-shadow: 0 8px 20px rgba(21,94,239,.22);
 }
-.brand-wordmark {
-  color: #07111f; font-size: 20px; line-height: 1; font-weight: 1000; font-style: italic;
-  letter-spacing: -.055em; white-space: nowrap;
-}
+.brand-wordmark { color: #07111f; font-size: 20px; line-height: 1; font-weight: 1000; font-style: italic; letter-spacing: -.055em; white-space: nowrap; }
 .brand-wordmark span { color: #155eef; }
 .brand-lockup--compact .brand-mark { width: 38px; height: 38px; }
 
-/* Shared controls */
+/* Shared controls — same visual language across every page. */
 .input {
-  width: 100%; height: 48px; border: 1px solid #cbd5e1; border-radius: 10px;
+  width: 100%; height: 48px; border: 1px solid #cbd5e1; border-radius: 12px;
   background: white; padding: 0 14px; color: #0f172a;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .input::placeholder { color: #94a3b8; }
-.input:focus { border-color: #155eef; box-shadow: 0 0 0 3px rgba(21,94,239,.12); }
-.btn-primary { min-height: 48px; border: 0; border-radius: 10px; background: #155eef; color: white; font-weight: 700; padding: 0 18px; transition: background .15s ease, transform .05s ease; }
-.btn-primary:hover { background: #0b3ca8; }
+.input:focus { border-color: #155eef; box-shadow: 0 0 0 4px rgba(21,94,239,.10); background: #fff; }
+.btn-primary { min-height: 48px; border: 0; border-radius: 12px; background: #155eef; color: white; font-weight: 800; padding: 0 18px; transition: background .15s ease, transform .05s ease, box-shadow .15s ease; box-shadow: 0 8px 18px rgba(21,94,239,.16); }
+.btn-primary:hover { background: #0b3ca8; box-shadow: 0 10px 24px rgba(21,94,239,.20); }
 .btn-primary:active { transform: translateY(1px); }
-.btn-primary:disabled { opacity: .6; }
-.btn-secondary { min-height: 48px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; color: #334155; font-weight: 700; padding: 0 18px; }
-.btn-secondary:hover { background: #f8fafc; }
+.btn-primary:disabled { opacity: .6; box-shadow: none; }
+.btn-secondary { min-height: 48px; border: 1px solid #cbd5e1; border-radius: 12px; background: white; color: #334155; font-weight: 700; padding: 0 18px; }
+.btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+
+/* Shared BIZYBUK application shell. */
+.biz-app { min-height: 100dvh; }
+.biz-app-sidebar { box-shadow: 8px 0 30px rgba(7,17,31,.025); }
+.biz-app-header { box-shadow: 0 1px 0 rgba(7,17,31,.02), 0 8px 24px rgba(7,17,31,.025); }
+.biz-app-main { min-width: 0; }
+.biz-nav-item { min-height: 42px; }
+.biz-mobile-nav { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.biz-dashboard-card { min-height: 176px; }
+.biz-dashboard-hero { position: relative; }
+.biz-dashboard-hero::after { content: ""; position: absolute; width: 220px; height: 220px; right: -90px; top: -100px; border-radius: 999px; background: rgba(21,94,239,.07); pointer-events: none; }
 
 /* Customer catalog: show availability, never inventory quantity. */
 .group > div:last-child > p.text-emerald-600,
@@ -93,17 +104,28 @@ a { -webkit-tap-highlight-color: transparent; }
   div[class~="max-w-[1600px]"] main > section:nth-child(2) { border-radius: 18px !important; }
 }
 
-/* Global premium polish — intentionally visual only, no data/backend behavior changes. */
+/* Global premium polish. */
 [class*="rounded-3xl"], [class*="rounded-[30px]"], [class*="rounded-[32px]"] { border-radius: 22px; }
 .shadow-sm { box-shadow: 0 1px 2px rgba(7,17,31,.04), 0 8px 24px rgba(7,17,31,.035); }
-
-/* Stronger BIZYBUK blue focus/selection treatment. */
 ::selection { background: rgba(21,94,239,.18); color: #07111f; }
 
-/* Mobile-safe touch targets and no horizontal page drift. */
+/* Mobile-first usability: no drift, comfortable controls, safe-area support. */
 @media (max-width: 767px) {
   html, body { overflow-x: hidden; }
   .brand-wordmark { font-size: 17px; }
   .brand-mark { width: 34px; height: 34px; }
   main { overflow-x: clip; }
+  input, select, textarea, button { touch-action: manipulation; }
+  input, select, textarea { font-size: 16px !important; }
+  .input { height: 50px; border-radius: 13px; }
+  .btn-primary, .btn-secondary { min-height: 50px; border-radius: 13px; }
+  .biz-app-main { padding-left: 12px !important; padding-right: 12px !important; padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+  .biz-dashboard-card { min-height: 0; }
+  .biz-dashboard-hero { border-radius: 22px !important; padding: 20px !important; }
+  .biz-dashboard-hero h1 { font-size: 1.75rem !important; line-height: 1.12 !important; }
+  .biz-mobile-nav a, .biz-mobile-nav button { min-height: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
