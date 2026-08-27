@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, BarChart3, Check, ChevronDown, Headphones, Package, QrCode, ShieldCheck, ShoppingCart, Smile, TrendingUp, Users, Zap } from 'lucide-react'
+import { ArrowRight, BarChart3, Check, ChevronDown, Headphones, Package, ShieldCheck, ShoppingCart, Smile, TrendingUp, Users, Zap } from 'lucide-react'
 
 function Brand() {
   return (
@@ -70,19 +70,19 @@ function DashboardPreview() {
 
 function TrustStrip() {
   const items = [
-    ['🇮🇳', 'Made in India', 'For Indian Businesses'],
-    [Smile, 'Easy to Use', 'Simple. Fast. Efficient.'],
-    [Headphones, '24x7 Support', 'We are here for you'],
-    [ShieldCheck, 'Secure & Safe', 'Your data is always protected'],
+    { icon: '🇮🇳', title: 'Made in India', text: 'For Indian Businesses' },
+    { icon: Smile, title: 'Easy to Use', text: 'Simple. Fast. Efficient.' },
+    { icon: Headphones, title: '24x7 Support', text: 'We are here for you' },
+    { icon: ShieldCheck, title: 'Secure & Safe', text: 'Your data is always protected' },
   ] as const
 
   return (
     <section className="border-y border-slate-100 bg-white">
       <div className="mx-auto grid max-w-[1380px] grid-cols-2 sm:grid-cols-4">
-        {items.map(([icon, title, text], i) => {
+        {items.map(({ icon, title, text }, i) => {
           const Icon = typeof icon === 'string' ? null : icon
           return <div key={title} className={`flex min-h-[104px] items-center gap-4 px-6 lg:px-10 ${i < 3 ? 'border-b border-slate-100 sm:border-b-0 sm:border-r' : ''}`}>
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f2f6fc] text-xl text-blue-600">{Icon ? <Icon className="h-6 w-6" /> : icon}</span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f2f6fc] text-xl text-blue-600">{typeof icon === 'string' ? icon : Icon ? <Icon className="h-6 w-6" /> : null}</span>
             <div><p className="text-[12px] font-extrabold text-[#172b4d]">{title}</p><p className="mt-1 text-[10px] font-medium text-slate-500">{text}</p></div>
           </div>
         })}
