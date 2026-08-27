@@ -13,7 +13,7 @@ async function getAdminBusiness() {
 export async function GET() {
   const result = await getAdminBusiness()
   if (result.error) return result.error
-  const { data, error } = await result.supabase.from('businesses').select('id, name, code, phone, address').eq('id', result.businessId).maybeSingle()
+  const { data, error } = await result.supabase.from('businesses').select('id, name, code, phone, address, logo_url').eq('id', result.businessId).maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ business: data })
 }
@@ -24,7 +24,7 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null) as { name?: string; code?: string | null; phone?: string | null; address?: string | null } | null
   const name = body?.name?.trim() || ''
   if (name.length < 2 || name.length > 120) return NextResponse.json({ error: 'Business name must be between 2 and 120 characters.' }, { status: 400 })
-  const { data, error } = await result.supabase.from('businesses').update({ name, code: body?.code?.trim() || null, phone: body?.phone?.trim() || null, address: body?.address?.trim() || null }).eq('id', result.businessId).select('id, name, code, phone, address').single()
+  const { data, error } = await result.supabase.from('businesses').update({ name, code: body?.code?.trim() || null, phone: body?.phone?.trim() || null, address: body?.address?.trim() || null }).eq('id', result.businessId).select('id, name, code, phone, address, logo_url').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ business: data })
 }
