@@ -1,12 +1,7 @@
-type ClaimsClient = {
-  auth: {
-    getClaims: (...args: unknown[]) => Promise<{
-      data: { claims: { session_id?: string } | null } | null
-    }>
-  }
-}
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-export async function getCurrentSessionId(supabase: ClaimsClient) {
+export async function getCurrentSessionId(supabase: SupabaseClient) {
   const { data } = await supabase.auth.getClaims()
-  return data?.claims?.session_id ?? null
+  const claims = data?.claims as { session_id?: string } | undefined
+  return claims?.session_id ?? null
 }
