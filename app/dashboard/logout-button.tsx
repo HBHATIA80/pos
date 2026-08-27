@@ -11,10 +11,19 @@ export default function LogoutButton() {
   const [loading, setLoading] = useState(false)
 
   async function logout() {
+    if (loading) return
     setLoading(true)
-    await supabase.auth.signOut()
-    router.replace('/login')
-    router.refresh()
+    try {
+      await fetch('/api/auth/session', { method: 'DELETE', credentials: 'include', keepalive: true }).catch(() => undefined)
+      await supabase.auth.signOut({ scope: 'local' })
+      router.replace('/login')
+      router.refresh()
+    } catch {
+      // Local sign-out should still complete even if the lock-release request fails.
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+      router.replace('/login')
+      router.refresh()
+    }
   }
 
   return (
@@ -22,10 +31,11 @@ export default function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={loading}
-      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+      title="Sign out securely"
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-      Logout
+      {loading ? 'Signing out…' : 'Logout'}
     </button>
   )
 }
