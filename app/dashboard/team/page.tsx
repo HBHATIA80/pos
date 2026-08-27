@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, ShieldCheck, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, Edit3, Loader2, ShieldCheck, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type Member = {
@@ -32,6 +32,9 @@ export default function TeamPage() {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<'staff' | 'user'>('staff')
   const [selected, setSelected] = useState<string[]>([])
+  const [editing, setEditing] = useState<Member | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [editingSaving, setEditingSaving] = useState(false)
 
   const groupedPermissions = useMemo(() => {
     return permissions.reduce<Record<string, Permission[]>>((groups, permission) => {
@@ -115,7 +118,32 @@ export default function TeamPage() {
       return
     }
 
-    toast.success('Team member updated.')
+    toast.success(data.message ?? 'Team member updated.')
+    await loadTeam()
+  }
+
+  function openEdit(member: Member) {
+    setEditing(member)
+    setEditingName(member.full_name)
+  }
+
+  async function saveName(event: React.FormEvent) {
+    event.preventDefault()
+    if (!editing) return
+    setEditingSaving(true)
+    const response = await fetch('/api/admin/team', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profileId: editing.id, action: 'name', fullName: editingName }),
+    })
+    const data = await response.json().catch(() => ({}))
+    setEditingSaving(false)
+    if (!response.ok) {
+      toast.error(data.error ?? 'Unable to update name.')
+      return
+    }
+    toast.success('Account name updated.')
+    setEditing(null)
     await loadTeam()
   }
 
@@ -135,19 +163,11 @@ export default function TeamPage() {
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-              Phase 3 · Team
-            </span>
+            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Phase 3 · Team</span>
             <h1 className="mt-3 text-3xl font-bold text-slate-950">Admin & Staff Management</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Create staff and user accounts for this shop and control their access without changing the future POS data model.
-            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Create staff and user accounts for this shop and control their access without changing the future POS data model.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowForm((value) => !value)}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-          >
+          <button type="button" onClick={() => setShowForm((value) => !value)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
             <UserPlus className="h-4 w-4" /> Add staff / user
           </button>
         </div>
@@ -156,93 +176,30 @@ export default function TeamPage() {
           <form onSubmit={createMember} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold text-slate-900">Create account</h2>
             <p className="mt-1 text-sm text-slate-500">The account is created inside your current business.</p>
-
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="text-sm font-medium text-slate-700">
-                Full name
-                <input value={fullName} onChange={(e) => setFullName(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                Mobile number
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+919876543210" required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                Password
-                <input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                Account type
-                <select value={role} onChange={(e) => setRole(e.target.value as 'staff' | 'user')} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                  <option value="staff">Staff</option>
-                  <option value="user">User</option>
-                </select>
-              </label>
+              <label className="text-sm font-medium text-slate-700">Full name<input value={fullName} onChange={(e) => setFullName(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="text-sm font-medium text-slate-700">Mobile number<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+919876543210" required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="text-sm font-medium text-slate-700">Password<input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="text-sm font-medium text-slate-700">Account type<select value={role} onChange={(e) => setRole(e.target.value as 'staff' | 'user')} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"><option value="staff">Staff</option><option value="user">User</option></select></label>
             </div>
-
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-slate-900">Permissions</h3>
-              <p className="mt-1 text-xs text-slate-500">Admins always have full access. These permissions apply to staff/user accounts.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
-                  <div key={module} className="rounded-xl border border-slate-200 p-3">
-                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">{module}</div>
-                    <div className="space-y-2">
-                      {modulePermissions.map((permission) => (
-                        <label key={permission.code} className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
-                          <input type="checkbox" checked={selected.includes(permission.code)} onChange={() => togglePermission(permission.code)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" />
-                          <span>{permission.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => setShowForm(false)} className="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Cancel</button>
-              <button disabled={saving} type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create account
-              </button>
-            </div>
+            <div className="mt-6"><h3 className="text-sm font-semibold text-slate-900">Permissions</h3><p className="mt-1 text-xs text-slate-500">Admins always have full access. These permissions apply to staff/user accounts.</p><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(groupedPermissions).map(([module, modulePermissions]) => <div key={module} className="rounded-xl border border-slate-200 p-3"><div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">{module}</div><div className="space-y-2">{modulePermissions.map((permission) => <label key={permission.code} className="flex cursor-pointer items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={selected.includes(permission.code)} onChange={() => togglePermission(permission.code)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" /><span>{permission.name}</span></label>)}</div></div>)}</div></div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => setShowForm(false)} className="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Cancel</button><button disabled={saving} type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{saving && <Loader2 className="h-4 w-4 animate-spin" />}Create account</button></div>
           </form>
         )}
 
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <div className="flex items-center gap-2 font-semibold text-slate-900"><Users className="h-5 w-5 text-blue-600" /> Team</div>
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading team...</div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {members.map((member) => (
-                <div key={member.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-slate-900">{member.full_name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${member.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{member.role}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${member.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{member.is_active ? 'Active' : 'Inactive'}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">{member.phone ?? 'No mobile number'}</p>
-                  </div>
-                  {member.role !== 'admin' && (
-                    <button
-                      type="button"
-                      onClick={() => void updateMember(member.id, member.is_active ? 'deactivate' : 'activate')}
-                      className="min-h-10 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:text-blue-600"
-                    >
-                      {member.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                  )}
-                </div>
-              ))}
-              {members.length === 0 && <div className="p-10 text-center text-sm text-slate-500">No team members found.</div>}
-            </div>
-          )}
+          <div className="border-b border-slate-200 px-5 py-4 sm:px-6"><div className="flex items-center gap-2 font-semibold text-slate-900"><Users className="h-5 w-5 text-blue-600" /> Team</div></div>
+          {loading ? <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading team...</div> : <div className="divide-y divide-slate-100">
+            {members.map((member) => <div key={member.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-slate-900">{member.full_name}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${member.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{member.role}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${member.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{member.is_active ? 'Active' : 'Inactive'}</span></div><p className="mt-1 text-sm text-slate-500">{member.phone ?? 'No mobile number'}</p></div>
+              {member.role !== 'admin' && <div className="flex flex-wrap gap-2"><button type="button" onClick={() => openEdit(member)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:text-blue-600"><Edit3 className="h-4 w-4" /> Edit name</button><button type="button" onClick={() => void updateMember(member.id, member.is_active ? 'deactivate' : 'activate')} className="min-h-10 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:text-blue-600">{member.is_active ? 'Deactivate' : 'Activate'}</button></div>}
+            </div>)}
+            {members.length === 0 && <div className="p-10 text-center text-sm text-slate-500">No team members found.</div>}
+          </div>}
         </div>
       </section>
+
+      {editing && <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4"><form onSubmit={saveName} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><h2 className="text-lg font-bold text-slate-900">Edit account name</h2><p className="mt-1 text-xs text-slate-500">This changes the display name for this login account.</p></div><button type="button" onClick={() => setEditing(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><label className="mt-5 block text-sm font-semibold text-slate-700">Name<input value={editingName} onChange={(e) => setEditingName(e.target.value)} required minLength={2} maxLength={120} className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setEditing(null)} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button disabled={editingSaving} type="submit" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white disabled:opacity-50">{editingSaving && <Loader2 className="h-4 w-4 animate-spin" />}Save name</button></div></form></div>}
     </main>
   )
 }
