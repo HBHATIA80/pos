@@ -44,7 +44,7 @@ export default function ShopCodePage() {
 
   const inviteMessage = useMemo(() => {
     if (!shop) return ''
-    return `Join ${shop.name} on Partronix.in customer portal.\n\nShop Code: ${shop.code}\n\nUse this code when creating your customer account.`
+    return `Join ${shop.name} on BIZYBUK.IN customer portal.\n\nShop Code: ${shop.code}\n\nUse this code when creating your customer account.`
   }, [shop])
 
   async function copyCode() {
