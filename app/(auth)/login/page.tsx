@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 
 const supportUrl = 'https://wa.me/919996609399?text=I%20have%20a%20question%20about%20BIZYBUK.IN'
+const concurrentLoginMessage = 'This login credential is already in use on another device. Please log out there before signing in here.'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,12 +28,26 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ phone: cleanPhone, password })
       if (error) { toast.error(error.message); return }
+
+      const sessionResponse = await fetch('/api/auth/session', { method: 'POST', credentials: 'include' })
+      const sessionBody = await sessionResponse.json().catch(() => ({}))
+      if (!sessionResponse.ok) {
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+        if (sessionResponse.status === 409) {
+          toast.error(concurrentLoginMessage, { duration: 6000 })
+        } else {
+          toast.error(sessionBody.error || 'Unable to establish a secure login session.')
+        }
+        return
+      }
+
       toast.success('You are signed in')
       router.push('/dashboard')
       router.refresh()
     } catch (error) {
       console.error(error)
-      toast.error('Unable to sign in')
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+      toast.error('Unable to sign in securely. Please try again.')
     } finally { setLoading(false) }
   }
 
@@ -80,7 +95,7 @@ export default function LoginPage() {
                 <div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
               </div>
               <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing you in...</> : <>Continue <ArrowRight className="h-4 w-4" /></>}</button>
-              <p className="mt-4 text-center text-xs leading-5 text-slate-400">Use the mobile number and password associated with your account.</p>
+              <p className="mt-4 text-center text-xs leading-5 text-slate-400">One BIZYBUK.IN account can be active on one device at a time.</p>
             </form>
             <div className="mt-6 space-y-3 text-center text-sm text-slate-500"><p>Opening a shop? <Link href="/signup" className="font-black text-blue-600">Create Shop Account</Link></p><p>Already a customer? <Link href="/customer-signup" className="font-black text-blue-600">Create Customer Account</Link></p><a href={supportUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-emerald-600 hover:text-emerald-700"><MessageCircle className="h-4 w-4" /> Questions or suggestions? Contact support</a></div>
           </div>
