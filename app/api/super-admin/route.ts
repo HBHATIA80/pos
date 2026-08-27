@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 
 const SUPER_ADMIN_TABLE = 'platform_super_admins'
+const LANDING_ASSET_KEY = 'shop-owner'
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
 async function requireSuperAdmin() {
   const supabase = await createServerClient()
@@ -54,5 +57,41 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to apply control action.' }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  const auth = await requireSuperAdmin()
+  if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status })
+
+  try {
+    const form = await request.formData()
+    const file = form.get('image')
+    if (!(file instanceof File)) return NextResponse.json({ error: 'Please select an image.' }, { status: 400 })
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) return NextResponse.json({ error: 'Only PNG, JPEG or WebP images are supported.' }, { status: 400 })
+    if (file.size === 0) return NextResponse.json({ error: 'The selected image is empty.' }, { status: 400 })
+    if (file.size > MAX_IMAGE_BYTES) return NextResponse.json({ error: 'Image must be 8 MB or smaller.' }, { status: 400 })
+
+    const bytes = Buffer.from(await file.arrayBuffer())
+    const base64 = bytes.toString('base64')
+
+    const { data: existing, error: lookupError } = await auth.supabase
+      .from('landing_assets')
+      .select('id')
+      .eq('asset_key', LANDING_ASSET_KEY)
+      .maybeSingle()
+    if (lookupError) throw lookupError
+
+    const payload = { mime_type: file.type, data_base64: base64, updated_at: new Date().toISOString() }
+    const result = existing
+      ? await auth.supabase.from('landing_assets').update(payload).eq('id', existing.id)
+      : await auth.supabase.from('landing_assets').insert({ asset_key: LANDING_ASSET_KEY, ...payload })
+
+    if (result.error) throw result.error
+
+    return NextResponse.json({ ok: true, message: 'Homepage image updated successfully.' })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to update homepage image.' }, { status: 500 })
   }
 }
