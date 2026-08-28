@@ -28,19 +28,14 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ phone: cleanPhone, password })
       if (error) { toast.error(error.message); return }
-
       const sessionResponse = await fetch('/api/auth/session', { method: 'POST', credentials: 'include' })
       const sessionBody = await sessionResponse.json().catch(() => ({}))
       if (!sessionResponse.ok) {
         await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-        if (sessionResponse.status === 409) {
-          toast.error(concurrentLoginMessage, { duration: 6000 })
-        } else {
-          toast.error(sessionBody.error || 'Unable to establish a secure login session.')
-        }
+        if (sessionResponse.status === 409) toast.error(concurrentLoginMessage, { duration: 6000 })
+        else toast.error(sessionBody.error || 'Unable to establish a secure login session.')
         return
       }
-
       toast.success('You are signed in')
       router.push('/dashboard')
       router.refresh()
@@ -55,7 +50,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#f4f7fb] text-slate-950 lg:grid lg:grid-cols-[.95fr_1.05fr]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-[#edf4ff] via-white to-[#e5f0ff] text-slate-950 lg:flex lg:flex-col lg:border-r-2 lg:border-slate-200">
+      <section className="biz-login-hero relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-[#edf4ff] via-white to-[#e5f0ff] text-slate-950 lg:flex lg:flex-col lg:border-r-2 lg:border-slate-200">
         <div className="absolute -left-32 top-24 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -right-32 bottom-0 h-[30rem] w-[30rem] rounded-full bg-blue-400/10 blur-3xl" />
         <div className="relative flex flex-1 flex-col px-10 py-8 xl:px-16">
@@ -65,7 +60,7 @@ export default function LoginPage() {
             <h1 className="mt-7 text-5xl font-black leading-[1.02] tracking-[-.055em] text-slate-950 xl:text-6xl">Run your business,<br /><span className="text-blue-700">with clarity.</span></h1>
             <p className="mt-6 max-w-lg text-base font-medium leading-7 text-slate-800">Sales, inventory, customers, payments and everyday work — all in one clear BIZYBUK.IN workspace.</p>
             <div className="mt-9 space-y-4">
-              {['One workspace for your daily business', 'Fast access to sales, stock and accounts', 'Secure access wherever you work'].map(item => <div key={item} className="flex items-center gap-3 text-base font-bold text-slate-900"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"><Check className="h-4 w-4" strokeWidth={3} /></span><span>{item}</span></div>)}
+              {['One workspace for your daily business', 'Fast access to sales, stock and accounts', 'Secure access wherever you work'].map(item => <div key={item} className="biz-login-feature flex items-center gap-3 text-base font-bold text-slate-900"><span className="biz-login-feature-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"><Check className="h-4 w-4" strokeWidth={3} /></span><span>{item}</span></div>)}
             </div>
           </div>
           <p className="text-sm font-bold text-slate-700">Business. Simplified. Success Amplified.</p>
@@ -86,14 +81,8 @@ export default function LoginPage() {
               <p className="mt-3 text-base font-medium leading-6 text-slate-700">Sign in to your BIZYBUK.IN business workspace or customer portal.</p>
             </div>
             <form onSubmit={handleLogin} className="rounded-[28px] border-2 border-slate-200 bg-white p-5 shadow-xl shadow-slate-300/40 sm:p-7">
-              <div>
-                <label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-950">Mobile number</label>
-                <div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="phone" type="tel" autoComplete="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div>
-              </div>
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-bold text-slate-950">Password</label><Link href="/forgot-password" className="text-sm font-black text-blue-700 hover:text-blue-900">Forgot password?</Link></div>
-                <div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
-              </div>
+              <div><label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-950">Mobile number</label><div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="phone" type="tel" autoComplete="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div></div>
+              <div className="mt-5"><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-bold text-slate-950">Password</label><Link href="/forgot-password" className="text-sm font-black text-blue-700 hover:text-blue-900">Forgot password?</Link></div><div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
               <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 text-sm font-black text-white shadow-lg shadow-blue-700/25 transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing you in...</> : <>Continue <ArrowRight className="h-4 w-4" /></>}</button>
               <p className="mt-4 text-center text-xs font-medium leading-5 text-slate-600">One BIZYBUK.IN account can be active on one device at a time.</p>
             </form>
