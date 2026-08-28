@@ -44,3 +44,53 @@
   .biz-app-main :where(.flex-row.gap-*) { flex-wrap: wrap; }
   .biz-app-main :where(.overflow-hidden) { min-width: 0; }
 }
+
+/* Voucher readability: keep the invoice-date copy visible on the light green bar. */
+.biz-app-main .invoice-date-title,
+.biz-app-main .invoice-date-help {
+  color: #0b1930 !important;
+  -webkit-text-fill-color: #0b1930 !important;
+}
+.biz-app-main .invoice-date-title {
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+}
+.biz-app-main .invoice-date-help {
+  margin-top: 3px !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+
+/* Sales + Purchase voucher icons: larger, darker and high-contrast. */
+.biz-app-main section.shrink-0 span[class*="bg-violet-600"] {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  background: #49596B !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(73,89,107,.20) !important;
+}
+.biz-app-main section.shrink-0 span[class*="bg-violet-600"] svg {
+  width: 21px !important;
+  height: 21px !important;
+  color: #fff !important;
+  stroke-width: 2.25 !important;
+}
+
+/* Bill-summary amount in rupees: never use pale/white text on the light summary header. */
+.biz-app-main aside .text-xl.font-black.tracking-tight {
+  color: #49596B !important;
+  -webkit-text-fill-color: #49596B !important;
+  font-weight: 900 !important;
+}
+
+/* Keep the main voucher labels strongly readable. */
+.biz-app-main section.shrink-0 .text-sm.font-black,
+.biz-app-main section.shrink-0 .text-\[10px\] {
+  font-weight: 800 !important;
+}
