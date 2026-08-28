@@ -13,6 +13,7 @@ import './dashboard-theme.css'
 import './green-buttons.css'
 import './brand-theme.css'
 import './brand-theme-hotfix.css'
+import './homepage-why-card.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
