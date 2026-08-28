@@ -8,6 +8,7 @@ import './ux-hardening.css'
 import './final-ui.css'
 import './ui-refresh.css'
 import './ui-final.css'
+import './adaptive-theme.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
