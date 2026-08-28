@@ -5,6 +5,7 @@ import './readability.css'
 import './design-system.css'
 import './receipt-palette.css'
 import './ux-hardening.css'
+import './final-ui.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
