@@ -1,0 +1,302 @@
+/* BIZYBUK final UI layer
+   Single source of truth for the last-pass visual treatment.
+   Loaded after the legacy contrast/readability layers so readability always wins. */
+:root {
+  --ui-blue: #1769ff;
+  --ui-blue-dark: #1558d6;
+  --ui-blue-soft: #eaf2ff;
+  --ui-navy: #0b1930;
+  --ui-text: #1f3552;
+  --ui-body: #334155;
+  --ui-muted: #5d718a;
+  --ui-placeholder: #71839b;
+  --ui-line: #cbd7e5;
+  --ui-line-soft: #e3eaf2;
+  --ui-surface: #ffffff;
+  --ui-soft: #f4f7fb;
+  --ui-green: #0f9f6e;
+  --ui-green-dark: #087f5b;
+  --ui-green-soft: #e9fbf3;
+  --ui-amber: #d97706;
+  --ui-amber-dark: #a15c05;
+  --ui-amber-soft: #fff7e6;
+  --ui-red: #dc2626;
+  --ui-red-dark: #b42318;
+  --ui-red-soft: #fff0f0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Base: calm, crisp, high-contrast business UI                               */
+/* -------------------------------------------------------------------------- */
+html { color-scheme: light; }
+body {
+  color: var(--ui-navy) !important;
+  background: #f5f8fc !important;
+}
+.biz-app-main { color: var(--ui-navy) !important; }
+
+.biz-app-main h1,
+.biz-app-main h2,
+.biz-app-main h3,
+.biz-app-main h4,
+.biz-app-main h5,
+.biz-app-main h6 {
+  color: var(--ui-navy) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+}
+
+.biz-app-main p,
+.biz-app-main li,
+.biz-app-main label,
+.biz-app-main legend,
+.biz-app-main dt,
+.biz-app-main dd {
+  color: var(--ui-body) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--ui-body) !important;
+}
+
+.biz-app-main small { color: var(--ui-muted) !important; opacity: 1 !important; }
+
+/* Do not let white/pale utility text disappear on a light surface. */
+.biz-app-main :where(.text-white, [class*="text-white/"], .text-slate-200, .text-slate-300, .text-slate-400) {
+  color: var(--ui-body) !important;
+  -webkit-text-fill-color: var(--ui-body) !important;
+  opacity: 1 !important;
+}
+.biz-app-main :where(.text-slate-500) { color: var(--ui-muted) !important; -webkit-text-fill-color: var(--ui-muted) !important; opacity: 1 !important; }
+.biz-app-main :where(.text-slate-600, .text-slate-700, .text-slate-800) { color: var(--ui-body) !important; -webkit-text-fill-color: var(--ui-body) !important; opacity: 1 !important; }
+.biz-app-main :where(.text-slate-900, .text-slate-950) { color: var(--ui-navy) !important; -webkit-text-fill-color: var(--ui-navy) !important; opacity: 1 !important; }
+
+/* Dark surfaces are the only places where white text is allowed. */
+.biz-app-main :where([class*="bg-slate-950"], [class*="bg-slate-900"], [class*="from-slate-950"], [class*="from-slate-900"]) {
+  color: #fff;
+}
+.biz-app-main :where([class*="bg-slate-950"], [class*="bg-slate-900"], [class*="from-slate-950"], [class*="from-slate-900"]) :where(.text-white, [class*="text-white/"], .text-slate-900, .text-slate-950) {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+.biz-app-main :where([class*="bg-slate-950"], [class*="bg-slate-900"], [class*="from-slate-950"], [class*="from-slate-900"]) :where(.text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800) {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Forms and controls                                                         */
+/* -------------------------------------------------------------------------- */
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  color: var(--ui-navy) !important;
+  background: #fff !important;
+  border: 1px solid var(--ui-line) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+  box-shadow: 0 1px 2px rgba(15,31,61,.04) !important;
+}
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"])::placeholder, textarea::placeholder) {
+  color: var(--ui-placeholder) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--ui-placeholder) !important;
+}
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):hover, select:hover, textarea:hover) {
+  border-color: #9fb1c5 !important;
+}
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus) {
+  border-color: var(--ui-blue) !important;
+  box-shadow: 0 0 0 4px rgba(23,105,255,.14) !important;
+}
+.biz-app-main select option { color: var(--ui-navy) !important; background: #fff !important; }
+
+.biz-app-main :where(.btn-primary, button[class*="bg-blue-600"], button[class*="bg-indigo-600"], button[class*="bg-violet-600"], button[class*="bg-purple-600"]) {
+  background: linear-gradient(135deg, var(--ui-blue), var(--ui-blue-dark)) !important;
+  color: #fff !important;
+  border-color: var(--ui-blue) !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 7px 18px rgba(23,105,255,.18) !important;
+}
+.biz-app-main :where(.btn-primary, button[class*="bg-blue-600"], button[class*="bg-indigo-600"], button[class*="bg-violet-600"], button[class*="bg-purple-600"]):hover {
+  background: var(--ui-blue-dark) !important;
+}
+.biz-app-main :where(.btn-secondary) {
+  background: #fff !important;
+  color: var(--ui-text) !important;
+  border: 1px solid var(--ui-line) !important;
+  -webkit-text-fill-color: var(--ui-text) !important;
+}
+
+/* Disabled is the only normal state that may reduce opacity. */
+.biz-app-main :where(button:disabled, input:disabled, select:disabled, textarea:disabled) { opacity: .58 !important; }
+
+/* -------------------------------------------------------------------------- */
+/* Cards, tables, navigation and data density                                 */
+/* -------------------------------------------------------------------------- */
+.biz-app-main :where(.bg-white, [class~="bg-white"]) {
+  background: #fff !important;
+  color: var(--ui-navy) !important;
+}
+.biz-app-main :where(.bg-white, [class~="bg-white"]) :where(.text-white, [class*="text-white/"], .text-slate-200, .text-slate-300, .text-slate-400) {
+  color: var(--ui-body) !important;
+  -webkit-text-fill-color: var(--ui-body) !important;
+  opacity: 1 !important;
+}
+.biz-app-main :where(.bg-slate-50, [class~="bg-slate-50"], [class~="bg-slate-100"]) { background: var(--ui-soft) !important; }
+.biz-app-main :where([class*="border-slate-100"], [class*="border-slate-200"], [class*="border-slate-300"]) { border-color: var(--ui-line-soft) !important; }
+
+thead th {
+  color: #405a79 !important;
+  background: var(--ui-soft) !important;
+  border-bottom: 1px solid var(--ui-line) !important;
+}
+tbody td { color: var(--ui-body) !important; border-bottom: 1px solid var(--ui-line-soft) !important; }
+tbody tr:hover { background: #f8fbff !important; }
+
+.biz-nav-item { color: #4e6683 !important; }
+.biz-nav-item:hover { color: var(--ui-navy) !important; background: #f2f7ff !important; }
+.biz-nav-item[aria-current="page"], .biz-nav-item.active { color: var(--ui-blue-dark) !important; background: var(--ui-blue-soft) !important; }
+
+/* -------------------------------------------------------------------------- */
+/* Semantic colors: receipt-voucher language                                  */
+/* -------------------------------------------------------------------------- */
+.biz-app-main :where([class*="bg-emerald-50"], [class*="bg-green-50"]) { background: var(--ui-green-soft) !important; }
+.biz-app-main :where([class*="text-emerald-"], [class*="text-green-"]) { color: var(--ui-green-dark) !important; -webkit-text-fill-color: var(--ui-green-dark) !important; }
+.biz-app-main :where([class*="bg-amber-50"], [class*="bg-yellow-50"]) { background: var(--ui-amber-soft) !important; }
+.biz-app-main :where([class*="text-amber-"], [class*="text-yellow-"]) { color: var(--ui-amber-dark) !important; -webkit-text-fill-color: var(--ui-amber-dark) !important; }
+.biz-app-main :where(button[class*="bg-red-"]) { background: var(--ui-red) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.biz-app-main :where([class*="text-red-"]) { color: var(--ui-red-dark) !important; -webkit-text-fill-color: var(--ui-red-dark) !important; }
+
+/* Eliminate legacy magenta/purple/fuchsia/rose accents from interactive UI. */
+.biz-app-main :where([class*="text-violet-"], [class*="text-purple-"], [class*="text-fuchsia-"], [class*="text-pink-"], [class*="text-rose-"]) {
+  color: var(--ui-blue-dark) !important;
+  -webkit-text-fill-color: var(--ui-blue-dark) !important;
+}
+.biz-app-main :where(button[class*="bg-violet-"], button[class*="bg-purple-"], button[class*="bg-fuchsia-"], button[class*="bg-pink-"], button[class*="bg-rose-"]) {
+  background: var(--ui-blue) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Modal system: backdrop and surface are deliberately separate                */
+/* -------------------------------------------------------------------------- */
+.biz-app-main :where(.fixed.inset-0) {
+  isolation: isolate;
+  opacity: 1 !important;
+}
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"], .fixed.inset-0[class*="z-[80]"], .fixed.inset-0[class*="z-[100]"], .fixed.inset-0[class*="z-[120]"], .fixed.inset-0[class*="z-[200]"]) {
+  background: rgba(15,23,42,.60) !important;
+}
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"], .fixed.inset-0[class*="z-[80]"], .fixed.inset-0[class*="z-[100]"], .fixed.inset-0[class*="z-[120]"], .fixed.inset-0[class*="z-[200]"]) > :where(div, section, form):not(.absolute) {
+  background: #fff !important;
+  color: var(--ui-navy) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: 0 28px 80px rgba(15,31,61,.24), 0 5px 18px rgba(15,31,61,.08) !important;
+}
+
+/* Keyboard shortcuts: this is the reference for every light modal. */
+.biz-light-modal {
+  background: rgba(15,23,42,.60) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+.biz-light-modal-surface {
+  background: #fff !important;
+  color: var(--ui-navy) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  isolation: isolate;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: 0 28px 80px rgba(15,31,61,.24), 0 5px 18px rgba(15,31,61,.08) !important;
+}
+.biz-light-modal-surface,
+.biz-light-modal-surface * {
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+.biz-light-modal-surface h1,
+.biz-light-modal-surface h2,
+.biz-light-modal-surface h3,
+.biz-light-modal-surface h4,
+.biz-light-modal-surface h5,
+.biz-light-modal-surface h6 {
+  color: var(--ui-navy) !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+}
+.biz-light-modal-surface p,
+.biz-light-modal-surface span,
+.biz-light-modal-surface div {
+  color: var(--ui-body) !important;
+  -webkit-text-fill-color: var(--ui-body) !important;
+}
+.biz-light-modal-surface .text-slate-900,
+.biz-light-modal-surface .text-slate-950 { color: var(--ui-navy) !important; -webkit-text-fill-color: var(--ui-navy) !important; }
+.biz-light-modal-surface .text-slate-600,
+.biz-light-modal-surface .text-slate-700,
+.biz-light-modal-surface .text-slate-800,
+.biz-light-modal-surface .text-slate-500,
+.biz-light-modal-surface .text-slate-400,
+.biz-light-modal-surface .text-white,
+.biz-light-modal-surface [class*="text-white/"] { color: var(--ui-body) !important; -webkit-text-fill-color: var(--ui-body) !important; }
+.biz-light-modal-surface kbd {
+  color: var(--ui-navy) !important;
+  background: var(--ui-soft) !important;
+  border: 1px solid var(--ui-line) !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+  font-weight: 800 !important;
+}
+.biz-light-modal-surface button[aria-label="Close shortcuts"] {
+  color: var(--ui-muted) !important;
+  background: transparent !important;
+  -webkit-text-fill-color: var(--ui-muted) !important;
+}
+.biz-light-modal-surface button[aria-label="Close shortcuts"]:hover {
+  color: var(--ui-navy) !important;
+  background: var(--ui-soft) !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+}
+
+/* All light modal content: no washed-out text, ever. */
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"], .fixed.inset-0[class*="z-[80]"], .fixed.inset-0[class*="z-[100]"], .fixed.inset-0[class*="z-[120]"], .fixed.inset-0[class*="z-[200]"]) > :where(div, section, form):not(.absolute) :where(h1,h2,h3,h4,h5,h6) {
+  color: var(--ui-navy) !important;
+  -webkit-text-fill-color: var(--ui-navy) !important;
+  opacity: 1 !important;
+}
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"], .fixed.inset-0[class*="z-[80]"], .fixed.inset-0[class*="z-[100]"], .fixed.inset-0[class*="z-[120]"], .fixed.inset-0[class*="z-[200]"]) > :where(div, section, form):not(.absolute) :where(p,span,li,label,legend,dt,dd) {
+  color: var(--ui-body) !important;
+  -webkit-text-fill-color: var(--ui-body) !important;
+  opacity: 1 !important;
+}
+
+/* Autocomplete/search popovers: white surface + dark content. */
+div.relative:has(input[placeholder*="product" i]) > div.absolute,
+div.relative:has(input[placeholder*="barcode" i]) > div.absolute,
+div.relative:has(input[placeholder*="customer" i]) > div.absolute,
+div.relative:has(input[placeholder*="supplier" i]) > div.absolute,
+div.relative:has(input[placeholder*="party" i]) > div.absolute {
+  background: #fff !important;
+  color: var(--ui-navy) !important;
+  opacity: 1 !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: 0 20px 48px rgba(15,31,61,.18) !important;
+}
+
+/* Clear selected/active states. */
+.biz-app-main :where(button[aria-selected="true"], button[aria-pressed="true"], [data-state="active"]) {
+  background: var(--ui-blue) !important;
+  color: #fff !important;
+  border-color: var(--ui-blue) !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Accessibility and interaction polish. */
+:focus-visible {
+  outline: 3px solid rgba(23,105,255,.35) !important;
+  outline-offset: 2px;
+}
+button, input, select, textarea { transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease, color .16s ease; }
+
+@media (max-width: 640px) {
+  .biz-light-modal-surface { width: min(100%, calc(100vw - 24px)) !important; max-height: calc(100dvh - 24px) !important; }
+}
