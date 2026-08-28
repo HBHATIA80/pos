@@ -1,0 +1,24 @@
+/* Receipt voucher palette lock: blue primary, green success, amber balance, red destructive, navy/slate neutrals. */
+:root{--receipt-blue:#1769ff;--receipt-blue-dark:#1558d6;--receipt-blue-soft:#eaf2ff;--receipt-green:#0f9f6e;--receipt-green-dark:#087f5b;--receipt-green-soft:#e9fbf3;--receipt-amber:#d97706;--receipt-amber-dark:#a15c05;--receipt-amber-soft:#fff7e6;--receipt-red:#dc2626;--receipt-red-dark:#b42318;--receipt-red-soft:#fff0f0;--receipt-navy:#0b1930;--receipt-text:#1f3552;--receipt-muted:#5d718a}
+/* Eliminate purple/indigo/violet/magenta/pink/rose accents. */
+.biz-app-main :where([class*="text-indigo-"],[class*="text-violet-"],[class*="text-purple-"],[class*="text-fuchsia-"],[class*="text-pink-"],[class*="text-rose-"]){color:var(--receipt-blue-dark)!important}
+.biz-app-main :where([class*="bg-indigo-"],[class*="bg-violet-"],[class*="bg-purple-"],[class*="bg-fuchsia-"],[class*="bg-pink-"],[class*="bg-rose-"]){background-color:var(--receipt-blue-soft)!important;background-image:none!important}
+.biz-app-main :where(button[class*="bg-indigo-"],button[class*="bg-violet-"],button[class*="bg-purple-"],button[class*="bg-fuchsia-"],button[class*="bg-pink-"],button[class*="bg-rose-"]){background:var(--receipt-blue)!important;color:#fff!important}
+.biz-app-main :where([class*="border-indigo-"],[class*="border-violet-"],[class*="border-purple-"],[class*="border-fuchsia-"],[class*="border-pink-"],[class*="border-rose-"]){border-color:#b9cdf0!important}
+.biz-app-main :where([class*="ring-indigo-"],[class*="ring-violet-"],[class*="ring-purple-"],[class*="ring-fuchsia-"],[class*="ring-pink-"],[class*="ring-rose-"]){--tw-ring-color:rgba(23,105,255,.25)!important}
+.biz-app-main :where([class*="from-indigo-"],[class*="from-violet-"],[class*="from-purple-"],[class*="from-fuchsia-"],[class*="from-pink-"],[class*="from-rose-"],[class*="via-indigo-"],[class*="via-violet-"],[class*="via-purple-"],[class*="via-fuchsia-"],[class*="via-pink-"],[class*="via-rose-"],[class*="to-indigo-"],[class*="to-violet-"],[class*="to-purple-"],[class*="to-fuchsia-"],[class*="to-pink-"],[class*="to-rose-"]){--tw-gradient-from:var(--receipt-blue)!important;--tw-gradient-via:var(--receipt-blue)!important;--tw-gradient-to:var(--receipt-blue-dark)!important}
+/* Common inline magenta/pink/purple values. */
+.biz-app-main :where([style*="#ec4899"],[style*="#db2777"],[style*="#f43f5e"],[style*="#e11d48"],[style*="#d946ef"],[style*="#c026d3"],[style*="#a21caf"],[style*="#9333ea"]){color:var(--receipt-blue)!important;border-color:var(--receipt-blue)!important}
+/* Receipt semantic colors. */
+.biz-app-main :where([class*="bg-emerald-"],[class*="bg-green-"]){background-color:var(--receipt-green-soft)!important}
+.biz-app-main :where([class*="text-emerald-"],[class*="text-green-"]){color:var(--receipt-green-dark)!important}
+.biz-app-main :where([class*="bg-amber-"],[class*="bg-yellow-"]){background-color:var(--receipt-amber-soft)!important}
+.biz-app-main :where([class*="text-amber-"],[class*="text-yellow-"]){color:var(--receipt-amber-dark)!important}
+.biz-app-main :where([class*="bg-red-"]){background-color:var(--receipt-red-soft)!important}
+.biz-app-main :where(button[class*="bg-red-"]){background:var(--receipt-red)!important;color:#fff!important}
+.biz-app-main :where(button[class*="bg-red-"]:hover){background:var(--receipt-red-dark)!important}
+.biz-app-main :where([class*="text-red-"]){color:var(--receipt-red-dark)!important}
+.biz-app-main :where(button[aria-selected="true"],button[aria-pressed="true"]){background:var(--receipt-blue)!important;color:#fff!important;border-color:var(--receipt-blue)!important}
+.biz-app-main :where(h1,h2,h3,h4,h5,h6){color:var(--receipt-navy)!important}
+.biz-app-main :where(label,p,li,dt,dd,legend){color:var(--receipt-text)!important}
+.biz-app-main :where(small){color:var(--receipt-muted)!important}
