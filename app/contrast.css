@@ -159,3 +159,127 @@ button:disabled { color: inherit; }
 
 /* Keyboard visibility. */
 :focus-visible { outline: 3px solid rgba(23,105,255,.55); outline-offset: 2px; }
+
+/* -------------------------------------------------------------------------- */
+/* Global visibility hardening                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Keep text on normal application surfaces dark and fully opaque. */
+.biz-app-main { color: #0b1220; }
+.biz-app-main p, .biz-app-main label, .biz-app-main dt, .biz-app-main dd { color: #334155; }
+.biz-app-main h1, .biz-app-main h2, .biz-app-main h3, .biz-app-main h4, .biz-app-main h5, .biz-app-main h6 { color: #0b1930; }
+.biz-app-main small { color: #526783; }
+
+/* Prevent accidental white/transparent text on light cards, panels and forms. */
+.biz-app-main [class~="bg-white"],
+.biz-app-main [class~="bg-slate-50"],
+.biz-app-main [class~="bg-slate-100"] { color: #0b1220; }
+.biz-app-main [class~="bg-white"] p,
+.biz-app-main [class~="bg-white"] label,
+.biz-app-main [class~="bg-slate-50"] p,
+.biz-app-main [class~="bg-slate-50"] label { color: #334155 !important; }
+.biz-app-main [class~="bg-white"] h1,
+.biz-app-main [class~="bg-white"] h2,
+.biz-app-main [class~="bg-white"] h3,
+.biz-app-main [class~="bg-white"] h4,
+.biz-app-main [class~="bg-slate-50"] h1,
+.biz-app-main [class~="bg-slate-50"] h2,
+.biz-app-main [class~="bg-slate-50"] h3,
+.biz-app-main [class~="bg-slate-50"] h4 { color: #0b1930 !important; }
+
+/* Never use opacity as the mechanism for ordinary text. Keep disabled state only. */
+.biz-app-main [class*="text-white/"] { color: #475569 !important; }
+.biz-app-main [class*="text-slate-300"] { color: #475569 !important; }
+.biz-app-main [class*="text-slate-400"] { color: #64748b !important; }
+.biz-app-main [class*="text-gray-300"] { color: #475569 !important; }
+.biz-app-main [class*="text-gray-400"] { color: #64748b !important; }
+
+/* Dialogs/modals on the light application theme must be readable even when
+   their original component used pale/white utility text. */
+.biz-payment-dialog {
+  color: #0b1220 !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  opacity: 1 !important;
+}
+.biz-payment-dialog h1, .biz-payment-dialog h2, .biz-payment-dialog h3,
+.biz-payment-dialog h4, .biz-payment-dialog h5, .biz-payment-dialog h6 { color: #0b1930 !important; }
+.biz-payment-dialog p, .biz-payment-dialog label, .biz-payment-dialog span { color: #334155 !important; }
+.biz-payment-dialog .text-slate-950 { color: #0b1220 !important; }
+.biz-payment-dialog .text-slate-900 { color: #111827 !important; }
+.biz-payment-dialog .text-slate-800 { color: #1f2937 !important; }
+.biz-payment-dialog .text-slate-700 { color: #334155 !important; }
+.biz-payment-dialog .text-slate-600 { color: #475569 !important; }
+.biz-payment-dialog .text-slate-500,
+.biz-payment-dialog .placeholder\:text-slate-500::placeholder { color: #64748b !important; }
+.biz-payment-dialog .text-blue-700 { color: #1558d6 !important; }
+.biz-payment-dialog .text-blue-800 { color: #1248ad !important; }
+.biz-payment-dialog .text-emerald-700 { color: #087f5b !important; }
+.biz-payment-dialog .text-emerald-800 { color: #06734f !important; }
+.biz-payment-dialog .text-emerald-900 { color: #065f46 !important; }
+.biz-payment-dialog .text-amber-700 { color: #a15c05 !important; }
+.biz-payment-dialog .text-amber-800 { color: #8a4b08 !important; }
+.biz-payment-dialog .text-white { color: #ffffff !important; }
+.biz-payment-dialog input, .biz-payment-dialog select, .biz-payment-dialog textarea {
+  color: #0b1220 !important;
+  background: #ffffff !important;
+  border-color: #b8c7d9 !important;
+  opacity: 1 !important;
+}
+.biz-payment-dialog input::placeholder, .biz-payment-dialog textarea::placeholder { color: #64748b !important; opacity: 1 !important; }
+.biz-payment-dialog button { opacity: 1 !important; }
+.biz-payment-dialog button:disabled { opacity: .55 !important; }
+.biz-payment-dialog .bg-blue-600 { background: #1769ff !important; color: #ffffff !important; }
+.biz-payment-dialog .bg-blue-600:hover { background: #1558d6 !important; }
+.biz-payment-dialog .bg-blue-50 { background: #eaf2ff !important; }
+.biz-payment-dialog .bg-slate-50 { background: #f4f7fb !important; }
+.biz-payment-dialog .bg-emerald-50 { background: #e9fbf3 !important; }
+.biz-payment-dialog .bg-amber-50 { background: #fff7e6 !important; }
+.biz-payment-dialog .border-slate-200,
+.biz-payment-dialog .border-slate-300 { border-color: #b8c7d9 !important; }
+.biz-payment-dialog .border-emerald-200 { border-color: #a7e3ca !important; }
+.biz-payment-dialog .border-amber-200 { border-color: #f3cf91 !important; }
+.biz-payment-dialog .ring-blue-200 { --tw-ring-color: rgba(37,99,235,.30) !important; }
+.biz-payment-dialog .biz-payment-method-active,
+.biz-payment-dialog button[aria-pressed="true"] {
+  background: #eaf2ff !important;
+  color: #1248ad !important;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14) !important;
+}
+.biz-payment-overlay { background: rgba(15,23,42,.62) !important; }
+
+/* Any conventional modal marked as a dialog gets a strong light-surface
+   baseline. Dark analytics panels remain unaffected because this is scoped to
+   elements explicitly acting as dialogs. */
+[role="dialog"] {
+  color: #0b1220;
+}
+[role="dialog"] input, [role="dialog"] select, [role="dialog"] textarea {
+  color: #0b1220;
+  background: #ffffff;
+  border-color: #b8c7d9;
+}
+[role="dialog"] input::placeholder, [role="dialog"] textarea::placeholder { color: #64748b; opacity: 1; }
+[role="dialog"]:not([data-theme="dark"]) h1,
+[role="dialog"]:not([data-theme="dark"]) h2,
+[role="dialog"]:not([data-theme="dark"]) h3,
+[role="dialog"]:not([data-theme="dark"]) h4 { color: #0b1930; }
+
+/* Touch targets and safe mobile layouts. */
+@media (max-width: 1023px) {
+  .biz-app-sidebar { max-width: 86vw; }
+  .biz-app-main { min-width: 0; overflow-x: hidden; }
+  .biz-app-main button, .biz-app-main a[role="button"] { min-height: 44px; }
+}
+@media (max-width: 640px) {
+  .biz-payment-dialog {
+    width: min(100%, 100vw) !important;
+    max-height: calc(100dvh - 12px) !important;
+    overflow-y: auto !important;
+    border-radius: 20px !important;
+  }
+  .biz-payment-dialog .grid-cols-3 { grid-template-columns: 1fr !important; }
+  .biz-payment-dialog .grid-cols-2 { grid-template-columns: 1fr !important; }
+  .biz-payment-dialog .p-5 { padding: 16px !important; }
+}
