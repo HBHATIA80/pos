@@ -30,10 +30,6 @@
   --receipt-shadow: 0 24px 70px rgba(15,31,61,.18), 0 4px 16px rgba(15,31,61,.08);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Global palette normalization                                               */
-/* -------------------------------------------------------------------------- */
-
 html, body { color: var(--receipt-navy); }
 body { background-color: #f5f8fc; }
 
@@ -42,35 +38,22 @@ body { background-color: #f5f8fc; }
   [class*="text-indigo-"], [class*="text-violet-"], [class*="text-purple-"],
   [class*="text-fuchsia-"], [class*="text-pink-"], [class*="text-rose-"]
 ) { color: var(--receipt-blue-dark) !important; }
-
 :where(
   [class*="bg-indigo-"], [class*="bg-violet-"], [class*="bg-purple-"],
   [class*="bg-fuchsia-"], [class*="bg-pink-"], [class*="bg-rose-"]
-) {
-  background-color: var(--receipt-blue-soft) !important;
-  background-image: none !important;
-}
-
+) { background-color: var(--receipt-blue-soft) !important; background-image: none !important; }
 :where(
   button[class*="bg-indigo-"], button[class*="bg-violet-"], button[class*="bg-purple-"],
   button[class*="bg-fuchsia-"], button[class*="bg-pink-"], button[class*="bg-rose-"]
-) {
-  background: var(--receipt-blue) !important;
-  color: #fff !important;
-  border-color: var(--receipt-blue) !important;
-  -webkit-text-fill-color: #fff !important;
-}
-
+) { background: var(--receipt-blue) !important; color: #fff !important; border-color: var(--receipt-blue) !important; -webkit-text-fill-color: #fff !important; }
 :where(
   [class*="border-indigo-"], [class*="border-violet-"], [class*="border-purple-"],
   [class*="border-fuchsia-"], [class*="border-pink-"], [class*="border-rose-"]
 ) { border-color: #b9cdf0 !important; }
-
 :where(
   [class*="ring-indigo-"], [class*="ring-violet-"], [class*="ring-purple-"],
   [class*="ring-fuchsia-"], [class*="ring-pink-"], [class*="ring-rose-"]
 ) { --tw-ring-color: rgba(23,105,255,.24) !important; }
-
 :where(
   [class*="from-indigo-"], [class*="from-violet-"], [class*="from-purple-"],
   [class*="from-fuchsia-"], [class*="from-pink-"], [class*="from-rose-"],
@@ -78,169 +61,62 @@ body { background-color: #f5f8fc; }
   [class*="via-fuchsia-"], [class*="via-pink-"], [class*="via-rose-"],
   [class*="to-indigo-"], [class*="to-violet-"], [class*="to-purple-"],
   [class*="to-fuchsia-"], [class*="to-pink-"], [class*="to-rose-"]
-) {
-  --tw-gradient-from: var(--receipt-blue) !important;
-  --tw-gradient-via: var(--receipt-blue) !important;
-  --tw-gradient-to: var(--receipt-blue-dark) !important;
-}
-
-/* Catch common inline legacy accent values as well. */
+) { --tw-gradient-from: var(--receipt-blue) !important; --tw-gradient-via: var(--receipt-blue) !important; --tw-gradient-to: var(--receipt-blue-dark) !important; }
 :where(
   [style*="#ec4899"], [style*="#db2777"], [style*="#f43f5e"], [style*="#e11d48"],
   [style*="#d946ef"], [style*="#c026d3"], [style*="#a21caf"], [style*="#9333ea"]
-) {
-  color: var(--receipt-blue) !important;
-  border-color: var(--receipt-blue) !important;
-  background-color: var(--receipt-blue-soft) !important;
-}
+) { color: var(--receipt-blue) !important; border-color: var(--receipt-blue) !important; background-color: var(--receipt-blue-soft) !important; }
 
-/* -------------------------------------------------------------------------- */
-/* Text: readable by default on every light surface                            */
-/* -------------------------------------------------------------------------- */
-
+/* Strong, synchronized typography on normal light application surfaces. */
 .biz-app-main { color: var(--receipt-navy) !important; }
-.biz-app-main :where(h1,h2,h3,h4,h5,h6) {
-  color: var(--receipt-navy) !important;
-  opacity: 1 !important;
-}
-.biz-app-main :where(p,li,dt,dd,legend,label) {
-  color: var(--receipt-text) !important;
-  opacity: 1 !important;
-}
+.biz-app-main :where(h1,h2,h3,h4,h5,h6) { color: var(--receipt-navy) !important; opacity: 1 !important; }
+.biz-app-main :where(p,li,dt,dd,legend,label) { color: var(--receipt-text) !important; opacity: 1 !important; }
 .biz-app-main :where(small) { color: var(--receipt-muted) !important; opacity: 1 !important; }
+.biz-app-main :where(.text-white,[class*="text-white/"],.text-slate-200,.text-slate-300) { color: var(--receipt-text) !important; -webkit-text-fill-color: var(--receipt-text) !important; }
+.biz-app-main :where(.text-slate-400) { color: var(--receipt-muted) !important; -webkit-text-fill-color: var(--receipt-muted) !important; }
+.biz-app-main :where(.text-slate-500) { color: #526783 !important; -webkit-text-fill-color: #526783 !important; }
+.biz-app-main :where(.text-slate-600,.text-slate-700,.text-slate-800) { color: var(--receipt-body) !important; -webkit-text-fill-color: var(--receipt-body) !important; }
+.biz-app-main :where(.text-slate-900,.text-slate-950) { color: var(--receipt-navy) !important; -webkit-text-fill-color: var(--receipt-navy) !important; }
 
-/* Utility classes that previously became nearly white on white surfaces. */
-.biz-app-main :where(.text-white,[class*="text-white/"],.text-slate-200,.text-slate-300) {
-  color: var(--receipt-text) !important;
-  -webkit-text-fill-color: var(--receipt-text) !important;
-}
-.biz-app-main :where(.text-slate-400) {
-  color: var(--receipt-muted) !important;
-  -webkit-text-fill-color: var(--receipt-muted) !important;
-}
-.biz-app-main :where(.text-slate-500) {
-  color: #526783 !important;
-  -webkit-text-fill-color: #526783 !important;
-}
-.biz-app-main :where(.text-slate-600,.text-slate-700,.text-slate-800) {
-  color: var(--receipt-body) !important;
-  -webkit-text-fill-color: var(--receipt-body) !important;
-}
-.biz-app-main :where(.text-slate-900,.text-slate-950) {
-  color: var(--receipt-navy) !important;
-  -webkit-text-fill-color: var(--receipt-navy) !important;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Surfaces, controls and tables                                               */
-/* -------------------------------------------------------------------------- */
-
-.biz-app-main :where(.bg-white,[class~="bg-white"]) {
-  background: var(--receipt-surface) !important;
-  color: var(--receipt-navy) !important;
-}
-.biz-app-main :where(.bg-slate-50,[class~="bg-slate-50"],[class~="bg-slate-100"]) {
-  background: var(--receipt-soft) !important;
-}
-.biz-app-main :where([class*="border-slate-100"],[class*="border-slate-200"],[class*="border-slate-300"]) {
-  border-color: var(--receipt-line-soft) !important;
-}
-
-.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
-  color: var(--receipt-navy) !important;
-  background: #fff !important;
-  border: 1px solid var(--receipt-line) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-navy) !important;
-}
-.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"])::placeholder,textarea::placeholder) {
-  color: var(--receipt-placeholder) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-placeholder) !important;
-}
-.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):hover,select:hover,textarea:hover) {
-  border-color: #9fb1c5 !important;
-}
-.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):focus,select:focus,textarea:focus) {
-  border-color: var(--receipt-blue) !important;
-  box-shadow: 0 0 0 4px rgba(23,105,255,.14) !important;
-}
+/* Synchronized surfaces and form controls. */
+.biz-app-main :where(.bg-white,[class~="bg-white"]) { background: var(--receipt-surface) !important; color: var(--receipt-navy) !important; }
+.biz-app-main :where(.bg-slate-50,[class~="bg-slate-50"],[class~="bg-slate-100"]) { background: var(--receipt-soft) !important; }
+.biz-app-main :where([class*="border-slate-100"],[class*="border-slate-200"],[class*="border-slate-300"]) { border-color: var(--receipt-line-soft) !important; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { color: var(--receipt-navy) !important; background: #fff !important; border: 1px solid var(--receipt-line) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-navy) !important; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"])::placeholder,textarea::placeholder) { color: var(--receipt-placeholder) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-placeholder) !important; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):hover,select:hover,textarea:hover) { border-color: #9fb1c5 !important; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]):focus,select:focus,textarea:focus) { border-color: var(--receipt-blue) !important; box-shadow: 0 0 0 4px rgba(23,105,255,.14) !important; }
 .biz-app-main select option { color: var(--receipt-navy) !important; background: #fff !important; }
+.biz-app-main table thead th { background: var(--receipt-soft) !important; color: #405a79 !important; border-bottom: 1px solid var(--receipt-line) !important; }
+.biz-app-main table tbody td { color: var(--receipt-body) !important; border-bottom: 1px solid var(--receipt-line-soft) !important; }
 
-.biz-app-main table thead th {
-  background: var(--receipt-soft) !important;
-  color: #405a79 !important;
-  border-bottom: 1px solid var(--receipt-line) !important;
-}
-.biz-app-main table tbody td {
-  color: var(--receipt-body) !important;
-  border-bottom: 1px solid var(--receipt-line-soft) !important;
-}
-
-/* Primary and secondary actions. */
-.biz-app-main :where(button[class*="bg-blue-"],button[class*="bg-indigo-"],.btn-primary) {
-  background: var(--receipt-blue) !important;
-  color: #fff !important;
-  border-color: var(--receipt-blue) !important;
-  -webkit-text-fill-color: #fff !important;
-}
-.biz-app-main :where(button[class*="bg-blue-"]:hover,button[class*="bg-indigo-"]:hover,.btn-primary:hover) {
-  background: var(--receipt-blue-dark) !important;
-}
-.biz-app-main .btn-secondary {
-  background: #fff !important;
-  color: var(--receipt-text) !important;
-  border-color: var(--receipt-line) !important;
-}
-
-/* Semantic receipt colors: only these four accents are allowed. */
-.biz-app-main :where([class*="bg-emerald-"],[class*="bg-green-"]) {
-  background: var(--receipt-green-soft) !important;
-}
-.biz-app-main :where([class*="text-emerald-"],[class*="text-green-"]) {
-  color: var(--receipt-green-dark) !important;
-}
-.biz-app-main :where([class*="bg-amber-"],[class*="bg-yellow-"]) {
-  background: var(--receipt-amber-soft) !important;
-}
-.biz-app-main :where([class*="text-amber-"],[class*="text-yellow-"]) {
-  color: var(--receipt-amber-dark) !important;
-}
-.biz-app-main :where([class*="bg-red-"]) {
-  background: var(--receipt-red-soft) !important;
-}
-.biz-app-main :where(button[class*="bg-red-"]) {
-  background: var(--receipt-red) !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-}
+/* Blue primary, white secondary; semantic green/amber/red remain distinct. */
+.biz-app-main :where(button[class*="bg-blue-"],button[class*="bg-indigo-"],.btn-primary) { background: var(--receipt-blue) !important; color: #fff !important; border-color: var(--receipt-blue) !important; -webkit-text-fill-color: #fff !important; }
+.biz-app-main :where(button[class*="bg-blue-"]:hover,button[class*="bg-indigo-"]:hover,.btn-primary:hover) { background: var(--receipt-blue-dark) !important; }
+.biz-app-main .btn-secondary { background: #fff !important; color: var(--receipt-text) !important; border-color: var(--receipt-line) !important; }
+.biz-app-main :where([class*="bg-emerald-"],[class*="bg-green-"]) { background: var(--receipt-green-soft) !important; }
+.biz-app-main :where([class*="text-emerald-"],[class*="text-green-"]) { color: var(--receipt-green-dark) !important; }
+.biz-app-main :where([class*="bg-amber-"],[class*="bg-yellow-"]) { background: var(--receipt-amber-soft) !important; }
+.biz-app-main :where([class*="text-amber-"],[class*="text-yellow-"]) { color: var(--receipt-amber-dark) !important; }
+.biz-app-main :where([class*="bg-red-"]) { background: var(--receipt-red-soft) !important; }
+.biz-app-main :where(button[class*="bg-red-"]) { background: var(--receipt-red) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
 .biz-app-main :where(button[class*="bg-red-"]:hover) { background: var(--receipt-red-dark) !important; }
 .biz-app-main :where([class*="text-red-"]) { color: var(--receipt-red-dark) !important; }
 
-/* Any selected state is blue + white, so selection is unmistakable. */
-.biz-app-main :where(button[aria-selected="true"],button[aria-pressed="true"],[data-state="active"]) {
-  background: var(--receipt-blue) !important;
-  color: #fff !important;
-  border-color: var(--receipt-blue) !important;
-  -webkit-text-fill-color: #fff !important;
-  font-weight: 700 !important;
-}
+/* Selected states are always unmistakable. */
+.biz-app-main :where(button[aria-selected="true"],button[aria-pressed="true"],[data-state="active"]) { background: var(--receipt-blue) !important; color: #fff !important; border-color: var(--receipt-blue) !important; -webkit-text-fill-color: #fff !important; font-weight: 700 !important; }
 
 /* -------------------------------------------------------------------------- */
-/* Modal architecture: backdrop is dim, surface is never dimmed                */
+/* Modal system: backdrop and dialog are separate visual layers.              */
 /* -------------------------------------------------------------------------- */
+.biz-app-main :where(.fixed.inset-0) { opacity: 1 !important; isolation: isolate; }
 
-.biz-app-main :where(.fixed.inset-0) {
-  background: var(--receipt-overlay) !important;
-  opacity: 1 !important;
-  isolation: isolate;
-}
-
-/* The first non-absolute child is the modal surface in the app's modal
-   components. Give it its own layer so the backdrop never washes its text. */
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) {
+/* Existing dialog z-index families. The backdrop is dark, the dialog surface
+   is white and fully opaque. */
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) { background: var(--receipt-overlay) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) {
   position: relative;
-  z-index: 1;
+  z-index: 2001;
   background: #fff !important;
   color: var(--receipt-navy) !important;
   border-color: var(--receipt-line) !important;
@@ -250,73 +126,26 @@ body { background-color: #f5f8fc; }
   mix-blend-mode: normal !important;
 }
 
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(h1,h2,h3,h4,h5,h6) {
-  color: var(--receipt-navy) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-navy) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(p,li,dt,dd,legend,label) {
-  color: var(--receipt-text) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-text) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(.text-white,[class*="text-white/"],.text-slate-200,.text-slate-300,.text-slate-400) {
-  color: var(--receipt-text) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-text) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(.text-slate-900,.text-slate-950) {
-  color: var(--receipt-navy) !important;
-  -webkit-text-fill-color: var(--receipt-navy) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(input,select,textarea) {
-  color: var(--receipt-navy) !important;
-  background: #fff !important;
-  border-color: var(--receipt-line) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-navy) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(input,textarea)::placeholder {
-  color: var(--receipt-placeholder) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--receipt-placeholder) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(button) {
-  opacity: 1 !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(button:not([class*="bg-red-"])) {
-  color: var(--receipt-text) !important;
-  -webkit-text-fill-color: var(--receipt-text) !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(button[class*="bg-blue-"],button[class*="bg-indigo-"],button[class*="bg-violet-"],button[class*="bg-purple-"]) {
-  background: var(--receipt-blue) !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-}
-.biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) :where(button[class*="bg-red-"]) {
-  background: var(--receipt-red) !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-}
+/* Keyboard shortcuts dialog uses z-[200]; explicitly keep it above every
+   backdrop and restore the readable receipt-voucher typography. */
+.biz-app-main :where(.fixed.inset-0[class*="z-[200]"]) { z-index: 2000 !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[200]"]) > div:not(.absolute) { min-width: min(100%,32rem); }
 
-/* Keyboard-shortcuts dialog: explicit class-independent fallback for z-200. */
-.biz-app-main :where(.fixed.inset-0[class*="z-[200]"]) > :where(div):not(.absolute) {
-  min-width: min(100%, 32rem);
-}
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(h1,h2,h3,h4,h5,h6) { color: var(--receipt-navy) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-navy) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(p,li,dt,dd,legend,label) { color: var(--receipt-text) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-text) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(.text-white,[class*="text-white/"],.text-slate-200,.text-slate-300,.text-slate-400) { color: var(--receipt-text) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-text) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(.text-slate-900,.text-slate-950) { color: var(--receipt-navy) !important; -webkit-text-fill-color: var(--receipt-navy) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(input,select,textarea) { color: var(--receipt-navy) !important; background: #fff !important; border-color: var(--receipt-line) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-navy) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(input,textarea)::placeholder { color: var(--receipt-placeholder) !important; opacity: 1 !important; -webkit-text-fill-color: var(--receipt-placeholder) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(button) { opacity: 1 !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(button:not([class*="bg-red-"])) { color: var(--receipt-text) !important; -webkit-text-fill-color: var(--receipt-text) !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(button[class*="bg-blue-"],button[class*="bg-indigo-"],button[class*="bg-violet-"],button[class*="bg-purple-"]) { background: var(--receipt-blue) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) :where(button[class*="bg-red-"]) { background: var(--receipt-red) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
 
-/* Disabled state is the only place where reduced opacity is allowed. */
-.biz-app-main :where(button:disabled,input:disabled,select:disabled,textarea:disabled) {
-  opacity: .62 !important;
-}
-
-.biz-app-main :focus-visible {
-  outline: 3px solid rgba(23,105,255,.48) !important;
-  outline-offset: 2px;
-}
+/* Reduced opacity is reserved for disabled controls only. */
+.biz-app-main :where(button:disabled,input:disabled,select:disabled,textarea:disabled) { opacity: .62 !important; }
+.biz-app-main :focus-visible { outline: 3px solid rgba(23,105,255,.48) !important; outline-offset: 2px; }
 
 @media (max-width: 640px) {
-  .biz-app-main :where(.fixed.inset-0) > :where(div,section,form):not(.absolute) {
-    max-width: calc(100vw - 24px);
-    max-height: calc(100dvh - 24px);
-  }
+  .biz-app-main :where(.fixed.inset-0[class*="z-[60]"],.fixed.inset-0[class*="z-[80]"],.fixed.inset-0[class*="z-[100]"],.fixed.inset-0[class*="z-[120]"],.fixed.inset-0[class*="z-[200]"]) > :where(div,section,form):not(.absolute) { max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }
 }
