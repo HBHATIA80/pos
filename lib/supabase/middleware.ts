@@ -16,10 +16,10 @@ function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((path) => pathname === path || (path !== '/' && pathname.startsWith(`${path}/`)))
 }
 
-function loginRedirect(request: NextRequest) {
+function loginRedirect(request: NextRequest, reason = 'login_in_use') {
   const redirectUrl = request.nextUrl.clone()
   redirectUrl.pathname = '/login'
-  redirectUrl.search = '?error=login_in_use'
+  redirectUrl.search = `?error=${reason}`
   return NextResponse.redirect(redirectUrl)
 }
 
@@ -53,16 +53,18 @@ export async function updateSession(request: NextRequest) {
     const sessionId = await getCurrentSessionId(supabase)
     if (!sessionId) {
       await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-      return loginRedirect(request)
+      return loginRedirect(request, 'session_timeout')
     }
 
-    const { data: claimed, error: claimError } = await supabase.rpc('claim_active_login', {
+    // Never revive a stale session here. Fresh logins use claim_active_login;
+    // normal requests only touch an already-active lock.
+    const { data: active, error: touchError } = await supabase.rpc('touch_active_login', {
       p_session_id: sessionId,
     })
 
-    if (claimError || !claimed) {
+    if (touchError || !active) {
       await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-      return loginRedirect(request)
+      return loginRedirect(request, 'session_timeout')
     }
   }
 

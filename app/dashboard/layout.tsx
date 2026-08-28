@@ -6,6 +6,7 @@ import InvoiceViewer from './invoice-viewer'
 import BulkDeletePanel from './bulk-delete-panel'
 import InvoiceDateSelector from './invoice-date-selector'
 import PosKeyboardShortcuts from './pos-keyboard-shortcuts'
+import SessionGuard from './session-guard'
 
 type Props = { children: React.ReactNode }
 
@@ -40,6 +41,7 @@ export default async function DashboardLayout({ children }: Props) {
 
   return (
     <>
+      <SessionGuard />
       <CustomerCatalogGuard role={profile.role} />
       <POSShell
         profile={{ fullName: profile.full_name, role: profile.role, phone: profile.phone }}

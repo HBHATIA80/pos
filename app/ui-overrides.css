@@ -1,0 +1,78 @@
+/* Final visual overrides: keep light surfaces readable and dark surfaces high-contrast. */
+
+/* Never let the global heading rule turn text-white headings dark. */
+h1.text-white,
+h2.text-white,
+h3.text-white,
+h4.text-white,
+h5.text-white,
+h6.text-white,
+.text-white h1,
+.text-white h2,
+.text-white h3,
+.text-white h4,
+.text-white h5,
+.text-white h6 {
+  color: #fff !important;
+}
+
+/* The landing-page dark CTA must remain genuinely dark with white type. */
+.bg-\[\#102447\] h1,
+.bg-\[\#102447\] h2,
+.bg-\[\#102447\] h3,
+.bg-\[\#102447\] p.text-blue-100,
+.bg-\[\#102447\] .text-white {
+  color: #fff !important;
+}
+
+/* Login hero: strong contrast, no washed-out text. */
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] {
+  background: linear-gradient(145deg, #0a1c38 0%, #102d56 58%, #123a70 100%) !important;
+  color: #fff !important;
+}
+
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] h1,
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] .text-white,
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] .text-slate-200 {
+  color: #fff !important;
+}
+
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] .text-slate-300 {
+  color: #d7e5f7 !important;
+}
+
+main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] .text-slate-500 {
+  color: #a9bdd8 !important;
+}
+
+/* Login form: slightly stronger labels, fields and focus states. */
+main:has(section.bg-\[\#06101f\]) form {
+  border-color: #d9e3ef !important;
+  box-shadow: 0 24px 55px rgba(15, 31, 61, .10) !important;
+}
+
+main:has(section.bg-\[\#06101f\]) form label {
+  color: #18304f !important;
+}
+
+main:has(section.bg-\[\#06101f\]) form input {
+  background: #f8fbff !important;
+  color: #102447 !important;
+}
+
+main:has(section.bg-\[\#06101f\]) form input::placeholder {
+  color: #8a9bb0 !important;
+}
+
+main:has(section.bg-\[\#06101f\]) form input:focus {
+  background: #fff !important;
+}
+
+/* Avoid overly faint secondary copy across the landing/auth pages. */
+.text-slate-400 { color: #71839b !important; }
+
+@media (max-width: 1023px) {
+  main:has(section.bg-\[\#06101f\]) section.bg-\[\#06101f\] {
+    min-height: 300px !important;
+  }
+}
