@@ -9,6 +9,11 @@ const unitSchema = z.object({ name: z.string().trim().min(1).max(60), short_name
 function cleanOptional(value?: string | null) { return value?.trim() || null }
 async function getContext() { const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser(); if (!user) return { supabase, user: null, profile: null }; const { data: profile } = await supabase.from('profiles').select('id,business_id,role,is_active').eq('id', user.id).maybeSingle(); return { supabase, user, profile } }
 function canManageCatalog(profile: { role?: string | null } | null) { return profile?.role === 'admin' || profile?.role === 'staff' }
+function catalogError(error: { code?: string; message?: string } | null, fallback: string) {
+  if (error?.code === '23505') return 'A product with this SKU or barcode already exists in this business.'
+  if (error?.code === '42501') return 'You do not have permission to save catalog items.'
+  return error?.message || fallback
+}
 
 export async function GET(request: Request) {
   const { supabase, user, profile } = await getContext()
@@ -32,12 +37,35 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { supabase, user, profile } = await getContext(); if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const body = await request.json().catch(() => null); const entity = entitySchema.safeParse(body?.entity); if (!entity.success) return NextResponse.json({ error: 'Invalid catalog entity' }, { status: 400 }); const payload = body?.data; let row: Record<string, unknown>
-  if (entity.data === 'products') { const parsed = productSchema.safeParse(payload); if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid product' }, { status: 400 }); row = { business_id: profile.business_id, sku: parsed.data.sku, barcode: cleanOptional(parsed.data.barcode), name: parsed.data.name, description: cleanOptional(parsed.data.description), category_id: parsed.data.category_id ?? null, subcategory_id: parsed.data.subcategory_id ?? null, brand_id: parsed.data.brand_id ?? null, unit_id: parsed.data.unit_id, purchase_price: parsed.data.purchase_price, sale_price: parsed.data.sale_price, opening_stock: parsed.data.opening_stock, current_stock: parsed.data.opening_stock, reorder_level: parsed.data.reorder_level, image_url: cleanOptional(parsed.data.image_url), is_active: parsed.data.is_active ?? true, created_by: user.id } }
-  else if (entity.data === 'units') { const parsed = unitSchema.safeParse(payload); if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid unit' }, { status: 400 }); row = { ...parsed.data, business_id: profile.business_id, created_by: user.id } }
-  else { const parsed = baseSchema.safeParse(payload); if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid master' }, { status: 400 }); row = { business_id: profile.business_id, name: parsed.data.name, code: cleanOptional(parsed.data.code), description: cleanOptional(parsed.data.description), is_active: parsed.data.is_active ?? true, created_by: user.id, ...(entity.data === 'subcategories' ? { category_id: body?.data?.category_id } : {}) }; if (entity.data === 'subcategories' && !z.string().uuid().safeParse(row.category_id).success) return NextResponse.json({ error: 'Category is required for a subcategory' }, { status: 400 }) }
-  const table = entity.data === 'products' ? 'products' : entity.data === 'categories' ? 'catalog_categories' : entity.data === 'subcategories' ? 'catalog_subcategories' : entity.data === 'brands' ? 'catalog_brands' : 'catalog_units'; const { data, error } = await supabase.from(table).insert(row).select('*').single(); if (error) return NextResponse.json({ error: error.message }, { status: 400 }); return NextResponse.json({ item: data }, { status: 201 })
+  const { supabase, user, profile } = await getContext()
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!canManageCatalog(profile)) return NextResponse.json({ error: 'Only admin or staff can add catalog items' }, { status: 403 })
+
+  const body = await request.json().catch(() => null)
+  const entity = entitySchema.safeParse(body?.entity)
+  if (!entity.success) return NextResponse.json({ error: 'Invalid catalog entity' }, { status: 400 })
+  const payload = body?.data
+  let row: Record<string, unknown>
+
+  if (entity.data === 'products') {
+    const parsed = productSchema.safeParse(payload)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid product details' }, { status: 400 })
+    row = { business_id: profile.business_id, sku: parsed.data.sku, barcode: cleanOptional(parsed.data.barcode), name: parsed.data.name, description: cleanOptional(parsed.data.description), category_id: parsed.data.category_id ?? null, subcategory_id: parsed.data.subcategory_id ?? null, brand_id: parsed.data.brand_id ?? null, unit_id: parsed.data.unit_id, purchase_price: parsed.data.purchase_price, sale_price: parsed.data.sale_price, opening_stock: parsed.data.opening_stock, current_stock: parsed.data.opening_stock, reorder_level: parsed.data.reorder_level, image_url: cleanOptional(parsed.data.image_url), is_active: parsed.data.is_active ?? true, created_by: user.id }
+  } else if (entity.data === 'units') {
+    const parsed = unitSchema.safeParse(payload)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid unit' }, { status: 400 })
+    row = { ...parsed.data, business_id: profile.business_id, created_by: user.id }
+  } else {
+    const parsed = baseSchema.safeParse(payload)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid master' }, { status: 400 })
+    row = { business_id: profile.business_id, name: parsed.data.name, code: cleanOptional(parsed.data.code), description: cleanOptional(parsed.data.description), is_active: parsed.data.is_active ?? true, created_by: user.id, ...(entity.data === 'subcategories' ? { category_id: body?.data?.category_id } : {}) }
+    if (entity.data === 'subcategories' && !z.string().uuid().safeParse(row.category_id).success) return NextResponse.json({ error: 'Category is required for a subcategory' }, { status: 400 })
+  }
+
+  const table = entity.data === 'products' ? 'products' : entity.data === 'categories' ? 'catalog_categories' : entity.data === 'subcategories' ? 'catalog_subcategories' : entity.data === 'brands' ? 'catalog_brands' : 'catalog_units'
+  const { data, error } = await supabase.from(table).insert(row).select('*').single()
+  if (error) return NextResponse.json({ error: catalogError(error, 'Unable to save catalog item') }, { status: 400 })
+  return NextResponse.json({ item: data }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
