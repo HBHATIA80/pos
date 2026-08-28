@@ -3,6 +3,7 @@ import './globals.css'
 import './contrast.css'
 import './readability.css'
 import './design-system.css'
+import './receipt-palette.css'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
