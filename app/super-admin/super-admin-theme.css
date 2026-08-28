@@ -1,0 +1,326 @@
+.super-admin-shell {
+  --sa-ink: #14231f;
+  --sa-muted: #62756f;
+  --sa-line: #dce9e3;
+  --sa-surface: #ffffff;
+  --sa-soft: #f3f8f5;
+  --sa-green-900: #123f31;
+  --sa-green-800: #165843;
+  --sa-green-700: #1b6f54;
+  --sa-green-600: #218866;
+  --sa-green-500: #2aa579;
+  --sa-green-100: #e1f3eb;
+  --sa-green-50: #eff9f4;
+  padding: 24px 20px 40px;
+}
+
+.super-admin-shell > main {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  color: var(--sa-ink);
+}
+
+/* Hero / control header */
+.super-admin-shell > main > section:first-child {
+  border: 1px solid #d5e6de !important;
+  border-radius: 26px !important;
+  box-shadow: 0 18px 50px rgba(20, 63, 49, .10) !important;
+}
+
+.super-admin-shell > main > section:first-child > div:first-child {
+  background: linear-gradient(135deg, var(--sa-green-900) 0%, var(--sa-green-800) 58%, var(--sa-green-600) 100%) !important;
+  padding: 34px !important;
+}
+
+.super-admin-shell > main > section:first-child h1 {
+  color: #fff !important;
+  font-size: clamp(2rem, 3.4vw, 3rem) !important;
+  line-height: 1.08 !important;
+  font-weight: 850 !important;
+  letter-spacing: -.035em !important;
+}
+
+.super-admin-shell > main > section:first-child p {
+  color: #d9eee6 !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+
+.super-admin-shell > main > section:first-child > div:first-child > div:first-child > div:first-child {
+  color: #e5f7ef !important;
+  background: rgba(255,255,255,.12) !important;
+  border: 1px solid rgba(255,255,255,.18);
+  padding: 7px 12px !important;
+  font-size: .76rem !important;
+  letter-spacing: .09em;
+}
+
+.super-admin-shell > main > section:first-child > div:first-child button {
+  min-height: 46px;
+  border-radius: 13px !important;
+  border: 1px solid rgba(255,255,255,.26) !important;
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  box-shadow: 0 5px 16px rgba(0,0,0,.08);
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.super-admin-shell > main > section:first-child > div:first-child button:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.2) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.super-admin-shell > main > section:first-child > div:first-child button:last-child {
+  background: #f4fbf8 !important;
+  color: var(--sa-green-800) !important;
+  border-color: #f4fbf8 !important;
+}
+
+.super-admin-shell > main > section:first-child > div:first-child span.bg-emerald-400\/10 {
+  background: rgba(185, 246, 218, .16) !important;
+  color: #c7f4df !important;
+  border-color: rgba(199,244,223,.28) !important;
+}
+
+/* Metrics strip */
+.super-admin-shell > main > section:first-child > div:last-child {
+  background: var(--sa-line) !important;
+}
+
+.super-admin-shell > main > section:first-child > div:last-child > div {
+  min-height: 118px;
+  background: #fff !important;
+  padding: 18px 15px !important;
+  transition: background .18s ease, transform .18s ease;
+}
+
+.super-admin-shell > main > section:first-child > div:last-child > div:hover {
+  background: var(--sa-green-50) !important;
+}
+
+.super-admin-shell > main > section:first-child > div:last-child svg {
+  color: var(--sa-green-600) !important;
+  width: 21px;
+  height: 21px;
+}
+
+.super-admin-shell > main > section:first-child > div:last-child > div > div:nth-child(2) {
+  color: var(--sa-ink) !important;
+  font-size: 1.35rem !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+}
+
+.super-admin-shell > main > section:first-child > div:last-child > div > div:nth-child(3) {
+  color: #587069 !important;
+  font-size: .74rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .10em;
+}
+
+/* Summary cards */
+.super-admin-shell > main > section:nth-child(2) > div {
+  min-height: 148px;
+  border: 1px solid var(--sa-line) !important;
+  border-radius: 20px !important;
+  background: var(--sa-surface) !important;
+  box-shadow: 0 10px 28px rgba(20,63,49,.07) !important;
+  padding: 22px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.super-admin-shell > main > section:nth-child(2) > div::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--sa-green-500), var(--sa-green-700));
+}
+
+.super-admin-shell > main > section:nth-child(2) > div > div:first-child {
+  color: #5d746c !important;
+  font-size: .78rem !important;
+  font-weight: 850 !important;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.super-admin-shell > main > section:nth-child(2) > div > div:nth-child(2) {
+  color: var(--sa-ink) !important;
+  font-size: clamp(1.55rem, 2.4vw, 2rem) !important;
+  font-weight: 850 !important;
+  line-height: 1.15 !important;
+}
+
+.super-admin-shell > main > section:nth-child(2) > div > div:last-child {
+  color: #6c817a !important;
+  font-size: .9rem !important;
+  line-height: 1.45 !important;
+}
+
+/* Shops / users / activity workspace */
+.super-admin-shell > main > section:nth-child(3) {
+  border: 1px solid var(--sa-line) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 12px 34px rgba(20,63,49,.07) !important;
+  overflow: hidden;
+}
+
+.super-admin-shell > main > section:nth-child(3) > div:first-child {
+  background: #fbfdfc !important;
+  padding: 18px !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child {
+  background: #eaf5f0 !important;
+  border: 1px solid #d7ebe3;
+  border-radius: 14px !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child button {
+  min-height: 40px;
+  border-radius: 10px !important;
+  color: #587069 !important;
+  font-size: .88rem !important;
+  font-weight: 800 !important;
+  padding-inline: 15px !important;
+  transition: all .18s ease;
+}
+
+.super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child button:hover,
+.super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child button.bg-white {
+  color: var(--sa-green-800) !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) input {
+  min-height: 46px;
+  border: 1px solid #cfe0d9 !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  color: var(--sa-ink) !important;
+  font-size: .94rem !important;
+  box-shadow: 0 3px 12px rgba(20,63,49,.04);
+}
+
+.super-admin-shell > main > section:nth-child(3) input:focus {
+  border-color: var(--sa-green-500) !important;
+  box-shadow: 0 0 0 4px rgba(42,165,121,.13) !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) > div:not(:first-child) {
+  color: var(--sa-ink);
+}
+
+.super-admin-shell > main > section:nth-child(3) h3 {
+  font-size: 1.02rem !important;
+  font-weight: 850 !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) p {
+  font-size: .9rem;
+}
+
+.super-admin-shell > main > section:nth-child(3) button {
+  min-height: 42px;
+  border-radius: 11px !important;
+  font-size: .84rem !important;
+  font-weight: 800 !important;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.super-admin-shell > main > section:nth-child(3) button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.super-admin-shell > main > section:nth-child(3) .bg-emerald-600 {
+  background: var(--sa-green-600) !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) .hover\:bg-emerald-700:hover {
+  background: var(--sa-green-700) !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) .bg-blue-50 {
+  background: var(--sa-green-50) !important;
+  color: var(--sa-green-700) !important;
+}
+
+.super-admin-shell > main > section:nth-child(3) .text-blue-600 {
+  color: var(--sa-green-600) !important;
+}
+
+/* Comfortable touch targets and mobile layout */
+@media (max-width: 767px) {
+  .super-admin-shell {
+    padding: 14px 12px 28px;
+  }
+
+  .super-admin-shell > main {
+    max-width: none;
+  }
+
+  .super-admin-shell > main > section:first-child > div:first-child {
+    padding: 22px 18px !important;
+  }
+
+  .super-admin-shell > main > section:first-child h1 {
+    font-size: 1.8rem !important;
+  }
+
+  .super-admin-shell > main > section:first-child p {
+    font-size: .94rem !important;
+  }
+
+  .super-admin-shell > main > section:first-child > div:first-child > div:last-child {
+    width: 100%;
+  }
+
+  .super-admin-shell > main > section:first-child > div:first-child button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 125px;
+  }
+
+  .super-admin-shell > main > section:first-child > div:first-child button:last-child {
+    flex-basis: 100%;
+  }
+
+  .super-admin-shell > main > section:first-child > div:last-child > div {
+    min-height: 102px;
+    padding: 14px 10px !important;
+  }
+
+  .super-admin-shell > main > section:first-child > div:last-child > div > div:nth-child(2) {
+    font-size: 1.08rem !important;
+  }
+
+  .super-admin-shell > main > section:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .super-admin-shell > main > section:nth-child(2) > div {
+    min-height: 122px;
+  }
+
+  .super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .super-admin-shell > main > section:nth-child(3) > div:first-child > div:first-child button {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .super-admin-shell {
+    padding-inline: 16px;
+  }
+
+  .super-admin-shell > main > section:nth-child(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
