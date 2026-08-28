@@ -1,0 +1,360 @@
+/* BIZYBUK Import Products — page-specific visual layer
+   Matches the homepage's approved green brand language while preserving
+   the Excel workflow and making the bulk grid readable on desktop + mobile. */
+
+:root {
+  --bb-home-green: #17624f;
+  --bb-home-green-dark: #104b3d;
+  --bb-home-green-mid: #1f8067;
+  --bb-home-green-soft: #eaf7f1;
+  --bb-home-green-pale: #f4faf7;
+  --bb-home-ink: #10261f;
+  --bb-home-body: #36544a;
+  --bb-home-muted: #61766d;
+  --bb-home-line: #d5e4dd;
+}
+
+/* Page hero: same green family as the homepage Why BIZYBUK card. */
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] {
+  background: linear-gradient(135deg, var(--bb-home-green) 0%, var(--bb-home-green-mid) 100%) !important;
+  background-image: linear-gradient(135deg, var(--bb-home-green) 0%, var(--bb-home-green-mid) 100%) !important;
+  border: 1px solid var(--bb-home-green-dark) !important;
+  box-shadow: 0 18px 42px rgba(23, 98, 79, .18) !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] :where(h2,p,a,svg) {
+  opacity: 1 !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] h2 {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-size: clamp(1.55rem, 2.4vw, 2.15rem) !important;
+  line-height: 1.16 !important;
+  font-weight: 900 !important;
+  letter-spacing: -.025em !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] p {
+  color: #eaf8f2 !important;
+  -webkit-text-fill-color: #eaf8f2 !important;
+  font-size: 1rem !important;
+  line-height: 1.55 !important;
+  font-weight: 600 !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] :where(.bg-white\/15) {
+  background: rgba(255,255,255,.14) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > div > div > button {
+  background: #fff !important;
+  color: var(--bb-home-green-dark) !important;
+  -webkit-text-fill-color: var(--bb-home-green-dark) !important;
+  border: 1px solid rgba(255,255,255,.9) !important;
+  min-height: 48px !important;
+  border-radius: 14px !important;
+  font-size: .98rem !important;
+  font-weight: 900 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12) !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > a {
+  background: rgba(255,255,255,.13) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border-radius: 12px !important;
+}
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > a:hover {
+  background: rgba(255,255,255,.2) !important;
+}
+
+/* Information cards: calm white surfaces with the homepage green accent. */
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white) {
+  border-color: var(--bb-home-line) !important;
+  box-shadow: 0 8px 24px rgba(23,98,79,.07) !important;
+}
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white) h3 {
+  color: var(--bb-home-ink) !important;
+  -webkit-text-fill-color: var(--bb-home-ink) !important;
+  font-size: 1.15rem !important;
+  font-weight: 850 !important;
+}
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white) svg {
+  color: var(--bb-home-green) !important;
+}
+
+/* Upload card. */
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] {
+  border-color: var(--bb-home-line) !important;
+  box-shadow: 0 10px 28px rgba(23,98,79,.07) !important;
+}
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] h2 {
+  color: var(--bb-home-ink) !important;
+  -webkit-text-fill-color: var(--bb-home-ink) !important;
+  font-size: 1.45rem !important;
+  font-weight: 900 !important;
+}
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(.border-dashed) {
+  border-color: #b9d6ca !important;
+  background: var(--bb-home-green-pale) !important;
+}
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(button.bg-slate-950) {
+  background: var(--bb-home-green) !important;
+  border-color: var(--bb-home-green-dark) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  min-height: 48px !important;
+  border-radius: 14px !important;
+}
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(button.bg-indigo-600) {
+  background: linear-gradient(135deg, var(--bb-home-green), var(--bb-home-green-dark)) !important;
+  border-color: var(--bb-home-green-dark) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  min-height: 50px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 18px rgba(23,98,79,.18) !important;
+}
+
+/* Bulk-entry modal: high contrast, green controls, readable grid. */
+.biz-app-main :where([class*="z-[100]"]) {
+  background: rgba(16,38,31,.64) !important;
+  backdrop-filter: blur(3px) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div {
+  background: #fff !important;
+  border: 1px solid var(--bb-home-line) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 70px rgba(16,38,31,.24) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :first-child {
+  background: #fff !important;
+  border-color: var(--bb-home-line) !important;
+  min-height: 78px !important;
+}
+.biz-app-main :where([class*="z-[100]"]) h2 {
+  color: var(--bb-home-ink) !important;
+  -webkit-text-fill-color: var(--bb-home-ink) !important;
+  font-size: 1.25rem !important;
+  line-height: 1.25 !important;
+  font-weight: 900 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) p {
+  color: var(--bb-home-body) !important;
+  -webkit-text-fill-color: var(--bb-home-body) !important;
+  opacity: 1 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) :where(.text-slate-500) {
+  color: var(--bb-home-muted) !important;
+  -webkit-text-fill-color: var(--bb-home-muted) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) {
+  background: var(--bb-home-green-pale) !important;
+  border-color: var(--bb-home-line) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button[class*="bg-indigo-600"] {
+  background: var(--bb-home-green) !important;
+  border-color: var(--bb-home-green-dark) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 5px 14px rgba(23,98,79,.18) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button[class*="bg-indigo-600"]:hover {
+  background: var(--bb-home-green-dark) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button[class*="bg-white"] {
+  background: #fff !important;
+  border-color: var(--bb-home-line) !important;
+  color: var(--bb-home-green-dark) !important;
+  -webkit-text-fill-color: var(--bb-home-green-dark) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) span {
+  color: var(--bb-home-body) !important;
+  -webkit-text-fill-color: var(--bb-home-body) !important;
+  font-size: .9rem !important;
+  font-weight: 800 !important;
+}
+
+/* Close control */
+.biz-app-main :where([class*="z-[100]"]) button[aria-label=""] {
+  color: var(--bb-home-body) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :first-child button {
+  background: #fff !important;
+  border: 1px solid var(--bb-home-line) !important;
+  color: var(--bb-home-body) !important;
+  -webkit-text-fill-color: var(--bb-home-body) !important;
+  min-height: 44px !important;
+  min-width: 44px !important;
+}
+
+/* Excel table: remove the pill-like legacy inputs and increase legibility. */
+.biz-app-main :where([class*="z-[100]"]) table {
+  min-width: 2100px !important;
+  color: var(--bb-home-ink) !important;
+  font-size: .9rem !important;
+}
+.biz-app-main :where([class*="z-[100]"]) thead th {
+  background: #edf7f2 !important;
+  color: #294a3d !important;
+  -webkit-text-fill-color: #294a3d !important;
+  border-color: #cfe0d8 !important;
+  font-size: .84rem !important;
+  line-height: 1.25 !important;
+  font-weight: 900 !important;
+  letter-spacing: .025em !important;
+  white-space: nowrap !important;
+  height: 44px !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody td {
+  border-color: #d9e6e0 !important;
+  color: var(--bb-home-ink) !important;
+  font-size: .9rem !important;
+  font-weight: 600 !important;
+  height: 50px !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody tr:hover td {
+  background: #f2faf6 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody input,
+.biz-app-main :where([class*="z-[100]"]) tbody select {
+  min-height: 48px !important;
+  height: 48px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--bb-home-ink) !important;
+  -webkit-text-fill-color: var(--bb-home-ink) !important;
+  font-size: .92rem !important;
+  font-weight: 600 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody input:focus,
+.biz-app-main :where([class*="z-[100]"]) tbody select:focus {
+  background: #eaf7f1 !important;
+  box-shadow: inset 0 0 0 2px var(--bb-home-green) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody input::placeholder {
+  color: #71867c !important;
+  -webkit-text-fill-color: #71867c !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody td:has(input.ring-1) {
+  background: #fff2f2 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody button {
+  color: #b72e2e !important;
+  -webkit-text-fill-color: #b72e2e !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+}
+.biz-app-main :where([class*="z-[100]"]) tbody button:hover {
+  background: #fff0f0 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :last-child {
+  background: #fff !important;
+  border-color: var(--bb-home-line) !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :last-child button[class*="bg-indigo-600"] {
+  background: linear-gradient(135deg, var(--bb-home-green), var(--bb-home-green-dark)) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border-color: var(--bb-home-green-dark) !important;
+  min-height: 48px !important;
+  border-radius: 13px !important;
+  font-size: .96rem !important;
+  font-weight: 900 !important;
+}
+.biz-app-main :where([class*="z-[100]"]) > div > :last-child button:not([class*="bg-indigo-600"]) {
+  background: #fff !important;
+  color: var(--bb-home-body) !important;
+  -webkit-text-fill-color: var(--bb-home-body) !important;
+  border-color: var(--bb-home-line) !important;
+}
+
+/* New-master dialog is green/white and remains easy to read. */
+.biz-app-main :where([class*="z-[120]"]) {
+  background: rgba(16,38,31,.64) !important;
+  backdrop-filter: blur(3px) !important;
+}
+.biz-app-main :where([class*="z-[120]"]) > div {
+  border: 1px solid var(--bb-home-line) !important;
+  box-shadow: 0 24px 60px rgba(16,38,31,.22) !important;
+}
+.biz-app-main :where([class*="z-[120]"]) h3 {
+  color: var(--bb-home-ink) !important;
+  -webkit-text-fill-color: var(--bb-home-ink) !important;
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+}
+.biz-app-main :where([class*="z-[120]"]) input:focus {
+  border-color: var(--bb-home-green) !important;
+  box-shadow: 0 0 0 4px rgba(23,98,79,.14) !important;
+}
+
+/* Mobile: the grid remains horizontally scrollable, while the dialog itself
+   uses the full viewport and keeps controls reachable. */
+@media (max-width: 767px) {
+  .biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] {
+    padding: 20px !important;
+    border-radius: 22px !important;
+  }
+  .biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] h2 {
+    font-size: 1.45rem !important;
+  }
+  .biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > div {
+    gap: 16px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) {
+    padding: 8px !important;
+    align-items: stretch !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div {
+    width: 100% !important;
+    max-width: none !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 18px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :first-child {
+    padding: 14px 16px !important;
+    min-height: 72px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) {
+    padding: 10px 12px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button {
+    min-height: 44px !important;
+    font-size: .86rem !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) span {
+    width: 100% !important;
+    margin-left: 0 !important;
+    text-align: left !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :last-child {
+    padding: 12px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :last-child p {
+    font-size: .78rem !important;
+    line-height: 1.45 !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :last-child > div {
+    width: 100% !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :last-child button {
+    min-height: 46px !important;
+    width: auto !important;
+    flex: 1 1 0 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) {
+    gap: 6px !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button {
+    padding-inline: 10px !important;
+    font-size: .8rem !important;
+  }
+  .biz-app-main :where([class*="z-[100]"]) > div > :last-child button {
+    padding-inline: 10px !important;
+    font-size: .86rem !important;
+  }
+}
