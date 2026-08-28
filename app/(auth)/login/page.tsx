@@ -3,11 +3,25 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, MessageCircle, Smartphone, Zap } from 'lucide-react'
+import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, MessageCircle, Smartphone, ShoppingCart, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 
 const supportUrl = 'https://wa.me/919996609399?text=I%20have%20a%20question%20about%20BIZYBUK.IN'
+
+function HomeBrand() {
+  return (
+    <Link href="/" aria-label="BIZYBUK.IN home" className="flex w-fit items-center gap-3">
+      <span className="relative flex h-10 w-10 items-center justify-center rounded-[11px] border-[3px] border-[#18795c] bg-white text-[18px] font-black text-[#18795c] shadow-sm">
+        <ShoppingCart className="absolute h-6 w-6" strokeWidth={2.8} />
+        <span className="relative z-10 mt-0.5 text-[15px] font-black text-white">B</span>
+      </span>
+      <span className="text-[23px] font-black tracking-[-.055em] text-[#17382f]">
+        BIZYBUK<span className="text-[#18795c]">.IN</span>
+      </span>
+    </Link>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -45,7 +59,7 @@ export default function LoginPage() {
         <div className="absolute -left-32 top-24 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="absolute -right-32 bottom-0 h-[30rem] w-[30rem] rounded-full bg-teal-400/10 blur-3xl" />
         <div className="relative flex flex-1 flex-col px-10 py-8 xl:px-16">
-          <Link href="/" className="brand-lockup w-fit"><span className="brand-mark bg-[#0f8f83] shadow-lg shadow-[#0f8f83]/20">B</span><span className="brand-wordmark">BIZYBUK<span className="text-[#0f8f83]">.IN</span></span></Link>
+          <HomeBrand />
           <div className="my-auto max-w-xl pb-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wider text-[#087f73] shadow-sm"><Zap className="h-3.5 w-3.5" /> Fast · Secure · Smart</div>
             <h1 className="mt-7 text-5xl font-black leading-[1.02] tracking-[-.055em] text-slate-950 xl:text-6xl">Run your business,<br /><span className="text-[#087f73]">with clarity.</span></h1>
@@ -60,7 +74,7 @@ export default function LoginPage() {
 
       <section className="flex min-h-screen flex-col bg-[#f7fbfa]">
         <header className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
-          <Link href="/" className="brand-lockup lg:hidden"><span className="brand-mark bg-[#0f8f83] shadow-sm">B</span><span className="brand-wordmark">BIZYBUK<span className="text-[#0f8f83]">.IN</span></span></Link>
+          <div className="lg:hidden"><HomeBrand /></div>
           <div className="ml-auto text-right text-sm font-semibold text-slate-700">New to BIZYBUK.IN? <Link href="/signup" className="font-black text-[#087f73] hover:text-[#06665d]">Create a shop</Link></div>
         </header>
         <div className="flex flex-1 items-center justify-center px-5 pb-10 pt-2 sm:px-8 lg:px-12 lg:pb-16">
@@ -69,7 +83,7 @@ export default function LoginPage() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#087f73]"><Smartphone className="h-6 w-6" strokeWidth={2.5} /></div>
               <p className="text-xs font-black uppercase tracking-[.18em] text-[#087f73]">Welcome back</p>
               <h2 className="mt-2 text-3xl font-black tracking-[-.035em] text-slate-950 sm:text-4xl">Continue to your workspace</h2>
-              <p className="mt-3 text-base font-medium leading-6 text-slate-700">Sign in to your BIZYBUK.IN business workspace or customer portal.</p>
+              <p className="mt-3 text-base font-medium leading-6 text-slate-700">Sign in to your business workspace or customer portal.</p>
             </div>
             <form onSubmit={handleLogin} className="rounded-[28px] border-2 border-slate-200 bg-white p-5 shadow-xl shadow-slate-300/40 sm:p-7">
               <div><label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-950">Mobile number</label><div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="phone" type="tel" inputMode="tel" autoComplete="tel" autoCapitalize="none" autoCorrect="off" enterKeyHint="next" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div></div>
