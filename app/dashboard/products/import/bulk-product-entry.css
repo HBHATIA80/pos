@@ -120,3 +120,89 @@
 .fixed.inset-0.z-50 table tbody td {
   border-color: #dbe5e2 !important;
 }
+
+/* Required-field guidance: make the mandatory columns unmistakable. */
+.fixed.inset-0.z-50 table thead th:nth-child(2),
+.fixed.inset-0.z-50 table thead th:nth-child(4),
+.fixed.inset-0.z-50 table thead th:nth-child(6),
+.fixed.inset-0.z-50 table thead th:nth-child(8),
+.fixed.inset-0.z-50 table thead th:nth-child(9),
+.fixed.inset-0.z-50 table thead th:nth-child(10),
+.fixed.inset-0.z-50 table thead th:nth-child(11) {
+  background: #fff7f7 !important;
+  color: #7f1d1d !important;
+  border-bottom-color: #fecdd3 !important;
+}
+
+.fixed.inset-0.z-50 table thead th:nth-child(2)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(4)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(6)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(8)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(9)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(10)::after,
+.fixed.inset-0.z-50 table thead th:nth-child(11)::after {
+  content: ' REQUIRED';
+  display: inline-block;
+  margin-left: 5px;
+  color: #b42318 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .04em;
+}
+
+/* Stronger red wash on the complete required cells, not just the inner control. */
+.fixed.inset-0.z-50 table tbody tr td:nth-child(2),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(4),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(6),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(8),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(9),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(10),
+.fixed.inset-0.z-50 table tbody tr td:nth-child(11) {
+  background: #fff8f8 !important;
+}
+
+.fixed.inset-0.z-50 table tbody tr td:nth-child(2) input,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(4) input,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(6) select,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(8) select,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(9) select,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(10) input,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(11) input {
+  background: #fff1f2 !important;
+  border: 1px solid #f3b7bd !important;
+}
+
+.fixed.inset-0.z-50 table tbody tr td:nth-child(2) input::placeholder,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(4) input::placeholder,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(10) input::placeholder,
+.fixed.inset-0.z-50 table tbody tr td:nth-child(11) input::placeholder {
+  color: #9f5961 !important;
+  opacity: 1 !important;
+}
+
+/* Make the validation message itself explicit instead of relying only on a toast. */
+.fixed.inset-0.z-50 table {
+  position: relative;
+}
+
+.fixed.inset-0.z-50 table thead th {
+  min-height: 44px;
+  font-size: 13px !important;
+}
+
+.fixed.inset-0.z-50 table tbody td,
+.fixed.inset-0.z-50 table tbody input,
+.fixed.inset-0.z-50 table tbody select {
+  font-size: 15px !important;
+}
+
+.fixed.inset-0.z-50 table tbody tr td:last-child button svg {
+  stroke-width: 2.4 !important;
+}
+
+/* Always keep the delete control visible against the grid. */
+.fixed.inset-0.z-50 table tbody tr td:last-child,
+.fixed.inset-0.z-50 table tbody tr td:last-child button {
+  position: relative;
+  z-index: 2;
+}
