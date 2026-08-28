@@ -1,0 +1,226 @@
+/* BIZYBUK final readability layer
+ * Loaded after globals.css + contrast.css.
+ * Keep light-surface text dark and controls readable without changing
+ * intentional dark analytics surfaces.
+ */
+
+:root {
+  --read-text: #0b1930;
+  --read-body: #334155;
+  --read-muted: #526783;
+  --read-placeholder: #64748b;
+  --read-border: #b8c7d9;
+  --read-border-focus: #2563eb;
+  --read-surface: #ffffff;
+  --read-soft: #f8fafc;
+}
+
+/* Normal application content */
+.biz-app-main {
+  color: var(--read-text);
+}
+
+.biz-app-main p,
+.biz-app-main label,
+.biz-app-main dt,
+.biz-app-main dd,
+.biz-app-main legend {
+  color: var(--read-body);
+}
+
+.biz-app-main h1,
+.biz-app-main h2,
+.biz-app-main h3,
+.biz-app-main h4,
+.biz-app-main h5,
+.biz-app-main h6 {
+  color: var(--read-text);
+}
+
+/* Light cards/panels: restore contrast even when a component uses pale
+   Tailwind text utilities. */
+.biz-app-main [class~="bg-white"] label,
+.biz-app-main [class~="bg-white"] p,
+.biz-app-main [class~="bg-white"] dt,
+.biz-app-main [class~="bg-white"] dd,
+.biz-app-main [class~="bg-slate-50"] label,
+.biz-app-main [class~="bg-slate-50"] p,
+.biz-app-main [class~="bg-slate-50"] dt,
+.biz-app-main [class~="bg-slate-50"] dd {
+  color: var(--read-body) !important;
+}
+
+.biz-app-main [class~="bg-white"] h1,
+.biz-app-main [class~="bg-white"] h2,
+.biz-app-main [class~="bg-white"] h3,
+.biz-app-main [class~="bg-white"] h4,
+.biz-app-main [class~="bg-slate-50"] h1,
+.biz-app-main [class~="bg-slate-50"] h2,
+.biz-app-main [class~="bg-slate-50"] h3,
+.biz-app-main [class~="bg-slate-50"] h4 {
+  color: var(--read-text) !important;
+}
+
+/* Do not allow low-contrast white/gray utilities to disappear on light
+   application surfaces. Dark gradient/hero components are excluded below. */
+.biz-app-main :where(
+  .text-white,
+  [class*="text-white/"],
+  .text-slate-200,
+  .text-slate-300,
+  .text-slate-400
+) {
+  color: var(--read-muted) !important;
+}
+
+.biz-app-main :where(.text-slate-950, .text-slate-900) {
+  color: var(--read-text) !important;
+}
+
+.biz-app-main :where(.text-slate-800, .text-slate-700, .text-slate-600) {
+  color: var(--read-body) !important;
+}
+
+/* Restore intentional white text inside dark analytics/hero surfaces. */
+.biz-app-main :where(
+  [class*="from-slate-950"],
+  [class*="from-slate-900"],
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"]
+) :where(.text-white, [class*="text-white/"], .text-slate-950, .text-slate-900) {
+  color: #ffffff !important;
+}
+
+.biz-app-main :where(
+  [class*="from-slate-950"],
+  [class*="from-slate-900"],
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"]
+) :where(.text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800) {
+  color: #cbd5e1 !important;
+}
+
+/* Form controls everywhere: readable value, placeholder, label and focus. */
+.biz-app-main input:not([type="checkbox"]):not([type="radio"]),
+.biz-app-main select,
+.biz-app-main textarea {
+  color: var(--read-text) !important;
+  background: var(--read-surface) !important;
+  border-color: var(--read-border) !important;
+  -webkit-text-fill-color: var(--read-text) !important;
+}
+
+.biz-app-main input:not([type="checkbox"]):not([type="radio"])::placeholder,
+.biz-app-main textarea::placeholder {
+  color: var(--read-placeholder) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--read-placeholder) !important;
+}
+
+.biz-app-main input:not([type="checkbox"]):not([type="radio"]):focus,
+.biz-app-main select:focus,
+.biz-app-main textarea:focus {
+  border-color: var(--read-border-focus) !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.14) !important;
+}
+
+.biz-app-main select option {
+  color: var(--read-text);
+  background: #ffffff;
+}
+
+/* Fixed light dialogs/modals, including the Add Party form and import forms.
+   The overlay stays dim; the actual dialog is always fully opaque. */
+.biz-app-main > .fixed.inset-0 {
+  background: rgba(15,23,42,.54) !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section, form) {
+  opacity: 1 !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(
+  h1, h2, h3, h4, h5, h6, label, legend, p, dt, dd
+) {
+  opacity: 1 !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(
+  label, legend
+) {
+  color: var(--read-text) !important;
+  font-weight: 650 !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(p, dt, dd) {
+  color: var(--read-body) !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(h1, h2, h3, h4, h5, h6) {
+  color: var(--read-text) !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(input, select, textarea) {
+  color: var(--read-text) !important;
+  background: #ffffff !important;
+  border-color: var(--read-border) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--read-text) !important;
+}
+
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(input, textarea)::placeholder {
+  color: var(--read-placeholder) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--read-placeholder) !important;
+}
+
+/* Explicitly neutralize accidental pale text utilities inside light dialogs. */
+.biz-app-main > .fixed.inset-0 > :where(div, section) :where(
+  .text-white,
+  [class*="text-white/"],
+  .text-slate-200,
+  .text-slate-300,
+  .text-slate-400
+) {
+  color: var(--read-body) !important;
+}
+
+/* Keep primary dialog actions high contrast. */
+.biz-app-main > .fixed.inset-0 > :where(div, section) button[class*="bg-blue-600"],
+.biz-app-main > .fixed.inset-0 > :where(div, section) button[class*="bg-indigo-600"] {
+  color: #ffffff !important;
+  background: linear-gradient(135deg,#1769ff,#1558d6) !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Disabled controls are visibly inactive but their text must remain readable. */
+.biz-app-main button:disabled,
+.biz-app-main input:disabled,
+.biz-app-main select:disabled,
+.biz-app-main textarea:disabled {
+  opacity: .62;
+}
+
+.biz-app-main button:disabled {
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Readability for common data tables and dense panels. */
+.biz-app-main table tbody td {
+  color: var(--read-body) !important;
+}
+
+.biz-app-main table thead th {
+  color: #405a79 !important;
+}
+
+/* Modal close buttons and secondary actions. */
+.biz-app-main > .fixed.inset-0 > :where(div, section) button:not([class*="bg-blue-600"]):not([class*="bg-indigo-600"]) {
+  color: #334155;
+}
+
+/* Accessibility: clear keyboard focus without changing layout. */
+.biz-app-main :focus-visible {
+  outline: 3px solid rgba(37,99,235,.48) !important;
+  outline-offset: 2px;
+}
