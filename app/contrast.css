@@ -87,6 +87,59 @@ body { color: #0b1220; }
 .biz-login-feature { color: #111827 !important; font-weight: 700 !important; }
 .biz-login-feature-icon { background: #1769ff !important; color: #fff !important; }
 
+/* Product forms and dialogs: never rely on low-opacity utility colors for primary content. */
+.biz-product-form { color: #0b1220 !important; }
+.biz-product-form h1, .biz-product-form h2, .biz-product-form h3, .biz-product-form label { color: #111827 !important; }
+.biz-product-form p { color: #475569 !important; }
+.biz-product-form input, .biz-product-form select, .biz-product-form textarea {
+  color: #0b1220 !important;
+  background: #ffffff !important;
+  border-color: #b8c7d9 !important;
+}
+.biz-product-form input::placeholder, .biz-product-form textarea::placeholder { color: #64748b !important; opacity: 1 !important; }
+.biz-product-form input:focus, .biz-product-form select:focus, .biz-product-form textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.14) !important;
+}
+.biz-product-form .text-slate-400 { color: #64748b !important; }
+.biz-product-form .text-slate-500 { color: #475569 !important; }
+.biz-product-form .text-slate-600, .biz-product-form .text-slate-700 { color: #334155 !important; }
+.biz-product-form .text-indigo-600 { color: #4338ca !important; }
+.biz-product-form .bg-slate-50 { background: #f8fafc !important; }
+
+/* Bulk-delete modal: strong separation from the dimmed page and readable controls. */
+.biz-bulk-delete-overlay { background: rgba(15,23,42,.62) !important; }
+.biz-bulk-delete-modal {
+  color: #0b1220 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 28px 80px rgba(15,23,42,.30) !important;
+  opacity: 1 !important;
+}
+.biz-bulk-delete-modal h2 { color: #0b1220 !important; }
+.biz-bulk-delete-modal p, .biz-bulk-delete-modal .text-slate-500 { color: #475569 !important; }
+.biz-bulk-delete-modal .text-slate-600 { color: #334155 !important; }
+.biz-bulk-delete-modal .text-slate-700, .biz-bulk-delete-modal .text-slate-900 { color: #111827 !important; }
+.biz-bulk-delete-modal .text-slate-400 { color: #64748b !important; }
+.biz-bulk-delete-modal input[type="text"], .biz-bulk-delete-modal input:not([type]) {
+  color: #111827 !important;
+  background: #ffffff !important;
+  border: 1px solid #94a3b8 !important;
+}
+.biz-bulk-delete-modal input::placeholder { color: #64748b !important; opacity: 1 !important; }
+.biz-bulk-delete-modal .biz-bulk-tab { color: #334155 !important; background: #f1f5f9 !important; }
+.biz-bulk-delete-modal .biz-bulk-tab[aria-selected="true"] { color: #9f1239 !important; background: #ffffff !important; border: 2px solid #fb7185 !important; box-shadow: 0 2px 8px rgba(190,24,93,.12) !important; }
+.biz-bulk-delete-modal .biz-bulk-loading { color: #475569 !important; }
+.biz-bulk-delete-modal .biz-bulk-row { color: #111827 !important; }
+.biz-bulk-delete-modal .biz-bulk-row:hover { background: #fff1f2 !important; }
+.biz-bulk-delete-modal .biz-bulk-row-meta { color: #475569 !important; }
+.biz-bulk-delete-modal .biz-bulk-footer { color: #475569 !important; background: #ffffff !important; }
+.biz-bulk-delete-modal button:focus-visible, .biz-product-form button:focus-visible { outline: 3px solid rgba(37,99,235,.55) !important; outline-offset: 2px; }
+
+/* Disabled controls remain legible while visibly inactive. */
+button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: .68; }
+button:disabled { color: inherit; }
+
 /* Mobile ergonomics. */
 @media (max-width: 1023px) {
   body { font-size: 15px; }
@@ -101,6 +154,7 @@ body { color: #0b1220; }
   .biz-dashboard-hero, .biz-dashboard-card { border-radius: 18px !important; }
   h1 { line-height: 1.08; }
   h2 { line-height: 1.15; }
+  .biz-bulk-delete-modal { max-height: calc(100dvh - 24px) !important; }
 }
 
 /* Keyboard visibility. */
