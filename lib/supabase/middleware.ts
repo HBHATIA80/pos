@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { getCurrentSessionId } from '@/lib/auth/session-lock'
 
 const CUSTOMER_PORTAL_PATHS = ['/dashboard/orders', '/dashboard/my-ledger']
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/customer-signup', '/forgot-password', '/marketplace']
@@ -14,13 +13,6 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith('/_next/') || pathname === '/favicon.ico') return true
   if (pathname.startsWith('/api/auth/session') || pathname.startsWith('/api/marketplace')) return true
   return PUBLIC_PATHS.some((path) => pathname === path || (path !== '/' && pathname.startsWith(`${path}/`)))
-}
-
-function loginRedirect(request: NextRequest) {
-  const redirectUrl = request.nextUrl.clone()
-  redirectUrl.pathname = '/login'
-  redirectUrl.search = '?error=login_in_use'
-  return NextResponse.redirect(redirectUrl)
 }
 
 export async function updateSession(request: NextRequest) {
@@ -47,24 +39,10 @@ export async function updateSession(request: NextRequest) {
     return response
   }
 
-  // Enforce the BIZYBUK.IN one-device rule for every authenticated page and
-  // protected API. Public marketplace/auth routes intentionally remain public.
-  if (!isPublicPath(request.nextUrl.pathname)) {
-    const sessionId = await getCurrentSessionId(supabase)
-    if (!sessionId) {
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-      return loginRedirect(request)
-    }
-
-    const { data: claimed, error: claimError } = await supabase.rpc('claim_active_login', {
-      p_session_id: sessionId,
-    })
-
-    if (claimError || !claimed) {
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-      return loginRedirect(request)
-    }
-  }
+  // Authentication is handled by Supabase Auth. Do not enforce an
+  // application-level one-device/session lock here. This prevents stale
+  // sessions on another browser from redirecting a valid login to
+  // /login?error=login_in_use.
 
   const { data: profile } = await supabase
     .from('profiles')
