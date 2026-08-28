@@ -90,14 +90,14 @@ export default function PosKeyboardShortcuts() {
 
   return <>
     <button type="button" onClick={() => setOpen(true)} className="fixed bottom-3 left-3 z-[90] hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white/95 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-lg backdrop-blur sm:flex" title="Keyboard shortcuts (F1)">
-      <Keyboard className="h-3.5 w-3.5 text-violet-600" /> Shortcuts <kbd className="rounded bg-slate-100 px-1">F1</kbd>
+      <Keyboard className="h-3.5 w-3.5 text-blue-600" /> Shortcuts <kbd className="rounded bg-slate-100 px-1">F1</kbd>
     </button>
 
-    {open && <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={() => setOpen(false)}>
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onMouseDown={event => event.stopPropagation()}>
+    {open && <div className="biz-light-modal fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={() => setOpen(false)}>
+      <div className="biz-light-modal-surface w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onMouseDown={event => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div><h2 className="text-base font-black text-slate-900">BIZBook Keyboard Shortcuts</h2><p className="text-xs text-slate-500">Designed for fast desktop Sales & Purchase billing</p></div>
-          <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close shortcuts"><X className="h-5 w-5" /></button>
         </div>
         <div className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2">
           {shortcuts.map(([key, description]) => <div key={key} className="flex items-center justify-between gap-3 bg-white px-4 py-3"><span className="text-xs text-slate-600">{description}</span><kbd className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-700 shadow-sm">{key}</kbd></div>)}
