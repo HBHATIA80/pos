@@ -51,53 +51,53 @@ export default function LoginPage() {
     } finally { setLoading(false) }
   }
 
-  const inputClass = 'h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10'
+  const inputClass = 'h-12 w-full rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10'
 
   return (
     <main className="min-h-screen bg-[#f5f8fc] text-slate-950 lg:grid lg:grid-cols-[.95fr_1.05fr]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#06101f] text-white lg:flex lg:flex-col">
-        <div className="absolute -left-32 top-24 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+      <section className="relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-[#eef5ff] via-white to-[#e8f2ff] text-slate-950 lg:flex lg:flex-col lg:border-r lg:border-slate-200">
+        <div className="absolute -left-32 top-24 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -right-32 bottom-0 h-[30rem] w-[30rem] rounded-full bg-blue-400/10 blur-3xl" />
         <div className="relative flex flex-1 flex-col px-10 py-8 xl:px-16">
-          <Link href="/" className="brand-lockup w-fit"><span className="brand-mark">B</span><span className="brand-wordmark text-white">BIZYBUK<span>.IN</span></span></Link>
+          <Link href="/" className="brand-lockup w-fit"><span className="brand-mark">B</span><span className="brand-wordmark">BIZYBUK<span>.IN</span></span></Link>
           <div className="my-auto max-w-xl pb-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-blue-200"><Zap className="h-3.5 w-3.5" /> Fast · Secure · Smart</div>
-            <h1 className="mt-7 text-5xl font-black italic leading-[1.02] tracking-[-.055em] xl:text-6xl">Run your business,<br /><span className="text-blue-400">with clarity.</span></h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-slate-300">Sales, inventory, customers, payments and everyday work — all in one clear BIZYBUK.IN workspace.</p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700"><Zap className="h-3.5 w-3.5" /> Fast · Secure · Smart</div>
+            <h1 className="mt-7 text-5xl font-black leading-[1.02] tracking-[-.055em] text-slate-950 xl:text-6xl">Run your business,<br /><span className="text-blue-600">with clarity.</span></h1>
+            <p className="mt-6 max-w-lg text-base leading-7 text-slate-700">Sales, inventory, customers, payments and everyday work — all in one clear BIZYBUK.IN workspace.</p>
             <div className="mt-9 space-y-3">
-              {['One workspace for your daily business', 'Fast access to sales, stock and accounts', 'Secure access wherever you work'].map(item => <div key={item} className="flex items-center gap-3 text-sm font-semibold text-slate-200"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/15 text-blue-300"><Check className="h-3.5 w-3.5" /></span>{item}</div>)}
+              {['One workspace for your daily business', 'Fast access to sales, stock and accounts', 'Secure access wherever you work'].map(item => <div key={item} className="flex items-center gap-3 text-sm font-semibold text-slate-800"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700"><Check className="h-3.5 w-3.5" /></span>{item}</div>)}
             </div>
           </div>
-          <p className="text-xs font-semibold text-slate-500">Business. Simplified. Success Amplified.</p>
+          <p className="text-xs font-semibold text-slate-600">Business. Simplified. Success Amplified.</p>
         </div>
       </section>
 
-      <section className="flex min-h-screen flex-col">
-        <header className="flex h-20 items-center justify-between px-5 sm:px-8 lg:px-12">
+      <section className="flex min-h-screen flex-col bg-[#f7faff]">
+        <header className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
           <Link href="/" className="brand-lockup lg:hidden"><span className="brand-mark">B</span><span className="brand-wordmark">BIZYBUK<span>.IN</span></span></Link>
-          <div className="ml-auto text-sm font-semibold text-slate-500">New to BIZYBUK.IN? <Link href="/signup" className="font-black text-blue-600 hover:text-blue-700">Create a shop</Link></div>
+          <div className="ml-auto text-right text-sm font-semibold text-slate-600">New to BIZYBUK.IN? <Link href="/signup" className="font-black text-blue-700 hover:text-blue-800">Create a shop</Link></div>
         </header>
         <div className="flex flex-1 items-center justify-center px-5 pb-10 pt-2 sm:px-8 lg:px-12 lg:pb-16">
           <div className="w-full max-w-xl">
             <div className="mb-8 max-w-lg">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Smartphone className="h-6 w-6" /></div>
-              <p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">Welcome back</p>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><Smartphone className="h-6 w-6" /></div>
+              <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Welcome back</p>
               <h2 className="mt-2 text-3xl font-black tracking-[-.035em] text-slate-950 sm:text-4xl">Continue to your workspace</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">Sign in to your BIZYBUK.IN business workspace or customer portal.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">Sign in to your BIZYBUK.IN business workspace or customer portal.</p>
             </div>
-            <form onSubmit={handleLogin} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/40 sm:p-7">
+            <form onSubmit={handleLogin} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-7">
               <div>
-                <label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-800">Mobile number</label>
-                <div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" /><input id="phone" type="tel" autoComplete="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div>
+                <label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-900">Mobile number</label>
+                <div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-500" /><input id="phone" type="tel" autoComplete="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div>
               </div>
               <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-bold text-slate-800">Password</label><Link href="/forgot-password" className="text-sm font-black text-blue-600 hover:text-blue-700">Forgot password?</Link></div>
-                <div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
+                <div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-bold text-slate-900">Password</label><Link href="/forgot-password" className="text-sm font-black text-blue-700 hover:text-blue-800">Forgot password?</Link></div>
+                <div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-500" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
               </div>
-              <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing you in...</> : <>Continue <ArrowRight className="h-4 w-4" /></>}</button>
-              <p className="mt-4 text-center text-xs leading-5 text-slate-400">One BIZYBUK.IN account can be active on one device at a time.</p>
+              <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing you in...</> : <>Continue <ArrowRight className="h-4 w-4" /></>}</button>
+              <p className="mt-4 text-center text-xs leading-5 text-slate-500">One BIZYBUK.IN account can be active on one device at a time.</p>
             </form>
-            <div className="mt-6 space-y-3 text-center text-sm text-slate-500"><p>Opening a shop? <Link href="/signup" className="font-black text-blue-600">Create Shop Account</Link></p><p>Already a customer? <Link href="/customer-signup" className="font-black text-blue-600">Create Customer Account</Link></p><a href={supportUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-emerald-600 hover:text-emerald-700"><MessageCircle className="h-4 w-4" /> Questions or suggestions? Contact support</a></div>
+            <div className="mt-6 space-y-3 text-center text-sm text-slate-600"><p>Opening a shop? <Link href="/signup" className="font-black text-blue-700">Create Shop Account</Link></p><p>Already a customer? <Link href="/customer-signup" className="font-black text-blue-700">Create Customer Account</Link></p><a href={supportUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-800"><MessageCircle className="h-4 w-4" /> Questions or suggestions? Contact support</a></div>
           </div>
         </div>
       </section>
