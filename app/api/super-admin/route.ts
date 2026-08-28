@@ -75,23 +75,41 @@ export async function POST(request: Request) {
     const bytes = Buffer.from(await file.arrayBuffer())
     const base64 = bytes.toString('base64')
 
-    const { data: existing, error: lookupError } = await auth.supabase
+    // Do not write landing_assets directly through the user's RLS context.
+    // The table intentionally has no client INSERT/UPDATE policy. The RPC
+    // performs the same super-admin check again inside a SECURITY DEFINER
+    // transaction, so the write cannot silently become a zero-row update.
+    const { data: assetId, error: saveError } = await auth.supabase.rpc('set_landing_asset', {
+      p_asset_key: LANDING_ASSET_KEY,
+      p_mime_type: file.type,
+      p_data_base64: base64,
+    })
+
+    if (saveError) {
+      console.error('set_landing_asset failed', saveError)
+      return NextResponse.json({ error: saveError.message }, { status: 500 })
+    }
+
+    const { data: saved, error: verifyError } = await auth.supabase
       .from('landing_assets')
-      .select('id')
+      .select('id,mime_type,updated_at')
       .eq('asset_key', LANDING_ASSET_KEY)
       .maybeSingle()
-    if (lookupError) throw lookupError
 
-    const payload = { mime_type: file.type, data_base64: base64, updated_at: new Date().toISOString() }
-    const result = existing
-      ? await auth.supabase.from('landing_assets').update(payload).eq('id', existing.id)
-      : await auth.supabase.from('landing_assets').insert({ asset_key: LANDING_ASSET_KEY, ...payload })
+    if (verifyError || !saved || saved.id !== assetId) {
+      console.error('Homepage image verification failed', verifyError)
+      return NextResponse.json({ error: 'Image was saved but could not be verified. Please try again.' }, { status: 500 })
+    }
 
-    if (result.error) throw result.error
-
-    return NextResponse.json({ ok: true, message: 'Homepage image updated successfully.' })
+    return NextResponse.json({
+      ok: true,
+      message: 'Homepage image published successfully.',
+      assetUrl: `/api/landing-assets/${LANDING_ASSET_KEY}?v=${encodeURIComponent(saved.updated_at)}`,
+      updatedAt: saved.updated_at,
+      mimeType: saved.mime_type,
+    })
   } catch (error) {
-    console.error(error)
+    console.error('Homepage image upload failed', error)
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to update homepage image.' }, { status: 500 })
   }
 }
