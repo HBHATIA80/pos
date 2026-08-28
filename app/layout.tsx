@@ -11,6 +11,7 @@ import './ui-final.css'
 import './adaptive-theme.css'
 import './dashboard-theme.css'
 import './green-buttons.css'
+import './brand-theme.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
