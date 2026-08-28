@@ -17,7 +17,7 @@ export default async function SuperAdminPage() {
   if (!access) redirect('/dashboard')
 
   return (
-    <div className="space-y-6">
+    <div className="super-admin-shell space-y-6">
       <SuperAdminConsole />
       <HomepageImageSettings />
     </div>
