@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, Smartphone, Store, User, Zap } from 'lucide-react'
+import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, Smartphone, ShoppingCart, Store, User, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 
@@ -17,7 +17,8 @@ function HomeBrand() {
   return (
     <Link href="/" aria-label="BIZYBUK.IN home" className="flex w-fit items-center gap-3">
       <span className="relative flex h-10 w-10 items-center justify-center rounded-[11px] border-[3px] border-[#18795c] bg-white text-[18px] font-black text-[#18795c] shadow-sm">
-        <span className="text-[15px] font-black text-[#18795c]">B</span>
+        <ShoppingCart className="absolute h-6 w-6" strokeWidth={2.8} />
+        <span className="relative z-10 mt-0.5 text-[15px] font-black text-white">B</span>
       </span>
       <span className="text-[23px] font-black tracking-[-.055em] text-[#17382f]">
         BIZYBUK<span className="text-[#18795c]">.IN</span>
@@ -102,7 +103,7 @@ export default function SignupPage() {
                 <FormField label="Password" id="password"><div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" enterKeyHint="next" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></FormField>
                 <FormField label="Confirm password" id="confirmPassword"><div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" enterKeyHint="done" required minLength={6} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></FormField>
               </div>
-              <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0f8f83] px-5 text-sm font-black text-white shadow-lg shadow-[#0f8f83]/25 transition hover:bg-[#0b776d] disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Creating your account...</> : <>Create account <ArrowRight className="h-4 w-4" /></>}</button>
+              <button type="submit" disabled={loading} style={{ color: '#ffffff' }} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0f8f83] px-5 !text-white font-black shadow-lg shadow-[#0f8f83]/25 transition hover:bg-[#0b776d] disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Creating your account...</> : <>Create account <ArrowRight className="h-4 w-4" /></>}</button>
               <p className="mt-4 text-center text-xs font-medium leading-5 text-slate-500">By creating an account, you’re ready to start managing your business.</p>
             </form>
             <p className="mt-6 text-center text-sm font-medium text-slate-700">Already have an account? <Link href="/login" className="font-black text-[#087f73] hover:text-[#06665d]">Sign in</Link></p>
