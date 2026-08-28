@@ -89,8 +89,8 @@ export default function PaymentDialog({ invoiceId, open, onClose, onPaymentSaved
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-lg rounded-t-3xl border border-slate-200 bg-white text-slate-950 shadow-2xl sm:rounded-3xl">
+    <div className="biz-payment-overlay fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4">
+      <div className="biz-payment-dialog w-full max-w-lg rounded-t-3xl border border-slate-200 bg-white text-slate-950 shadow-2xl sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div><h2 className="text-lg font-bold text-slate-950">Receive Payment</h2><p className="text-xs font-medium text-slate-600">Record money received against this invoice</p></div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="Close payment dialog" className="rounded-xl border border-transparent p-2 text-slate-600 hover:border-slate-200 hover:bg-slate-100 disabled:opacity-40"><X className="h-5 w-5" /></button>
