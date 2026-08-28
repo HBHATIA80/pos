@@ -1,0 +1,119 @@
+/* BIZYBUK final accessibility + receipt-voucher UI contract.
+   Loaded last: this is the one authoritative correction layer for contrast,
+   typography, palette and POS overlays. */
+:root {
+  --app-blue: #1769ff;
+  --app-blue-dark: #0f4dcc;
+  --app-blue-soft: #eaf2ff;
+  --app-navy: #0b1930;
+  --app-text: #263d5b;
+  --app-muted: #536b87;
+  --app-placeholder: #6f839c;
+  --app-line: #c8d6e5;
+  --app-line-soft: #e3eaf2;
+  --app-surface: #ffffff;
+  --app-soft: #f4f7fb;
+  --app-green: #0f9f6e;
+  --app-green-dark: #087f5b;
+  --app-green-soft: #e9fbf3;
+  --app-amber: #d97706;
+  --app-amber-dark: #a15c05;
+  --app-amber-soft: #fff7e6;
+  --app-red: #dc2626;
+  --app-red-dark: #b42318;
+  --app-red-soft: #fff0f0;
+}
+
+html { color-scheme: light; font-size: 16px; }
+body { font-size: 16px !important; color: var(--app-navy) !important; }
+.biz-app-main { font-size: 16px !important; color: var(--app-navy) !important; }
+
+/* Readability: never use pale text on a light surface. */
+.biz-app-main :where(p,li,dt,dd,label,legend) { color: var(--app-text) !important; opacity: 1 !important; -webkit-text-fill-color: var(--app-text) !important; }
+.biz-app-main :where(h1,h2,h3,h4,h5,h6) { color: var(--app-navy) !important; opacity: 1 !important; -webkit-text-fill-color: var(--app-navy) !important; }
+.biz-app-main :where(.text-slate-950,.text-slate-900) { color: var(--app-navy) !important; -webkit-text-fill-color: var(--app-navy) !important; }
+.biz-app-main :where(.text-slate-800,.text-slate-700,.text-slate-600) { color: var(--app-text) !important; -webkit-text-fill-color: var(--app-text) !important; }
+.biz-app-main :where(.text-slate-500,.text-slate-400) { color: var(--app-muted) !important; -webkit-text-fill-color: var(--app-muted) !important; }
+.biz-app-main :where(.text-white,[class*="text-white/"],.text-slate-200,.text-slate-300) { color: var(--app-text) !important; -webkit-text-fill-color: var(--app-text) !important; opacity: 1 !important; }
+
+/* Larger, more comfortable type across the application. */
+.biz-app-main :where(.text-xs) { font-size: .82rem !important; line-height: 1.35 !important; }
+.biz-app-main :where(.text-sm) { font-size: .96rem !important; line-height: 1.45 !important; }
+.biz-app-main :where(.text-base) { font-size: 1rem !important; }
+.biz-app-main :where(.text-lg) { font-size: 1.16rem !important; }
+.biz-app-main :where(.text-xl) { font-size: 1.34rem !important; }
+.biz-app-main :where(.text-2xl) { font-size: 1.72rem !important; }
+.biz-app-main :where(.text-3xl) { font-size: 2.08rem !important; }
+.biz-app-main :where([class*="text-[9px]"]) { font-size: .72rem !important; }
+.biz-app-main :where([class*="text-[10px]"]) { font-size: .78rem !important; }
+.biz-app-main :where([class*="text-[11px]"]) { font-size: .84rem !important; }
+.biz-app-main button { font-size: .96rem; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { min-height: 48px; font-size: 1rem !important; color: var(--app-navy) !important; background: #fff !important; border-color: var(--app-line) !important; -webkit-text-fill-color: var(--app-navy) !important; }
+.biz-app-main :where(input:not([type="checkbox"]):not([type="radio"])::placeholder,textarea::placeholder) { color: var(--app-placeholder) !important; opacity: 1 !important; -webkit-text-fill-color: var(--app-placeholder) !important; }
+
+/* Receipt-voucher palette: blue primary, green success, amber warning, red destructive. */
+.biz-app-main :where([class*="text-violet-"],[class*="text-purple-"],[class*="text-fuchsia-"],[class*="text-pink-"],[class*="text-rose-"],[class*="text-indigo-"]) { color: var(--app-blue-dark) !important; -webkit-text-fill-color: var(--app-blue-dark) !important; }
+.biz-app-main :where([class*="border-violet-"],[class*="border-purple-"],[class*="border-fuchsia-"],[class*="border-pink-"],[class*="border-rose-"],[class*="border-indigo-"]) { border-color: #b9cdf0 !important; }
+.biz-app-main :where([class*="bg-violet-50"],[class*="bg-violet-100"],[class*="bg-purple-50"],[class*="bg-purple-100"],[class*="bg-fuchsia-50"],[class*="bg-pink-50"],[class*="bg-rose-50"],[class*="bg-indigo-50"],[class*="bg-indigo-100"]) { background: var(--app-blue-soft) !important; }
+.biz-app-main :where([class*="bg-violet-500"],[class*="bg-violet-600"],[class*="bg-violet-700"],[class*="bg-purple-500"],[class*="bg-purple-600"],[class*="bg-purple-700"],[class*="bg-indigo-500"],[class*="bg-indigo-600"],[class*="bg-indigo-700"]) { background: linear-gradient(135deg,var(--app-blue),var(--app-blue-dark)) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.biz-app-main :where(button[class*="bg-violet-"],button[class*="bg-purple-"],button[class*="bg-fuchsia-"],button[class*="bg-pink-"],button[class*="bg-rose-"],button[class*="bg-indigo-"]) { background: linear-gradient(135deg,var(--app-blue),var(--app-blue-dark)) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border-color: var(--app-blue) !important; }
+
+/* Text inside a primary blue surface must stay white. */
+.biz-app-main :where([class*="bg-violet-500"],[class*="bg-violet-600"],[class*="bg-violet-700"],[class*="bg-purple-500"],[class*="bg-purple-600"],[class*="bg-purple-700"],[class*="bg-indigo-500"],[class*="bg-indigo-600"],[class*="bg-indigo-700"]) :where(*) { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.biz-app-main :where([class*="bg-violet-500"],[class*="bg-violet-600"],[class*="bg-violet-700"],[class*="bg-purple-500"],[class*="bg-purple-600"],[class*="bg-purple-700"],[class*="bg-indigo-500"],[class*="bg-indigo-600"],[class*="bg-indigo-700"]) svg { color: #fff !important; }
+
+.biz-app-main :where([class*="bg-emerald-"],[class*="bg-green-"]) { background: var(--app-green-soft) !important; }
+.biz-app-main :where([class*="text-emerald-"],[class*="text-green-"]) { color: var(--app-green-dark) !important; -webkit-text-fill-color: var(--app-green-dark) !important; }
+.biz-app-main :where([class*="bg-amber-"],[class*="bg-yellow-"]) { background: var(--app-amber-soft) !important; }
+.biz-app-main :where([class*="text-amber-"],[class*="text-yellow-"]) { color: var(--app-amber-dark) !important; -webkit-text-fill-color: var(--app-amber-dark) !important; }
+.biz-app-main :where(button[class*="bg-red-"]) { background: var(--app-red) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border-color: var(--app-red) !important; }
+.biz-app-main :where([class*="text-red-"]) { color: var(--app-red-dark) !important; -webkit-text-fill-color: var(--app-red-dark) !important; }
+
+/* Invoice date: strong blue bar + white hierarchy. */
+.biz-app-main .invoice-date-bar { background: linear-gradient(135deg,#0f4dcc 0%,#1769ff 58%,#2f7bff 100%) !important; border: 1px solid #0f4dcc !important; color: #fff !important; box-shadow: 0 12px 30px rgba(23,105,255,.18) !important; }
+.biz-app-main .invoice-date-bar .invoice-date-title { color: #fff !important; -webkit-text-fill-color: #fff !important; font-size: .9rem !important; font-weight: 900 !important; letter-spacing: .15em !important; }
+.biz-app-main .invoice-date-bar .invoice-date-help { color: rgba(255,255,255,.92) !important; -webkit-text-fill-color: rgba(255,255,255,.92) !important; font-size: 1rem !important; }
+.biz-app-main .invoice-date-bar .invoice-date-icon { background: rgba(255,255,255,.16) !important; color: #fff !important; border: 1px solid rgba(255,255,255,.24) !important; }
+.biz-app-main .invoice-date-bar .invoice-date-icon svg { color: #fff !important; }
+.biz-app-main .invoice-date-bar input { min-height: 48px !important; background: #fff !important; color: var(--app-navy) !important; -webkit-text-fill-color: var(--app-navy) !important; border-color: #fff !important; font-size: 1rem !important; }
+.biz-app-main .invoice-date-bar button { background: #fff !important; color: var(--app-blue-dark) !important; -webkit-text-fill-color: var(--app-blue-dark) !important; border-color: #fff !important; }
+.biz-app-main .invoice-date-bar .invoice-date-saving { background: rgba(255,255,255,.16) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+
+/* Latest vouchers: readable pill + high-contrast dialog. */
+.biz-app-main button:has(> svg.lucide-history) { min-height: 44px !important; background: var(--app-blue-soft) !important; border: 1px solid #b9cdf0 !important; color: var(--app-blue-dark) !important; -webkit-text-fill-color: var(--app-blue-dark) !important; font-size: .94rem !important; }
+.biz-app-main button:has(> svg.lucide-history) svg { color: var(--app-blue-dark) !important; }
+.biz-app-main button:has(> svg.lucide-history):hover { background: #dce9ff !important; border-color: #8fb2ed !important; }
+.biz-app-main .latest-vouchers,
+.biz-app-main .latest-vouchers-menu { background: #fff !important; color: var(--app-navy) !important; border: 1px solid var(--app-line) !important; box-shadow: 0 24px 60px rgba(15,31,61,.18) !important; }
+.biz-app-main .latest-vouchers :where(*),
+.biz-app-main .latest-vouchers-menu :where(*) { opacity: 1 !important; }
+.biz-app-main .latest-vouchers :where(p,span,div,li),
+.biz-app-main .latest-vouchers-menu :where(p,span,div,li) { color: var(--app-text) !important; -webkit-text-fill-color: var(--app-text) !important; }
+.biz-app-main .latest-vouchers :where(h1,h2,h3,h4,h5,h6),
+.biz-app-main .latest-vouchers-menu :where(h1,h2,h3,h4,h5,h6) { color: var(--app-navy) !important; -webkit-text-fill-color: var(--app-navy) !important; }
+
+/* Search/customer/product popovers: white, crisp, readable and layered above cards. */
+.biz-app-main :where(div.relative > div.absolute, [role="listbox"], [role="menu"]) { background: #fff !important; color: var(--app-navy) !important; border-color: var(--app-line) !important; box-shadow: 0 20px 48px rgba(15,31,61,.16) !important; opacity: 1 !important; }
+.biz-app-main :where(div.relative > div.absolute, [role="listbox"], [role="menu"]) :where(p,span,b,small,div,button,a) { opacity: 1 !important; }
+.biz-app-main :where(div.relative > div.absolute, [role="listbox"], [role="menu"]) :where(.text-slate-900,.text-slate-950) { color: var(--app-navy) !important; -webkit-text-fill-color: var(--app-navy) !important; }
+.biz-app-main :where(div.relative > div.absolute, [role="listbox"], [role="menu"]) :where(.text-slate-500,.text-slate-400) { color: var(--app-muted) !important; -webkit-text-fill-color: var(--app-muted) !important; }
+.biz-app-main :where(div.relative > div.absolute, [role="listbox"], [role="menu"]) :where(button:hover,[role="option"]:hover,[role="menuitem"]:hover) { background: var(--app-blue-soft) !important; color: var(--app-blue-dark) !important; }
+
+/* Cards/tables: slightly more open and legible. */
+.biz-app-main :where(.bg-white,[class~="bg-white"]) { background: #fff !important; }
+.biz-app-main :where(.bg-slate-50,[class~="bg-slate-50"],[class~="bg-slate-100"]) { background: var(--app-soft) !important; }
+.biz-app-main :where([class*="border-slate-100"],[class*="border-slate-200"],[class*="border-slate-300"]) { border-color: var(--app-line-soft) !important; }
+.biz-app-main table thead th { background: var(--app-soft) !important; color: #38516f !important; font-size: .84rem !important; }
+.biz-app-main table tbody td { color: var(--app-text) !important; font-size: .96rem !important; }
+.biz-app-main table tbody td :where(.text-slate-900,.text-slate-950) { color: var(--app-navy) !important; }
+
+/* Strong focus, no washed-out active controls. */
+.biz-app-main :focus-visible { outline: 3px solid rgba(23,105,255,.38) !important; outline-offset: 2px !important; }
+.biz-app-main :where(a,button):not(:disabled) { opacity: 1 !important; }
+.biz-app-main :where(button:disabled,input:disabled,select:disabled,textarea:disabled) { opacity: .58 !important; }
+
+@media (max-width: 767px) {
+  body,.biz-app-main { font-size: 15px !important; }
+  .biz-app-main :where(.text-sm) { font-size: .98rem !important; }
+  .biz-app-main :where(.text-xs) { font-size: .84rem !important; }
+}
