@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import './contrast.css'
+import './readability.css'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
