@@ -1,8 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, BarChart3, Check, ChevronDown, CreditCard, FileText, Headphones, Package, Receipt, ShieldCheck, ShoppingCart, Smile, TrendingUp, Users, Wallet, Zap } from 'lucide-react'
 
-const GREEN = '#18795c'
-
 function Brand() {
   return (
     <Link href="/" aria-label="BIZYBUK.IN home" className="flex items-center gap-3">
@@ -205,10 +203,10 @@ export default function HomePage() {
                 <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-.04em] text-white sm:text-4xl">Less admin. More control.</h2>
                 <p className="mt-4 max-w-2xl text-[16px] leading-7 text-[#d6e9e1]">A clearer view of your business, from sales and stock to customers and payments. The interface stays calm, readable and focused on the action you need to take.</p>
                 <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                  {['Readable at a glance', 'Fast everyday workflows', 'Works on phone and desktop', 'Built for growing teams'].map(item => <div key={item} className="flex items-center gap-2.5 text-[13px] font-bold text-white"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/12"><Check className="h-4 w-4 text-[#9ee1c2]" /></span>{item}</div>)}
+                  {['Readable at a glance', 'Fast everyday workflows', 'Works on phone and desktop', 'Built for growing teams'].map(item => <div key={item} className="flex items-center gap-2.5 text-[13px] font-bold text-white"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.12]"><Check className="h-4 w-4 text-[#9ee1c2]" /></span>{item}</div>)}
                 </div>
               </div>
-              <div className="rounded-[22px] border border-white/12 bg-white/8 p-6 backdrop-blur-sm">
+              <div className="rounded-[22px] border border-white/[0.12] bg-white/[0.08] p-6 backdrop-blur-sm">
                 <p className="text-[12px] font-extrabold uppercase tracking-[.15em] text-[#a9d8c3]">Designed for daily use</p>
                 <p className="mt-3 text-[17px] font-bold leading-7 text-white">Clear hierarchy, strong contrast and touch-friendly controls across the website.</p>
                 <Link href="/signup" className="mt-6 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-white px-5 text-[14px] font-extrabold text-[#174d3e] transition hover:bg-[#eef9f4]">Get started <ArrowRight className="h-4 w-4" /></Link>
@@ -218,7 +216,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="pricing" className="border-t border-[#e8efeB] bg-[#fbfdfc] py-16">
+      <section id="pricing" className="border-t border-[#e8efeb] bg-[#fbfdfc] py-16">
         <div className="mx-auto max-w-[900px] px-5 text-center sm:px-6">
           <p className="text-[12px] font-extrabold uppercase tracking-[.18em] text-[#18795c]">Simple to start</p>
           <h2 className="mt-3 text-[32px] font-black tracking-[-.04em] text-[#17382f]">Start with your business. Grow from there.</h2>
