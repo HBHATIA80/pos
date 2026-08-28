@@ -1,79 +1,215 @@
-/* Homepage "Why BIZYBUK" card: high-contrast, larger, confident typography. */
+/* BIZYBUK homepage — Why BIZYBUK card
+   Match the approved two-column layout from the reference design.
+   High contrast, readable typography, responsive on mobile + desktop. */
+
+#why {
+  background: #ffffff !important;
+}
+
+#why > div {
+  width: 100% !important;
+  max-width: 1380px !important;
+  margin-inline: auto !important;
+  padding-inline: 24px !important;
+}
+
+/* Main green card */
 #why > div > div {
-  background: #155f4b !important;
-  border-color: #1d765d !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding: 54px 58px !important;
+  border: 1px solid #176b54 !important;
+  border-radius: 32px !important;
+  background: #17624f !important;
+  box-shadow: 0 24px 55px rgba(23, 98, 79, 0.16) !important;
+  overflow: hidden !important;
+}
+
+/* Two-column layout: copy on left, CTA panel on right */
+#why > div > div > div {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.75fr) !important;
+  align-items: center !important;
+  gap: 56px !important;
+  width: 100% !important;
+}
+
+#why > div > div > div > div:first-child {
+  min-width: 0 !important;
 }
 
 #why h2 {
+  margin-top: 22px !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  font-size: 42px !important;
-  line-height: 1.12 !important;
+  font-size: clamp(38px, 4vw, 54px) !important;
+  line-height: 1.06 !important;
   font-weight: 900 !important;
-  letter-spacing: -0.035em !important;
+  letter-spacing: -0.045em !important;
+  text-wrap: balance !important;
 }
 
+/* Main paragraph under heading */
 #why > div > div > div > div:first-child > p {
-  color: #e7f7ef !important;
-  -webkit-text-fill-color: #e7f7ef !important;
+  max-width: 760px !important;
+  margin-top: 22px !important;
+  color: #eaf8f2 !important;
+  -webkit-text-fill-color: #eaf8f2 !important;
   font-size: 18px !important;
-  line-height: 1.7 !important;
+  line-height: 1.65 !important;
   font-weight: 600 !important;
 }
 
+/* Benefits / check-list */
 #why > div > div > div > div:first-child > div {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   font-size: 15px !important;
-  line-height: 1.5 !important;
-  font-weight: 800 !important;
-}
-
-#why > div > div > div > div:first-child > span {
-  color: #e9fff4 !important;
-  -webkit-text-fill-color: #e9fff4 !important;
-  background: rgba(255,255,255,.13) !important;
-  border-color: rgba(255,255,255,.22) !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-}
-
-#why > div > div > div > div:last-child {
-  background: rgba(255,255,255,.10) !important;
-  border-color: rgba(255,255,255,.22) !important;
-}
-
-#why > div > div > div > div:last-child > p:first-child {
-  color: #c9f0dc !important;
-  -webkit-text-fill-color: #c9f0dc !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-}
-
-#why > div > div > div > div:last-child > p:nth-child(2) {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  font-size: 19px !important;
   line-height: 1.55 !important;
   font-weight: 800 !important;
 }
 
+#why > div > div > div > div:first-child > div span,
+#why > div > div > div > div:first-child > div svg {
+  color: #ffffff !important;
+}
+
+#why > div > div > div > div:first-child > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 999px !important;
+  padding: 8px 15px !important;
+  color: #effcf6 !important;
+  -webkit-text-fill-color: #effcf6 !important;
+  background: rgba(255,255,255,.10) !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+/* Right CTA panel from the reference image */
+#why > div > div > div > div:last-child {
+  min-width: 0 !important;
+  padding: 32px !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 24px !important;
+  background: rgba(255,255,255,.085) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+#why > div > div > div > div:last-child > p:first-child {
+  margin: 0 !important;
+  color: #bfe8d6 !important;
+  -webkit-text-fill-color: #bfe8d6 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+#why > div > div > div > div:last-child > p:nth-child(2) {
+  margin-top: 18px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 21px !important;
+  line-height: 1.5 !important;
+  font-weight: 800 !important;
+}
+
 #why a {
-  color: #155f4b !important;
-  -webkit-text-fill-color: #155f4b !important;
+  display: inline-flex !important;
+  min-height: 52px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin-top: 24px !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  border-radius: 14px !important;
+  padding: 0 22px !important;
+  color: #164b3e !important;
+  -webkit-text-fill-color: #164b3e !important;
   background: #ffffff !important;
   font-size: 15px !important;
+  line-height: 1 !important;
   font-weight: 900 !important;
-  box-shadow: 0 8px 20px rgba(0,0,0,.10) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12) !important;
+  transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease !important;
 }
 
 #why a:hover {
-  background: #f2fbf6 !important;
+  color: #123d32 !important;
+  -webkit-text-fill-color: #123d32 !important;
+  background: #f3fbf7 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 28px rgba(0,0,0,.15) !important;
 }
 
-@media (max-width: 767px) {
-  #why h2 { font-size: 34px !important; }
-  #why > div > div > div > div:first-child > p { font-size: 16px !important; line-height: 1.6 !important; }
-  #why > div > div > div > div:first-child > div { font-size: 14px !important; }
-  #why > div > div > div > div:last-child > p:nth-child(2) { font-size: 17px !important; }
+#why a:focus-visible {
+  outline: 3px solid #bcebd5 !important;
+  outline-offset: 3px !important;
+}
+
+@media (max-width: 900px) {
+  #why > div {
+    padding-inline: 18px !important;
+  }
+
+  #why > div > div {
+    padding: 42px 36px !important;
+    border-radius: 28px !important;
+  }
+
+  #why > div > div > div {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+  }
+
+  #why > div > div > div > div:last-child {
+    max-width: 620px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #why > div {
+    padding-inline: 14px !important;
+  }
+
+  #why > div > div {
+    padding: 32px 22px !important;
+    border-radius: 24px !important;
+  }
+
+  #why h2 {
+    margin-top: 18px !important;
+    font-size: 34px !important;
+    line-height: 1.08 !important;
+  }
+
+  #why > div > div > div > div:first-child > p {
+    margin-top: 18px !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+  }
+
+  #why > div > div > div > div:first-child > div {
+    font-size: 14px !important;
+  }
+
+  #why > div > div > div > div:last-child {
+    padding: 24px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  #why > div > div > div > div:last-child > p:nth-child(2) {
+    font-size: 18px !important;
+    line-height: 1.5 !important;
+  }
+
+  #why a {
+    width: 100% !important;
+  }
 }
