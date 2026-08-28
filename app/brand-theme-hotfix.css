@@ -1,0 +1,46 @@
+/* Final palette sweep: no saturated blue/purple containers remain on light UI. */
+.biz-app-main :where(
+  div[class*="bg-blue-500"],div[class*="bg-blue-600"],div[class*="bg-blue-700"],
+  section[class*="bg-blue-500"],section[class*="bg-blue-600"],section[class*="bg-blue-700"],
+  header[class*="bg-blue-500"],header[class*="bg-blue-600"],header[class*="bg-blue-700"],
+  [class*="bg-indigo-500"],[class*="bg-indigo-600"],[class*="bg-indigo-700"],
+  [class*="bg-violet-500"],[class*="bg-violet-600"],[class*="bg-violet-700"],
+  [class*="bg-purple-500"],[class*="bg-purple-600"],[class*="bg-purple-700"]
+):not(button):not(a[role="button"]):not([role="button"]) {
+  background: linear-gradient(135deg,#e9f6ee,#dff0e7) !important;
+  color: var(--bb-text) !important;
+}
+
+/* Preserve white-on-green only for actual primary actions. */
+.biz-app-main :where(
+  button[class*="bg-blue-"],button[class*="bg-indigo-"],button[class*="bg-violet-"],button[class*="bg-purple-"],
+  button[class*="bg-fuchsia-"],button[class*="bg-pink-"],button[class*="bg-rose-"]
+) :where(*,svg) {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Blue-gradient utility classes on non-controls become the same soft green language. */
+.biz-app-main :where(
+  div[class*="to-blue-"],div[class*="to-indigo-"],div[class*="to-violet-"],div[class*="to-purple-"],
+  section[class*="to-blue-"],section[class*="to-indigo-"],section[class*="to-violet-"],section[class*="to-purple-"]
+):not(button):not([role="button"]) {
+  --tw-gradient-to: #dff0e7 !important;
+}
+
+/* Green hero copy must remain dark against the new light surface. */
+.biz-app-main :where([class*="from-blue-"],[class*="from-indigo-"],[class*="from-violet-"],[class*="from-purple-"]) :where(h1,h2,h3,h4,h5,h6,p,span,div) {
+  color: var(--bb-text) !important;
+  -webkit-text-fill-color: var(--bb-text) !important;
+}
+
+/* Small status/action pills use the same green family. */
+.biz-app-main :where(.badge,.pill,[class*="rounded-full"][class*="bg-blue-"]) {
+  border-color: #c4dfcf !important;
+}
+
+@media (max-width: 767px) {
+  .biz-app-main :where(.flex-row) { min-width: 0; }
+  .biz-app-main :where(.flex-row.gap-*) { flex-wrap: wrap; }
+  .biz-app-main :where(.overflow-hidden) { min-width: 0; }
+}
