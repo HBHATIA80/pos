@@ -93,10 +93,10 @@ export default function PosKeyboardShortcuts() {
       <Keyboard className="h-3.5 w-3.5 text-blue-600" /> Shortcuts <kbd className="rounded bg-slate-100 px-1">F1</kbd>
     </button>
 
-    {open && <div className="biz-light-modal fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={() => setOpen(false)}>
-      <div className="biz-light-modal-surface w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onMouseDown={event => event.stopPropagation()}>
+    {open && <div className="biz-light-modal fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={() => setOpen(false)}>
+      <div className="biz-light-modal-surface w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="pos-shortcuts-title" onMouseDown={event => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <div><h2 className="text-base font-black text-slate-900">BIZBook Keyboard Shortcuts</h2><p className="text-xs text-slate-500">Designed for fast desktop Sales & Purchase billing</p></div>
+          <div><h2 id="pos-shortcuts-title" className="text-base font-black text-slate-900">BIZBook Keyboard Shortcuts</h2><p className="text-xs text-slate-500">Designed for fast desktop Sales & Purchase billing</p></div>
           <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close shortcuts"><X className="h-5 w-5" /></button>
         </div>
         <div className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2">
