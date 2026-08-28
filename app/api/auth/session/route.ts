@@ -26,6 +26,28 @@ export async function POST() {
   return NextResponse.json({ ok: true })
 }
 
+export async function PATCH() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+
+  const sessionId = await getCurrentSessionId(supabase)
+  if (!sessionId) return NextResponse.json({ error: 'Session expired.' }, { status: 401 })
+
+  const { data: active, error } = await supabase.rpc('touch_active_login', { p_session_id: sessionId })
+  if (error) {
+    console.error('session heartbeat failed', error)
+    return NextResponse.json({ error: 'Unable to verify the secure session.' }, { status: 503 })
+  }
+
+  if (!active) {
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+    return NextResponse.json({ error: 'Session expired due to inactivity.', code: 'SESSION_TIMEOUT' }, { status: 401 })
+  }
+
+  return NextResponse.json({ ok: true })
+}
+
 export async function DELETE() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
