@@ -1,0 +1,59 @@
+/* BIZYBUK accessibility + responsive contrast layer. Loaded after globals so surface-specific rules win. */
+:root { color-scheme: light; }
+html, body { max-width: 100%; overflow-x: hidden; }
+body { color: #0b1220; }
+
+/* Light surfaces: readable dark text. */
+.bg-white, [class~="bg-white"] { color: #0b1220; }
+.bg-white h1, .bg-white h2, .bg-white h3, .bg-white h4, .bg-white h5, .bg-white h6,
+[class~="bg-white"] h1, [class~="bg-white"] h2, [class~="bg-white"] h3, [class~="bg-white"] h4, [class~="bg-white"] h5, [class~="bg-white"] h6 { color: #0b1220 !important; }
+
+/* Explicit high-contrast utility overrides on light backgrounds. */
+.text-slate-950 { color: #0b1220 !important; }
+.text-slate-900 { color: #111827 !important; }
+.text-slate-800 { color: #1f2937 !important; }
+.text-slate-700 { color: #334155 !important; }
+.text-slate-600 { color: #475569 !important; }
+.text-slate-500 { color: #64748b !important; }
+.text-slate-400 { color: #64748b !important; }
+
+/* Dark analytics/hero surfaces: every heading and important value stays light. */
+[class*="from-slate-950"], [class*="from-slate-900"], [class*="bg-slate-950"] { color: #ffffff !important; }
+[class*="from-slate-950"] h1, [class*="from-slate-950"] h2, [class*="from-slate-950"] h3, [class*="from-slate-950"] h4, [class*="from-slate-950"] h5, [class*="from-slate-950"] h6,
+[class*="from-slate-900"] h1, [class*="from-slate-900"] h2, [class*="from-slate-900"] h3, [class*="from-slate-900"] h4, [class*="from-slate-900"] h5, [class*="from-slate-900"] h6,
+[class*="bg-slate-950"] h1, [class*="bg-slate-950"] h2, [class*="bg-slate-950"] h3, [class*="bg-slate-950"] h4, [class*="bg-slate-950"] h5, [class*="bg-slate-950"] h6 { color: #ffffff !important; }
+[class*="from-slate-950"] .text-slate-950, [class*="from-slate-950"] .text-slate-900,
+[class*="from-slate-900"] .text-slate-950, [class*="from-slate-900"] .text-slate-900,
+[class*="bg-slate-950"] .text-slate-950, [class*="bg-slate-950"] .text-slate-900 { color: #ffffff !important; }
+[class*="from-slate-950"] .text-slate-800, [class*="from-slate-950"] .text-slate-700, [class*="from-slate-950"] .text-slate-600,
+[class*="from-slate-900"] .text-slate-800, [class*="from-slate-900"] .text-slate-700, [class*="from-slate-900"] .text-slate-600,
+[class*="bg-slate-950"] .text-slate-800, [class*="bg-slate-950"] .text-slate-700, [class*="bg-slate-950"] .text-slate-600 { color: #e2e8f0 !important; }
+[class*="from-slate-950"] .text-slate-500, [class*="from-slate-950"] .text-slate-400,
+[class*="from-slate-900"] .text-slate-500, [class*="from-slate-900"] .text-slate-400,
+[class*="bg-slate-950"] .text-slate-500, [class*="bg-slate-950"] .text-slate-400 { color: #cbd5e1 !important; }
+
+/* Login hero: readable against the pale blue background. */
+.biz-login-hero p, .biz-login-hero li { color: #1f2937 !important; }
+.biz-login-hero h1 { color: #07111f !important; }
+.biz-login-hero .text-blue-700, .biz-login-hero .text-blue-600 { color: #1558d6 !important; }
+.biz-login-feature { color: #111827 !important; font-weight: 700 !important; }
+.biz-login-feature-icon { background: #1769ff !important; color: #fff !important; }
+
+/* Mobile ergonomics. */
+@media (max-width: 1023px) {
+  body { font-size: 15px; }
+  button, a[role="button"], input, select, textarea { min-height: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+  .biz-app-main { padding-bottom: env(safe-area-inset-bottom); }
+  table { min-width: 640px; }
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 640px) {
+  .biz-login-hero { min-height: auto !important; }
+  .biz-dashboard-hero, .biz-dashboard-card { border-radius: 18px !important; }
+  h1 { line-height: 1.08; }
+  h2 { line-height: 1.15; }
+}
+
+/* Keyboard visibility. */
+:focus-visible { outline: 3px solid rgba(23,105,255,.55); outline-offset: 2px; }
