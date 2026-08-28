@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SuperAdminConsole from './super-admin-console'
 import HomepageImageSettings from './homepage-image-settings'
+import styles from './super-admin-theme.module.css'
 
 export default async function SuperAdminPage() {
   const supabase = await createClient()
@@ -17,7 +18,7 @@ export default async function SuperAdminPage() {
   if (!access) redirect('/dashboard')
 
   return (
-    <div className="super-admin-shell space-y-6">
+    <div className={`${styles.shell} space-y-6`}>
       <SuperAdminConsole />
       <HomepageImageSettings />
     </div>
