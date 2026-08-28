@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 
 const supportUrl = 'https://wa.me/919996609399?text=I%20have%20a%20question%20about%20BIZYBUK.IN'
-const concurrentLoginMessage = 'This login credential is already in use on another device. Please log out there before signing in here.'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -28,21 +27,13 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ phone: cleanPhone, password })
       if (error) { toast.error(error.message); return }
-      const sessionResponse = await fetch('/api/auth/session', { method: 'POST', credentials: 'include' })
-      const sessionBody = await sessionResponse.json().catch(() => ({}))
-      if (!sessionResponse.ok) {
-        await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-        if (sessionResponse.status === 409) toast.error(concurrentLoginMessage, { duration: 6000 })
-        else toast.error(sessionBody.error || 'Unable to establish a secure login session.')
-        return
-      }
       toast.success('You are signed in')
       router.push('/dashboard')
       router.refresh()
     } catch (error) {
       console.error(error)
       await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
-      toast.error('Unable to sign in securely. Please try again.')
+      toast.error('Unable to sign in. Please try again.')
     } finally { setLoading(false) }
   }
 
@@ -84,7 +75,6 @@ export default function LoginPage() {
               <div><label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-950">Mobile number</label><div className="relative"><Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="phone" type="tel" autoComplete="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={`${inputClass} pl-11 pr-3`} /></div></div>
               <div className="mt-5"><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-bold text-slate-950">Password</label><Link href="/forgot-password" className="text-sm font-black text-blue-700 hover:text-blue-900">Forgot password?</Link></div><div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" /><input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${inputClass} pl-11 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
               <button type="submit" disabled={loading} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 text-sm font-black text-white shadow-lg shadow-blue-700/25 transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70">{loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing you in...</> : <>Continue <ArrowRight className="h-4 w-4" /></>}</button>
-              <p className="mt-4 text-center text-xs font-medium leading-5 text-slate-600">One BIZYBUK.IN account can be active on one device at a time.</p>
             </form>
             <div className="mt-6 space-y-3 text-center text-sm font-medium text-slate-700"><p>Opening a shop? <Link href="/signup" className="font-black text-blue-700 hover:text-blue-900">Create Shop Account</Link></p><p>Already a customer? <Link href="/customer-signup" className="font-black text-blue-700 hover:text-blue-900">Create Customer Account</Link></p><a href={supportUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-emerald-800 hover:text-emerald-900"><MessageCircle className="h-4 w-4" /> Questions or suggestions? Contact support</a></div>
           </div>
