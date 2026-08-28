@@ -1,0 +1,79 @@
+/* Homepage "Why BIZYBUK" card: high-contrast, larger, confident typography. */
+#why > div > div {
+  background: #155f4b !important;
+  border-color: #1d765d !important;
+}
+
+#why h2 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 42px !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.035em !important;
+}
+
+#why > div > div > div > div:first-child > p {
+  color: #e7f7ef !important;
+  -webkit-text-fill-color: #e7f7ef !important;
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+  font-weight: 600 !important;
+}
+
+#why > div > div > div > div:first-child > div {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  font-weight: 800 !important;
+}
+
+#why > div > div > div > div:first-child > span {
+  color: #e9fff4 !important;
+  -webkit-text-fill-color: #e9fff4 !important;
+  background: rgba(255,255,255,.13) !important;
+  border-color: rgba(255,255,255,.22) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+#why > div > div > div > div:last-child {
+  background: rgba(255,255,255,.10) !important;
+  border-color: rgba(255,255,255,.22) !important;
+}
+
+#why > div > div > div > div:last-child > p:first-child {
+  color: #c9f0dc !important;
+  -webkit-text-fill-color: #c9f0dc !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+#why > div > div > div > div:last-child > p:nth-child(2) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 19px !important;
+  line-height: 1.55 !important;
+  font-weight: 800 !important;
+}
+
+#why a {
+  color: #155f4b !important;
+  -webkit-text-fill-color: #155f4b !important;
+  background: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.10) !important;
+}
+
+#why a:hover {
+  background: #f2fbf6 !important;
+}
+
+@media (max-width: 767px) {
+  #why h2 { font-size: 34px !important; }
+  #why > div > div > div > div:first-child > p { font-size: 16px !important; line-height: 1.6 !important; }
+  #why > div > div > div > div:first-child > div { font-size: 14px !important; }
+  #why > div > div > div > div:last-child > p:nth-child(2) { font-size: 17px !important; }
+}
