@@ -32,25 +32,52 @@ body { color: #0b1220; }
 [class*="from-slate-900"] .text-slate-500, [class*="from-slate-900"] .text-slate-400,
 [class*="bg-slate-950"] .text-slate-500, [class*="bg-slate-950"] .text-slate-400 { color: #cbd5e1 !important; }
 
-/* Dark dashboard date-range controls: avoid white-on-white active/hover states. */
-[class*="from-slate-950"] button[class~="bg-white"][class~="text-slate-900"] {
-  background: #e0e7ff !important;
-  color: #172554 !important;
-  border: 1px solid #c7d2fe !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,.14);
-}
-[class*="from-slate-950"] button[class~="bg-white"][class~="text-slate-900"]:hover {
-  background: #c7d2fe !important;
-  color: #0f1f3d !important;
-}
-[class*="from-slate-950"] button[class*="bg-white/10"] {
+/* Dashboard date-range controls: selected state must be unmistakable. */
+[class*="from-slate-950"] button[class~="bg-white"][class~="text-slate-900"],
+[class*="from-slate-900"] button[class~="bg-white"][class~="text-slate-900"] {
+  background: #2563eb !important;
+  background-image: none !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 0 2px #2563eb, 0 6px 18px rgba(37,99,235,.42) !important;
+  font-weight: 800 !important;
+  transform: translateY(-1px);
 }
-[class*="from-slate-950"] button[class*="bg-white/10"]:hover {
-  background: rgba(129,140,248,.30) !important;
+[class*="from-slate-950"] button[class~="bg-white"][class~="text-slate-900"]:hover,
+[class*="from-slate-900"] button[class~="bg-white"][class~="text-slate-900"]:hover {
+  background: #1d4ed8 !important;
   color: #ffffff !important;
-  border-color: rgba(199,210,254,.42) !important;
+  border-color: #ffffff !important;
+}
+
+/* Unselected day buttons stay dark/translucent so the selected one stands out. */
+[class*="from-slate-950"] button[class~="bg-white\/10"],
+[class*="from-slate-900"] button[class~="bg-white\/10"] {
+  background: rgba(255,255,255,.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  box-shadow: none !important;
+}
+[class*="from-slate-950"] button[class~="bg-white\/10"]:hover,
+[class*="from-slate-900"] button[class~="bg-white\/10"]:hover {
+  background: rgba(129,140,248,.34) !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,.48) !important;
+}
+
+/* Refresh control should remain visually secondary, not look selected. */
+[class*="from-slate-950"] button[title="Refresh"],
+[class*="from-slate-900"] button[title="Refresh"] {
+  background: rgba(255,255,255,.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  box-shadow: none !important;
+  transform: none;
+}
+[class*="from-slate-950"] button[title="Refresh"]:hover,
+[class*="from-slate-900"] button[title="Refresh"]:hover {
+  background: rgba(129,140,248,.34) !important;
+  border-color: rgba(255,255,255,.48) !important;
 }
 
 /* Login hero: readable against the pale blue background. */
