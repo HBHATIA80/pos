@@ -1,0 +1,175 @@
+.shell :global(main) {
+  color: #17352f;
+}
+
+/* Main Super Admin hero card: calm, premium green instead of the old navy/blue block. */
+.shell :global(main > section:first-child) {
+  border-color: #cfe5dd !important;
+  border-radius: 28px !important;
+  box-shadow: 0 18px 45px rgba(20, 83, 67, 0.10) !important;
+}
+
+.shell :global(main > section:first-child > div:first-child) {
+  background: linear-gradient(135deg, #0f5b4b 0%, #16745f 52%, #2b8a6f 100%) !important;
+  padding: 32px 36px !important;
+}
+
+.shell :global(main > section:first-child h1) {
+  color: #ffffff !important;
+  font-size: clamp(2rem, 3vw, 2.75rem) !important;
+  line-height: 1.08 !important;
+  font-weight: 900 !important;
+}
+
+.shell :global(main > section:first-child p) {
+  font-size: 0.98rem !important;
+  line-height: 1.7 !important;
+}
+
+.shell :global(main > section:first-child > div:first-child p) {
+  color: #e3f4ee !important;
+}
+
+.shell :global(main > section:first-child > div:first-child .bg-white\/10) {
+  background: rgba(255,255,255,.14) !important;
+  border: 1px solid rgba(255,255,255,.18);
+  color: #ffffff !important;
+}
+
+/* Header actions become light, high-contrast controls. */
+.shell :global(main > section:first-child > div:first-child button) {
+  min-height: 46px;
+  border-radius: 14px !important;
+  font-size: 0.9rem !important;
+  transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.shell :global(main > section:first-child > div:first-child button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.shell :global(main > section:first-child > div:first-child button:last-child) {
+  background: #f4fbf8 !important;
+  color: #12604f !important;
+}
+
+/* Metric strip: each metric reads like a small information card. */
+.shell :global(main > section:first-child > div:last-child) {
+  background: #dcece6 !important;
+}
+
+.shell :global(main > section:first-child > div:last-child > div) {
+  min-height: 112px;
+  padding: 18px 16px !important;
+  background: #ffffff !important;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.shell :global(main > section:first-child > div:last-child > div:hover) {
+  background: #f4faf7 !important;
+}
+
+.shell :global(main > section:first-child > div:last-child svg) {
+  width: 20px !important;
+  height: 20px !important;
+  color: #17806a !important;
+}
+
+.shell :global(main > section:first-child > div:last-child p:nth-child(2)) {
+  margin-top: 8px !important;
+  color: #123b33 !important;
+  font-size: 1.35rem !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+}
+
+.shell :global(main > section:first-child > div:last-child p:last-child) {
+  margin-top: 5px !important;
+  color: #55746b !important;
+  font-size: 0.72rem !important;
+  letter-spacing: .08em !important;
+}
+
+/* The four summary cards below the hero. */
+.shell :global(main > section:nth-child(2) > div) {
+  border-color: #d6e8e1 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 28px rgba(20,83,67,.07) !important;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.shell :global(main > section:nth-child(2) > div:hover) {
+  transform: translateY(-2px);
+  border-color: #a9d5c7 !important;
+  box-shadow: 0 14px 32px rgba(20,83,67,.11) !important;
+}
+
+.shell :global(main > section:nth-child(2) > div p:nth-child(2)) {
+  color: #153b33 !important;
+  font-size: 1.75rem !important;
+  font-weight: 900 !important;
+}
+
+/* Tabs and search area. */
+.shell :global(main > section:nth-child(3)) {
+  border-color: #d6e8e1 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 28px rgba(20,83,67,.06) !important;
+}
+
+.shell :global(main > section:nth-child(3) input:focus) {
+  border-color: #38a88b !important;
+  box-shadow: 0 0 0 3px rgba(56,168,139,.14);
+}
+
+.shell :global(main > section:nth-child(3) .bg-slate-100) {
+  background: #edf6f3 !important;
+}
+
+.shell :global(main > section:nth-child(3) .bg-white.text-slate-950) {
+  color: #125b4c !important;
+  box-shadow: 0 3px 10px rgba(20,83,67,.10) !important;
+}
+
+/* Consistent readable typography across the console. */
+.shell :global(main > section:nth-child(3) h3) {
+  font-size: 1rem !important;
+}
+
+.shell :global(main > section:nth-child(3) p) {
+  line-height: 1.5;
+}
+
+/* Mobile: preserve the same hierarchy without squeezing the hero. */
+@media (max-width: 640px) {
+  .shell :global(main) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .shell :global(main > section:first-child > div:first-child) {
+    padding: 24px 20px !important;
+  }
+
+  .shell :global(main > section:first-child h1) {
+    font-size: 2rem !important;
+  }
+
+  .shell :global(main > section:first-child > div:first-child > div) {
+    width: 100%;
+  }
+
+  .shell :global(main > section:first-child > div:first-child button) {
+    flex: 1 1 auto;
+  }
+
+  .shell :global(main > section:first-child > div:last-child > div) {
+    min-height: 100px;
+    padding: 15px 12px !important;
+  }
+
+  .shell :global(main > section:first-child > div:last-child p:nth-child(2)) {
+    font-size: 1.15rem !important;
+  }
+}
