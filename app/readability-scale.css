@@ -1,0 +1,21 @@
+/* Global readability scale: make the application easier to read without changing its visual language. */
+body {
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+}
+
+/* Tailwind's small utility sizes are intentionally lifted one step globally. */
+.text-xs { font-size: 0.8125rem !important; line-height: 1.35 !important; }
+.text-sm { font-size: 0.9375rem !important; line-height: 1.5 !important; }
+.text-base { font-size: 1rem !important; line-height: 1.55 !important; }
+
+/* Common application controls/navigation should remain comfortably readable. */
+.biz-nav-item { font-size: 0.9375rem !important; }
+button, input, select, textarea { font-size: 0.9375rem; }
+
+/* Keep table content readable while preserving the compact spreadsheet layout. */
+table tbody td { font-size: 0.9375rem !important; }
+thead th { font-size: 0.8125rem !important; }
+
+/* Form labels should be easy to scan. */
+label { font-size: 0.9375rem; }
