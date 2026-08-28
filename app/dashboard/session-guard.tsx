@@ -23,7 +23,8 @@ export default function SessionGuard() {
       if (signingOutRef.current) return
       signingOutRef.current = true
 
-      // Release the application lock before removing the Supabase session.
+      // Release only this application's active lock before removing the local
+      // auth session. This cannot affect a newer login on another device.
       await fetch('/api/auth/session', {
         method: 'DELETE',
         credentials: 'include',
@@ -60,7 +61,7 @@ export default function SessionGuard() {
 
       try {
         const response = await fetch('/api/auth/session', {
-          method: 'POST',
+          method: 'PATCH',
           credentials: 'include',
           cache: 'no-store',
         })
@@ -76,21 +77,6 @@ export default function SessionGuard() {
         // Do not log users out for a transient network failure.
       }
     }, 15_000)
-
-    // Establish the lock immediately after the dashboard mounts.
-    void fetch('/api/auth/session', {
-      method: 'POST',
-      credentials: 'include',
-      cache: 'no-store',
-    }).then(async (response) => {
-      if (!response.ok) {
-        await signOutAndRedirect(
-          response.status === 409
-            ? 'This account is now active on another device.'
-            : 'Your secure session has expired. Please sign in again.',
-        )
-      }
-    }).catch(() => undefined)
 
     return () => {
       mounted = false
