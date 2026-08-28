@@ -9,7 +9,7 @@ const MAX_BYTES = 8 * 1024 * 1024
 
 export default function HomepageImageSettings() {
   const [selected, setSelected] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string>(ASSET_URL)
+  const [preview, setPreview] = useState<string>(`${ASSET_URL}?v=${Date.now()}`)
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
@@ -40,18 +40,25 @@ export default function HomepageImageSettings() {
     try {
       const form = new FormData()
       form.append('image', selected)
+
       const response = await fetch('/api/super-admin', {
         method: 'POST',
         body: form,
         credentials: 'include',
+        cache: 'no-store',
       })
+
       const body = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(body.error || 'Unable to update homepage image.')
+      if (!response.ok) throw new Error(body.error || 'Unable to publish homepage image.')
+
       setSelected(null)
-      setPreview(`${ASSET_URL}?v=${Date.now()}`)
-      toast.success(body.message || 'Homepage image updated.')
+      const publishedUrl = typeof body.assetUrl === 'string'
+        ? body.assetUrl
+        : `${ASSET_URL}?v=${Date.now()}`
+      setPreview(publishedUrl)
+      toast.success(body.message || 'Homepage image published successfully.')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to update homepage image.')
+      toast.error(error instanceof Error ? error.message : 'Unable to publish homepage image.')
     } finally {
       setUploading(false)
     }
@@ -105,7 +112,7 @@ export default function HomepageImageSettings() {
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-600">LIVE</span>
           </div>
           <div className="flex min-h-[300px] items-end justify-center overflow-hidden rounded-xl bg-gradient-to-br from-white to-blue-50 p-2">
-            <img src={preview} alt="Homepage shop owner preview" className="h-[300px] w-full object-contain" />
+            <img key={preview} src={preview} alt="Homepage shop owner preview" className="h-[300px] w-full object-contain" />
           </div>
         </div>
       </div>
