@@ -89,7 +89,7 @@
   :where(.fixed.inset-0.z-\[100\]) table td { padding: 4px 8px !important; }
 }
 
-/* Mobile: preserve every column inside the viewport and keep rows compact. */
+/* Mobile voucher dialog: no horizontal slider and very compact rows. */
 @media (max-width: 768px) {
   :where(.fixed.inset-0.z-\[100\]) > div {
     width: calc(100vw - 12px) !important;
@@ -114,4 +114,77 @@
   }
 
   :where(.fixed.inset-0.z-\[100\]) table tbody tr { height: 25px !important; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile POS workspace: Sales + Purchases                                    */
+/* Desktop keeps the existing two-column layout. On phones the bill summary   */
+/* becomes a compact bottom checkout panel instead of consuming the page.     */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Sales uses the 250px summary column; purchases uses 270px. */
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) {
+    display: block !important;
+    min-height: 0 !important;
+    padding-bottom: 132px !important;
+  }
+
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) > :nth-child(1) {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* The second grid child is the Bill Summary. Keep it available without
+     pushing the voucher/item workspace below the fold. */
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) > :nth-child(2) {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: 124px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    z-index: 80 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.24) !important;
+  }
+
+  /* Keep the summary readable but dense. */
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) > :nth-child(2) > * {
+    min-height: 0 !important;
+  }
+
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) > :nth-child(2) button {
+    min-height: 36px !important;
+  }
+
+  /* Prevent the fixed summary from covering the last item/action. */
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px"]) main {
+    padding-bottom: 8px !important;
+  }
+
+  /* Header/action controls wrap cleanly instead of shrinking into unusable
+     touch targets. */
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) input {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) {
+    padding-bottom: 124px !important;
+  }
+
+  :where([class*="xl:grid-cols-[minmax(0,1fr)_250px]"], [class*="xl:grid-cols-[minmax(0,1fr)_270px]"]) > :nth-child(2) {
+    left: 6px !important;
+    right: 6px !important;
+    bottom: calc(6px + env(safe-area-inset-bottom)) !important;
+    max-height: 116px !important;
+    border-radius: 14px !important;
+  }
 }
