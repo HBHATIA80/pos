@@ -4,6 +4,7 @@ import './receipt-palette.css'
 import './homepage-why-card.css'
 import './import-page-theme.css'
 import './super-admin/super-admin-theme.css'
+import './dashboard/voucher-dialog.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
