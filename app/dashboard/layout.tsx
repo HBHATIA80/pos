@@ -40,6 +40,63 @@ export default async function DashboardLayout({ children }: Props) {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* Shared Bill Summary styling for Sales + Purchases */
+        aside section {
+          border-radius: 1rem !important;
+          border: 1px solid #cbd5e1 !important;
+          background: #ffffff !important;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10) !important;
+          overflow: hidden !important;
+        }
+        aside section > div:first-child {
+          background: #334155 !important;
+          color: #ffffff !important;
+          min-height: 78px !important;
+          padding: 12px 14px !important;
+        }
+        aside section > div:first-child,
+        aside section > div:first-child * {
+          color: #ffffff !important;
+        }
+        aside section > div:first-child div:nth-child(2) {
+          color: #ffffff !important;
+          font-size: 1.25rem !important;
+          line-height: 1.5rem !important;
+          font-weight: 900 !important;
+          letter-spacing: -0.02em !important;
+          margin-top: 2px !important;
+        }
+        aside section > div:nth-child(2) {
+          background: #ffffff !important;
+          color: #0f172a !important;
+          padding: 12px 14px !important;
+        }
+        aside section > div:nth-child(2) span,
+        aside section > div:nth-child(2) b {
+          color: #0f172a !important;
+        }
+        aside section > div:nth-child(2) > div:last-child {
+          border-color: #cbd5e1 !important;
+        }
+        aside section > div:nth-child(2) > div:last-child span:last-child {
+          color: #0f172a !important;
+          font-weight: 900 !important;
+        }
+        aside section > div:last-child {
+          background: #ffffff !important;
+          border-top: 1px solid #e2e8f0 !important;
+          padding: 10px !important;
+        }
+        aside section > div:last-child button {
+          font-weight: 900 !important;
+        }
+        @media (max-width: 1279px) {
+          aside section > div:first-child {
+            min-height: 70px !important;
+          }
+        }
+      ` }} />
       <CustomerCatalogGuard role={profile.role} />
       <POSShell
         profile={{ fullName: profile.full_name, role: profile.role, phone: profile.phone }}
