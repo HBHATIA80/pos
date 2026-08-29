@@ -17,6 +17,7 @@ import './homepage-why-card.css'
 import './import-page-theme.css'
 import './super-admin/super-admin-theme.css'
 import './readability-scale.css'
+import './voucher-clarity.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
