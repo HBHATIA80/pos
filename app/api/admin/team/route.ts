@@ -33,6 +33,15 @@ function normalizeName(value: string | null | undefined) {
   return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) return error.message.trim()
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = String((error as { message?: unknown }).message ?? '').trim()
+    if (message) return message
+  }
+  return fallback
+}
+
 async function requireAdmin() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -71,79 +80,142 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null)
   const parsed = createMemberSchema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid request.' }, { status: 400 })
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid request.' }, { status: 400 })
+  }
 
-  const admin = createAdminClient()
   const { fullName, phone, password, role, permissions } = parsed.data
+  let createdUserId: string | null = null
+  let createdPartyId: string | null = null
 
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    phone,
-    password,
-    phone_confirm: true,
-    user_metadata: { full_name: fullName, business_id: auth.profile.business_id, role },
-  })
+  try {
+    const admin = createAdminClient()
 
-  if (createError || !created.user) return NextResponse.json({ error: createError?.message ?? 'Unable to create account.' }, { status: 400 })
+    // Give a clear application-level message for the common case where the
+    // mobile number is already registered instead of falling through to a
+    // generic "Unable to create account" toast.
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      phone,
+      password,
+      phone_confirm: true,
+      user_metadata: { full_name: fullName, business_id: auth.profile.business_id, role },
+    })
 
-  if (role === 'user') {
-    const { data: parties, error: partyLookupError } = await admin
-      .from('parties')
-      .select('id,name,phone,party_type,is_active')
-      .eq('business_id', auth.profile.business_id)
-      .in('party_type', ['customer', 'both'])
-      .eq('is_active', true)
-
-    if (partyLookupError) {
-      await admin.auth.admin.deleteUser(created.user.id)
-      return NextResponse.json({ error: partyLookupError.message }, { status: 500 })
+    if (createError || !created.user) {
+      const message = errorMessage(createError, 'Unable to create account.')
+      const lower = message.toLowerCase()
+      if (lower.includes('already') || lower.includes('registered') || lower.includes('exists')) {
+        return NextResponse.json({ error: 'An account already exists for this mobile number. Use a different number or edit the existing account.' }, { status: 409 })
+      }
+      return NextResponse.json({ error: message }, { status: 400 })
     }
 
-    const phoneMatches = (parties ?? []).filter((party) => normalizePhone(party.phone) === normalizePhone(phone) && normalizePhone(phone) !== '')
-    const nameMatches = (parties ?? []).filter((party) => normalizeName(party.name) === normalizeName(fullName))
+    createdUserId = created.user.id
 
-    let partyId: string | null = null
-    if (phoneMatches.length === 1) partyId = phoneMatches[0].id
-    else if (nameMatches.length === 1) partyId = nameMatches[0].id
-    else if (phoneMatches.length === 0 && nameMatches.length === 0) {
-      const { data: createdParty, error: partyCreateError } = await admin
+    // The database trigger must create the profile in the admin's business.
+    // Verify it immediately so a broken trigger/configuration cannot leave an
+    // Auth user without a usable POS profile.
+    const { data: profile, error: profileLookupError } = await admin
+      .from('profiles')
+      .select('id, business_id, role')
+      .eq('id', createdUserId)
+      .maybeSingle()
+
+    if (profileLookupError || !profile || profile.business_id !== auth.profile.business_id || profile.role !== role) {
+      await admin.auth.admin.deleteUser(createdUserId)
+      createdUserId = null
+      return NextResponse.json({ error: profileLookupError?.message ?? 'Account profile was not created correctly. Please try again.' }, { status: 500 })
+    }
+
+    if (role === 'user') {
+      const { data: parties, error: partyLookupError } = await admin
         .from('parties')
-        .insert({ business_id: auth.profile.business_id, party_type: 'customer', name: fullName, phone, created_by: auth.user.id })
-        .select('id')
-        .single()
-      if (partyCreateError) {
-        await admin.auth.admin.deleteUser(created.user.id)
-        return NextResponse.json({ error: partyCreateError.message }, { status: 500 })
+        .select('id,name,phone,party_type,is_active')
+        .eq('business_id', auth.profile.business_id)
+        .in('party_type', ['customer', 'both'])
+        .eq('is_active', true)
+
+      if (partyLookupError) {
+        await admin.auth.admin.deleteUser(createdUserId)
+        return NextResponse.json({ error: partyLookupError.message }, { status: 500 })
       }
-      partyId = createdParty.id
+
+      const phoneMatches = (parties ?? []).filter((party) => normalizePhone(party.phone) === normalizePhone(phone) && normalizePhone(phone) !== '')
+      const nameMatches = (parties ?? []).filter((party) => normalizeName(party.name) === normalizeName(fullName))
+
+      let partyId: string | null = null
+      if (phoneMatches.length === 1) partyId = phoneMatches[0].id
+      else if (nameMatches.length === 1) partyId = nameMatches[0].id
+      else if (phoneMatches.length === 0 && nameMatches.length === 0) {
+        const { data: createdParty, error: partyCreateError } = await admin
+          .from('parties')
+          .insert({ business_id: auth.profile.business_id, party_type: 'customer', name: fullName, phone, created_by: auth.user.id })
+          .select('id')
+          .single()
+        if (partyCreateError) {
+          await admin.auth.admin.deleteUser(createdUserId)
+          return NextResponse.json({ error: partyCreateError.message }, { status: 500 })
+        }
+        partyId = createdParty.id
+        createdPartyId = partyId
+      }
+
+      if (partyId) {
+        const { error: profileLinkError } = await admin
+          .from('profiles')
+          .update({ party_id: partyId })
+          .eq('id', createdUserId)
+          .eq('business_id', auth.profile.business_id)
+        if (profileLinkError) {
+          if (createdPartyId) await admin.from('parties').delete().eq('id', createdPartyId).eq('business_id', auth.profile.business_id)
+          await admin.auth.admin.deleteUser(createdUserId)
+          return NextResponse.json({ error: profileLinkError.message }, { status: 500 })
+        }
+      }
     }
 
-    if (partyId) {
-      const { error: profileLinkError } = await admin.from('profiles').update({ party_id: partyId }).eq('id', created.user.id).eq('business_id', auth.profile.business_id)
-      if (profileLinkError) {
-        await admin.auth.admin.deleteUser(created.user.id)
-        return NextResponse.json({ error: profileLinkError.message }, { status: 500 })
+    if (permissions.length > 0) {
+      const { data: permissionRows, error: permissionError } = await admin
+        .from('permissions')
+        .select('id, code')
+        .in('code', permissions)
+
+      if (permissionError) {
+        if (createdPartyId) await admin.from('parties').delete().eq('id', createdPartyId).eq('business_id', auth.profile.business_id)
+        await admin.auth.admin.deleteUser(createdUserId)
+        return NextResponse.json({ error: permissionError.message }, { status: 500 })
+      }
+
+      const rows = (permissionRows ?? []).map((permission) => ({
+        profile_id: createdUserId,
+        permission_id: permission.id,
+        granted_by: auth.user.id,
+      }))
+
+      if (rows.length > 0) {
+        const { error: grantError } = await admin.from('profile_permissions').insert(rows)
+        if (grantError) {
+          if (createdPartyId) await admin.from('parties').delete().eq('id', createdPartyId).eq('business_id', auth.profile.business_id)
+          await admin.auth.admin.deleteUser(createdUserId)
+          return NextResponse.json({ error: grantError.message }, { status: 500 })
+        }
       }
     }
+
+    await admin.from('audit_logs').insert({
+      business_id: auth.profile.business_id,
+      actor_id: auth.user.id,
+      action: 'team.member_created',
+      entity_type: 'profile',
+      entity_id: createdUserId,
+      metadata: { role, permissions },
+    })
+
+    return NextResponse.json({ message: `${role === 'staff' ? 'Staff' : 'User'} account created.`, memberId: createdUserId }, { status: 201 })
+  } catch (error) {
+    console.error('team member creation failed', error)
+    return NextResponse.json({ error: errorMessage(error, 'Unable to create account. Please try again.') }, { status: 500 })
   }
-
-  if (permissions.length > 0) {
-    const { data: permissionRows, error: permissionError } = await admin.from('permissions').select('id, code').in('code', permissions)
-    if (permissionError) {
-      await admin.auth.admin.deleteUser(created.user.id)
-      return NextResponse.json({ error: permissionError.message }, { status: 500 })
-    }
-    const rows = (permissionRows ?? []).map((permission) => ({ profile_id: created.user!.id, permission_id: permission.id, granted_by: auth.user.id }))
-    if (rows.length > 0) {
-      const { error: grantError } = await admin.from('profile_permissions').insert(rows)
-      if (grantError) {
-        await admin.auth.admin.deleteUser(created.user.id)
-        return NextResponse.json({ error: grantError.message }, { status: 500 })
-      }
-    }
-  }
-
-  await admin.from('audit_logs').insert({ business_id: auth.profile.business_id, actor_id: auth.user.id, action: 'team.member_created', entity_type: 'profile', entity_id: created.user.id, metadata: { role, permissions } })
-  return NextResponse.json({ message: `${role === 'staff' ? 'Staff' : 'User'} account created.`, memberId: created.user.id }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
