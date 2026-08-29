@@ -35,8 +35,11 @@ export async function POST(request: Request) {
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => null)
 
+  // Purchases owns its date selector. Prefer the date explicitly submitted by
+  // the purchase screen, while retaining the shared cookie as a safe fallback.
   const cookieStore = await cookies()
-  const selectedDate = cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
+  const requestedDate = typeof body?.purchased_at === 'string' ? body.purchased_at : null
+  const selectedDate = requestedDate || cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
   const dateParsed = invoiceDateSchema.safeParse(selectedDate)
   if (!dateParsed.success) return NextResponse.json({ error: 'Invalid invoice date' }, { status: 400 })
   if (selectedDate > new Date().toISOString().slice(0, 10)) return NextResponse.json({ error: 'Invoice date cannot be in the future' }, { status: 400 })
