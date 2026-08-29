@@ -1,11 +1,15 @@
 /* Shared Latest 20 Voucher dialog layout for Sales and Purchases. */
+/* Keep every column inside the dialog: no horizontal slider, compact rows, readable details. */
 :where(.fixed.inset-0.z-\[100\]) > div {
-  width: min(1100px, calc(100vw - 32px)) !important;
-  max-width: 1100px !important;
-  max-height: calc(100vh - 32px) !important;
+  width: min(1180px, calc(100vw - 24px)) !important;
+  max-width: 1180px !important;
+  max-height: calc(100vh - 24px) !important;
+  min-width: 0 !important;
 }
 
 :where(.fixed.inset-0.z-\[100\]) > div > div:nth-child(2) {
+  width: 100% !important;
+  max-width: 100% !important;
   min-width: 0 !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
@@ -13,86 +17,101 @@
 
 :where(.fixed.inset-0.z-\[100\]) table {
   width: 100% !important;
+  max-width: 100% !important;
   min-width: 0 !important;
   table-layout: fixed !important;
-  border-collapse: separate !important;
+  border-collapse: collapse !important;
   font-size: 12px !important;
 }
 
 :where(.fixed.inset-0.z-\[100\]) table th,
 :where(.fixed.inset-0.z-\[100\]) table td {
   box-sizing: border-box !important;
-  padding: 7px 9px !important;
-  line-height: 1.2 !important;
-  white-space: nowrap !important;
+  min-width: 0 !important;
+  padding: 5px 8px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  overflow-wrap: anywhere !important;
+  vertical-align: middle !important;
 }
 
 :where(.fixed.inset-0.z-\[100\]) table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
+  white-space: nowrap !important;
 }
 
 :where(.fixed.inset-0.z-\[100\]) table tbody tr {
-  height: 34px !important;
+  height: 30px !important;
 }
 
 /* Sales: Voucher / Customer / Date / Amount / Status */
 :where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) th:nth-child(1),
-:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(1) { width: 21% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(1) { width: 18% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) th:nth-child(2),
-:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(2) { width: 31% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(2) { width: 28% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) th:nth-child(3),
-:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(3) { width: 18% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(3) { width: 17% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) th:nth-child(4),
-:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(4) { width: 18% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(4) { width: 20% !important; text-align: right !important; }
 :where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) th:nth-child(5),
-:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(5) { width: 12% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:not(:has(th:first-child input[type="checkbox"])) td:nth-child(5) { width: 17% !important; }
 
 /* Purchases: Select / Voucher / Supplier / Date / Amount / Status */
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(1),
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(1) { width: 42px !important; }
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(2),
-:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(2) { width: 20% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(2) { width: 18% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(3),
-:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(3) { width: 29% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(3) { width: 27% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(4),
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(4) { width: 16% !important; }
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(5),
-:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(5) { width: 16% !important; }
+:where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(5) { width: 20% !important; text-align: right !important; }
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) th:nth-child(6),
 :where(.fixed.inset-0.z-\[100\]) table:has(th:first-child input[type="checkbox"]) td:nth-child(6) { width: 13% !important; }
 
 /* Amount stays prominent and fully readable. */
 :where(.fixed.inset-0.z-\[100\]) table td:nth-last-child(2) {
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 900 !important;
   color: var(--biz-primary-dark) !important;
   -webkit-text-fill-color: var(--biz-primary-dark) !important;
 }
 
-@media (max-width: 768px) {
-  :where(.fixed.inset-0.z-\[100\]) > div {
-    width: calc(100vw - 16px) !important;
-    max-width: calc(100vw - 16px) !important;
-    max-height: calc(100vh - 16px) !important;
-  }
-
+/* Compact desktop: show more vouchers without wasting vertical space. */
+@media (min-width: 769px) {
+  :where(.fixed.inset-0.z-\[100\]) table tbody tr { height: 28px !important; }
   :where(.fixed.inset-0.z-\[100\]) table th,
-  :where(.fixed.inset-0.z-\[100\]) table td {
-    padding: 5px !important;
-    font-size: 11px !important;
-  }
-
-  :where(.fixed.inset-0.z-\[100\]) table tbody tr { height: 29px !important; }
+  :where(.fixed.inset-0.z-\[100\]) table td { padding: 4px 8px !important; }
 }
 
-@media (max-width: 640px) {
+/* Mobile: preserve every column inside the viewport and keep rows compact. */
+@media (max-width: 768px) {
+  :where(.fixed.inset-0.z-\[100\]) > div {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: calc(100vh - 12px) !important;
+  }
+
   :where(.fixed.inset-0.z-\[100\]) table th,
   :where(.fixed.inset-0.z-\[100\]) table td {
-    padding: 4px !important;
-    font-size: 10px !important;
+    padding: 4px 5px !important;
+    font-size: 10.5px !important;
   }
+
+  :where(.fixed.inset-0.z-\[100\]) table tbody tr { height: 27px !important; }
+}
+
+@media (max-width: 480px) {
+  :where(.fixed.inset-0.z-\[100\]) table th,
+  :where(.fixed.inset-0.z-\[100\]) table td {
+    padding: 3px 4px !important;
+    font-size: 9.5px !important;
+  }
+
+  :where(.fixed.inset-0.z-\[100\]) table tbody tr { height: 25px !important; }
 }
