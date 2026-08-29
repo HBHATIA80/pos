@@ -22,13 +22,13 @@ export default async function DashboardPage() {
   ]
 
   return <div className="mx-auto max-w-7xl space-y-6">
-    <section className="biz-dashboard-hero overflow-hidden rounded-[28px] border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-indigo-50 p-6 shadow-sm sm:p-8">
-      <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-[.12em] text-blue-700">BIZYBUK.IN · Business Workspace</span>
+    <section className="biz-dashboard-hero overflow-hidden rounded-[28px] p-6 sm:p-8">
+      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[.12em] text-emerald-700">BIZYBUK.IN · Business Workspace</span>
       <h1 className="mt-4 text-3xl font-black tracking-[-.035em] text-slate-950 sm:text-4xl">Welcome, {profile.full_name}</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">Run sales, purchases, inventory and customer accounts from one clear workspace.</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Run sales, purchases, inventory and customer accounts from one clear workspace.</p>
     </section>
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map(card => { const Icon = card.icon; return <Link key={card.title} href={card.href} className="biz-dashboard-card group rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Icon className="h-5 w-5" /></span><h2 className="mt-4 font-black text-slate-900">{card.title}</h2><p className="mt-1 text-sm leading-5 text-slate-500">{card.description}</p><span className="mt-4 inline-flex text-xs font-black text-blue-600 opacity-0 transition group-hover:opacity-100">Open workspace →</span></Link> })}
+      {cards.map(card => { const Icon = card.icon; return <Link key={card.title} href={card.href} className="biz-dashboard-card group rounded-[22px] p-5"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Icon className="h-5 w-5" /></span><h2 className="mt-4 font-black text-slate-900">{card.title}</h2><p className="mt-1 text-sm leading-5 text-slate-600">{card.description}</p><span className="mt-4 inline-flex text-xs font-black text-emerald-700 opacity-0 transition group-hover:opacity-100">Open workspace →</span></Link> })}
     </section>
   </div>
 }
