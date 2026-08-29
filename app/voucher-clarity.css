@@ -1,20 +1,34 @@
 /* Sales + Purchase voucher readability pass. */
-.invoice-date-bar{min-height:82px;border:1px solid #b7d8c5!important;background:#edf8f2!important;box-shadow:0 8px 24px rgba(15,23,42,.07)!important}
+.invoice-date-bar{min-height:82px!important;border:1px solid #b7d8c5!important;background:#edf8f2!important;box-shadow:0 8px 24px rgba(15,23,42,.07)!important}
 .invoice-date-bar .invoice-date-icon{width:48px!important;height:48px!important;background:#49596b!important;color:#fff!important;box-shadow:0 4px 10px rgba(73,89,107,.24)!important}
-.invoice-date-bar .invoice-date-icon svg{width:25px!important;height:25px!important;stroke-width:2.6!important}
-.invoice-date-bar .invoice-date-title{margin:0!important;color:#000!important;font-size:16px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:.08em!important}
-.invoice-date-bar .invoice-date-help{margin-top:4px!important;color:#000!important;font-size:14px!important;line-height:1.35!important;font-weight:700!important}
-.invoice-date-bar input[type=date]{min-height:48px!important;border:1px solid #94a3b8!important;background:#fff!important;color:#000!important;font-size:15px!important;font-weight:800!important;box-shadow:0 2px 7px rgba(15,23,42,.06)!important}
+.invoice-date-bar .invoice-date-icon svg{width:25px!important;height:25px!important;stroke-width:2.6!important;color:#fff!important}
+.invoice-date-bar .invoice-date-title,.invoice-date-bar .invoice-date-title:is(p){margin:0!important;color:#000!important;font-size:16px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:.08em!important}
+.invoice-date-bar .invoice-date-help,.invoice-date-bar .invoice-date-help:is(p){margin-top:4px!important;color:#000!important;font-size:14px!important;line-height:1.35!important;font-weight:900!important}
+.invoice-date-bar input[type=date]{min-height:48px!important;border:1px solid #64748b!important;background:#fff!important;color:#000!important;font-size:15px!important;font-weight:900!important;box-shadow:0 2px 7px rgba(15,23,42,.06)!important}
 .invoice-date-bar input[type=date]:focus{border-color:#49596b!important;box-shadow:0 0 0 4px rgba(73,89,107,.14)!important}
-.invoice-date-bar button,.invoice-date-bar .invoice-date-saving{min-height:44px!important;color:#000!important;font-size:13px!important;font-weight:800!important}
+.invoice-date-bar button,.invoice-date-bar .invoice-date-saving{min-height:44px!important;color:#000!important;font-size:13px!important;font-weight:900!important}
+
+/* Bill Summary: dark header + white text for reliable contrast on both vouchers. */
 aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg{border-color:#9aa9b8!important;box-shadow:0 12px 30px rgba(15,23,42,.12)!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child{min-height:76px;background:#edf8f2!important;color:#000!important;border-bottom:1px solid #b7d8c5}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:first-child>div:first-child{color:#000!important;font-size:11px!important;font-weight:900!important;letter-spacing:.18em!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:first-child>div:last-child{margin-top:3px!important;color:#000!important;font-size:24px!important;line-height:1.15!important;font-weight:900!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:last-child{color:#000!important;font-size:12px!important;font-weight:900!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child{min-height:76px!important;background:#49596b!important;color:#fff!important;border-bottom:1px solid #334155!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child *{color:#fff!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:first-child>div:first-child{color:#fff!important;font-size:11px!important;font-weight:900!important;letter-spacing:.18em!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:first-child>div:last-child{margin-top:3px!important;color:#fff!important;font-size:24px!important;line-height:1.15!important;font-weight:900!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:first-child>div:last-child{color:#fff!important;font-size:12px!important;font-weight:900!important}
 aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2){color:#000!important;background:#fff!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2) span,aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2) b{color:#000!important;font-size:13px!important;font-weight:800!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2) span,aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2) b{color:#000!important;font-size:13px!important;font-weight:900!important}
 aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2)>div:last-child span{font-size:15px!important;font-weight:900!important}
 aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:nth-child(2)>div:last-child span:last-child{color:#000!important;font-size:23px!important;font-weight:900!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:first-child{min-height:48px!important;font-size:14px!important;font-weight:900!important}
-aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:last-child{min-height:42px!important;font-size:13px!important;font-weight:900!important}
+
+/* Action buttons: keep text readable even while disabled; stronger hover states. */
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:first-child{min-height:48px!important;font-size:14px!important;font-weight:900!important;color:#fff!important;background:#0f766e!important;opacity:1!important;transition:background-color .15s ease,transform .15s ease,box-shadow .15s ease!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:first-child:hover:not(:disabled){background:#115e59!important;transform:translateY(-1px)!important;box-shadow:0 6px 14px rgba(15,118,110,.22)!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:first-child:disabled{background:#64748b!important;color:#fff!important;opacity:1!important;box-shadow:none!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:last-child{min-height:42px!important;font-size:13px!important;font-weight:900!important;color:#000!important;background:#fff!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:last-child:hover:not(:disabled){background:#f1f5f9!important;border-color:#64748b!important}
+aside>section.overflow-hidden.rounded-2xl.border.border-slate-200.bg-white.shadow-lg>div:last-child button:last-child:disabled{color:#475569!important;opacity:1!important;background:#f8fafc!important}
+
+/* Search Products empty-state CTA on both vouchers. */
+button.bg-teal-700,button.bg-slate-700{font-weight:900!important;color:#fff!important}
+button.bg-teal-700:hover{background:#115e59!important;color:#fff!important}
+button.bg-slate-700:hover{background:#334155!important;color:#fff!important}
