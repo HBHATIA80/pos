@@ -23,6 +23,13 @@ export default function PurchasesPage() {
   const [supplier, setSupplier] = useState('')
   const [supplierSearch, setSupplierSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
+  const [invoiceDate, setInvoiceDate] = useState(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = `${now.getMonth() + 1}`.padStart(2, '0')
+    const day = `${now.getDate()}`.padStart(2, '0')
+    return `${year}-${month}-${day}`
+  })
   const [lines, setLines] = useState<Line[]>([])
   const [loading, setLoading] = useState(true)
   const [productLoading, setProductLoading] = useState(false)
@@ -169,7 +176,7 @@ export default function PurchasesPage() {
     if (!lines.length) return toast.error('Add at least one product')
     setSaving(true)
     try {
-      const response = await fetch('/api/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ party_id: supplier || null, items: lines }) })
+      const response = await fetch('/api/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ party_id: supplier || null, items: lines, purchased_at: invoiceDate }) })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Unable to create purchase')
       const id = result.purchase?.id
@@ -193,7 +200,30 @@ export default function PurchasesPage() {
   const purchaseDate = (purchase: Purchase) => new Date(purchase.purchased_at || purchase.created_at).toLocaleDateString('en-IN')
   const latestPurchases = purchases.slice(0, 20)
 
+  const displayDate = useMemo(() => {
+    if (!invoiceDate) return ''
+    const [year, month, day] = invoiceDate.split('-')
+    return `${day}-${month}-${year}`
+  }, [invoiceDate])
+
   return <div className="mx-auto flex min-h-[calc(100vh-88px)] max-w-[1680px] flex-col gap-3 pb-28 lg:pb-3">
+    <section className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50/70 shadow-sm">
+      <div className="flex min-h-[108px] items-center justify-between gap-4 px-4 py-4 md:px-6">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-800/20"><span className="text-xl font-black">▣</span></span>
+          <div className="min-w-0 leading-tight">
+            <div className="text-[15px] font-black uppercase tracking-[0.14em] text-black">INVOICE DATE</div>
+            <div className="mt-1 text-[17px] font-black text-black">Choose the date for the new purchase invoice</div>
+          </div>
+        </div>
+        <label className="relative flex shrink-0 cursor-pointer items-center rounded-xl border border-slate-300 bg-white px-4 py-3 shadow-sm hover:border-slate-500">
+          <span className="mr-3 text-sm font-black text-black">{displayDate}</span>
+          <input type="date" value={invoiceDate} onChange={event => setInvoiceDate(event.target.value)} aria-label="Invoice date" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+          <span className="text-lg text-black" aria-hidden="true">▣</span>
+        </label>
+      </div>
+    </section>
+
     <section className="shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex min-h-12 flex-wrap items-center gap-2 px-3 py-2">
         <div className="flex items-center gap-3 pr-2"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-600 text-white shadow-sm ring-1 ring-slate-700/20"><ShoppingBag className="h-6 w-6 stroke-[2.5]" /></span><div className="leading-tight"><div className="text-base font-black text-black">Purchase Invoice</div><div className="text-[11px] font-bold text-slate-700">Stock Inward</div></div></div>
