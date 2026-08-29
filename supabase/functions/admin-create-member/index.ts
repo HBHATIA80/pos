@@ -97,7 +97,14 @@ Deno.serve(async (request) => {
       phone,
       password,
       phone_confirm: true,
-      user_metadata: { full_name: fullName, business_id: actor.business_id, role },
+      // The auth trigger uses account_type + business_id to distinguish
+      // internal shop accounts from a brand-new shop-admin signup.
+      user_metadata: {
+        full_name: fullName,
+        business_id: actor.business_id,
+        role,
+        account_type: role,
+      },
     });
 
     if (createError || !created.user) {
