@@ -41,12 +41,12 @@ export default async function DashboardLayout({ children }: Props) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Shared Bill Summary styling for Sales + Purchases */
+        /* Shared Bill Summary: one consistent, high-contrast design for Sales + Purchases */
         aside section {
           border-radius: 1rem !important;
           border: 1px solid #cbd5e1 !important;
           background: #ffffff !important;
-          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10) !important;
+          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10) !important;
           overflow: hidden !important;
         }
         aside section > div:first-child {
@@ -67,7 +67,9 @@ export default async function DashboardLayout({ children }: Props) {
           letter-spacing: -0.02em !important;
           margin-top: 2px !important;
         }
+        /* Summary detail area: black text on white for maximum readability. */
         aside section > div:nth-child(2) {
+          display: block !important;
           background: #ffffff !important;
           color: #0f172a !important;
           padding: 12px 14px !important;
@@ -76,13 +78,25 @@ export default async function DashboardLayout({ children }: Props) {
         aside section > div:nth-child(2) b {
           color: #0f172a !important;
         }
+        /* Highlight the final total in the same dark box on both pages. */
         aside section > div:nth-child(2) > div:last-child {
-          border-color: #cbd5e1 !important;
+          border: 0 !important;
+          border-radius: 12px !important;
+          background: #334155 !important;
+          color: #ffffff !important;
+          padding: 12px !important;
         }
-        aside section > div:nth-child(2) > div:last-child span:last-child {
-          color: #0f172a !important;
+        aside section > div:nth-child(2) > div:last-child * {
+          color: #ffffff !important;
+        }
+        aside section > div:nth-child(2) > div:last-child span:last-child,
+        aside section > div:nth-child(2) > div:last-child b:last-child {
+          color: #ffffff !important;
           font-weight: 900 !important;
+          font-size: 1.25rem !important;
+          line-height: 1.5rem !important;
         }
+        /* Footer/action area is always white and clearly separated. */
         aside section > div:last-child {
           background: #ffffff !important;
           border-top: 1px solid #e2e8f0 !important;
