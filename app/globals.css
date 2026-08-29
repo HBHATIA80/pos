@@ -30,10 +30,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 :where(div:has(> input[placeholder*="Search product"]) > input){height:54px!important;min-height:54px!important;font-size:16px!important;font-weight:700!important;padding-left:14px!important;padding-right:14px!important}
 :where(div:has(> input[placeholder*="Search product"]) > input::placeholder){font-size:15px!important;font-weight:600!important}
 
-/* Latest-voucher dialogs: make the amount column prominent and readable. */
-:where(.fixed table) th:last-of-type, :where(.fixed table) td:last-of-type{white-space:nowrap}
-:where(.fixed table) td:nth-last-child(2){font-size:15px!important;font-weight:900!important;color:var(--biz-primary-dark)!important;-webkit-text-fill-color:var(--biz-primary-dark)!important}
-:where(.fixed table) tbody tr{min-height:48px}
+/* Latest-voucher dialogs: compact enough to show all 20 vouchers without a horizontal slider. */
+:where(.fixed.inset-0.z-\[100\])>div{max-height:calc(100vh - 32px)!important}
+:where(.fixed.inset-0.z-\[100\])>div>div:nth-child(2){overflow-x:hidden!important;overflow-y:visible!important;min-height:0!important}
+:where(.fixed.inset-0.z-\[100\]) table{min-width:0!important;width:100%!important;table-layout:fixed!important;font-size:12px!important}
+:where(.fixed.inset-0.z-\[100\]) table th,:where(.fixed.inset-0.z-\[100\]) table td{padding:5px 8px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+:where(.fixed.inset-0.z-\[100\]) table tbody tr{height:27px!important;min-height:27px!important}
+:where(.fixed.inset-0.z-\[100\]) table thead th{font-size:10px!important;letter-spacing:.045em!important}
+:where(.fixed.inset-0.z-\[100\]) table td:nth-last-child(2){font-size:13px!important;font-weight:900!important;color:var(--biz-primary-dark)!important;-webkit-text-fill-color:var(--biz-primary-dark)!important}
+:where(.fixed.inset-0.z-\[100\]) table td span{line-height:1!important;padding-top:3px!important;padding-bottom:3px!important}
 
-@media(max-width:1279px){aside>section{max-width:100%}}@media(max-width:768px){body{font-size:14px}.biz-nav-item{min-height:42px!important}.dashboard-bill-summary>section,.biz-bill-summary,aside>section{border-radius:16px!important}:where(div:has(> input[placeholder*="Search product"])) {min-height:56px!important}:where(div:has(> input[placeholder*="Search product"]) > input){height:52px!important;min-height:52px!important;font-size:15px!important}}
-@media(max-width:640px){.biz-dashboard-card{min-height:0}.biz-light-modal-surface,.biz-payment-dialog{max-width:calc(100vw - 24px);border-radius:20px!important}}
+@media(max-width:1279px){aside>section{max-width:100%}}
+@media(max-width:768px){body{font-size:14px}.biz-nav-item{min-height:42px!important}.dashboard-bill-summary>section,.biz-bill-summary,aside>section{border-radius:16px!important}:where(div:has(> input[placeholder*="Search product"])) {min-height:56px!important}:where(div:has(> input[placeholder*="Search product"]) > input){height:52px!important;min-height:52px!important;font-size:15px!important}:where(.fixed.inset-0.z-\[100\])>div{max-height:calc(100vh - 16px)!important}:where(.fixed.inset-0.z-\[100\]) table{font-size:11px!important}:where(.fixed.inset-0.z-\[100\]) table th,:where(.fixed.inset-0.z-\[100\]) table td{padding:4px 5px!important}:where(.fixed.inset-0.z-\[100\]) table tbody tr{height:25px!important}}
+@media(max-width:640px){.biz-dashboard-card{min-height:0}.biz-light-modal-surface,.biz-payment-dialog{max-width:calc(100vw - 24px);border-radius:20px!important}:where(.fixed.inset-0.z-\[100\])>div{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;border-radius:20px!important}:where(.fixed.inset-0.z-\[100\]) table{table-layout:fixed!important}:where(.fixed.inset-0.z-\[100\]) table th,:where(.fixed.inset-0.z-\[100\]) table td{padding:4px 4px!important;font-size:10px!important}}
