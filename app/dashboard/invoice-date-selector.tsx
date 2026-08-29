@@ -51,14 +51,14 @@ export default function InvoiceDateSelector() {
   const invoiceKind = pathname.endsWith('/sales') ? 'sale' : 'purchase'
 
   return (
-    <section className="invoice-date-bar mb-5 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+    <section className="invoice-date-bar mb-5 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4" style={{ backgroundColor: '#E8F5EE', border: '1px solid #B7D9C5', boxShadow: '0 6px 18px rgba(15, 118, 110, 0.08)' }}>
       <div className="flex items-center gap-3">
-        <span className="invoice-date-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-900">
-          <CalendarDays className="h-5 w-5 stroke-[2.5]" />
+        <span className="invoice-date-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: '#267A5B', boxShadow: '0 5px 12px rgba(38, 122, 91, 0.22)' }}>
+          <CalendarDays className="h-5 w-5 stroke-[2.8]" />
         </span>
         <div>
-          <p className="invoice-date-title !text-slate-950 !font-black">INVOICE DATE</p>
-          <p className="invoice-date-help !text-slate-950 !font-bold">Choose the date for the new {invoiceKind} invoice</p>
+          <p className="invoice-date-title" style={{ color: '#000000', fontWeight: 900, fontSize: '15px', lineHeight: 1.25 }}>INVOICE DATE</p>
+          <p className="invoice-date-help" style={{ color: '#000000', fontWeight: 800, fontSize: '15px', lineHeight: 1.35 }}>Choose the date for the new {invoiceKind} invoice</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -70,13 +70,14 @@ export default function InvoiceDateSelector() {
           disabled={saving}
           aria-label="Invoice date"
           className="rounded-xl px-3 font-bold text-slate-950 outline-none ring-blue-200 focus:ring-4 disabled:opacity-60"
+          style={{ color: '#000000', fontWeight: 800, borderColor: '#94A3B8' }}
         />
         {!isToday && (
-          <button type="button" onClick={() => void saveDate(today())} disabled={saving} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 font-bold text-slate-950 hover:bg-blue-50 disabled:opacity-60">
+          <button type="button" onClick={() => void saveDate(today())} disabled={saving} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 font-bold text-black hover:bg-white disabled:opacity-60">
             <RotateCcw className="h-4 w-4" /> Today
           </button>
         )}
-        {saving && <span className="invoice-date-saving inline-flex min-h-11 items-center gap-1 rounded-xl px-3 font-bold text-slate-950"><Check className="h-4 w-4" /> Saving</span>}
+        {saving && <span className="invoice-date-saving inline-flex min-h-11 items-center gap-1 rounded-xl px-3 font-bold text-black"><Check className="h-4 w-4" /> Saving</span>}
       </div>
     </section>
   )
