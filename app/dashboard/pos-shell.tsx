@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { BarChart3, BookOpen, CheckSquare, ClipboardList, CreditCard, FileText, LayoutDashboard, Lightbulb, Menu, Package, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Tags, Users, WalletCards } from 'lucide-react'
+import { ArrowLeftRight, BarChart3, BookOpen, CheckSquare, ClipboardList, CreditCard, FileText, LayoutDashboard, Lightbulb, Menu, Package, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Tags, Users, WalletCards } from 'lucide-react'
 import LogoutButton from './logout-button'
 
 type Props = { children: React.ReactNode; profile: { fullName: string; role: 'admin' | 'staff' | 'user'; phone: string | null }; businessName: string; logoUrl: string | null; isSuperAdmin: boolean }
@@ -19,6 +19,7 @@ const mainNav: NavItem[] = [
   { label: 'Order Management', href: '/dashboard/order-management', icon: FileText },
   { label: 'Sales', href: '/dashboard/sales', icon: ShoppingCart },
   { label: 'Purchases', href: '/dashboard/purchases', icon: ShoppingBag },
+  { label: 'Returns', href: '/dashboard/returns', icon: ArrowLeftRight },
   { label: 'Physical Receiving', href: '/dashboard/purchase-receiving', icon: CheckSquare },
   { label: 'Records', href: '/dashboard/records', icon: ClipboardList },
   { label: 'List on Marketplace', href: '/dashboard/marketplace/manage', icon: ShoppingBag },
