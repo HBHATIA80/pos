@@ -10,6 +10,10 @@ function signedOpening(amount: number, type: string | null) {
   return 0
 }
 
+function salesDate(invoice: { sold_at?: string | null; completed_at?: string | null; created_at?: string | null }) {
+  return invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? ''
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -75,11 +79,11 @@ export async function GET(request: Request) {
   const stock = (products ?? []).reduce((s, p) => s + n(p.stock_cost_value || n(p.current_stock) * n(p.purchase_price)), 0)
 
   // Party receivables/payables must use the same source-of-truth calculation as the Party Ledger.
-  // The old implementation used accounting account balances restricted to the report date range,
-  // which made the dashboard disagree with the ledger (especially when the last 7 days were selected).
+  // Use the transaction/business date (sold_at), not completed_at, because a voucher can be
+  // entered later than the date selected by the user.
   const [{ data: parties, error: partiesError }, { data: partySales, error: partySalesError }, { data: partyPurchases, error: partyPurchasesError }, { data: partyPayments, error: partyPaymentsError }, { data: partyVouchers, error: partyVouchersError }] = await Promise.all([
     supabase.from('parties').select('id,name,party_type,opening_balance,opening_balance_type,is_active').eq('business_id', businessId),
-    supabase.from('sales_invoices').select('id,party_id,grand_total,status,completed_at,sold_at,created_at').eq('business_id', businessId).eq('status', 'completed').order('completed_at', { ascending: true }),
+    supabase.from('sales_invoices').select('id,party_id,grand_total,status,completed_at,sold_at,created_at').eq('business_id', businessId).eq('status', 'completed').order('sold_at', { ascending: true }),
     supabase.from('purchase_invoices').select('id,party_id,grand_total,status,purchased_at,created_at').eq('business_id', businessId).eq('status', 'completed').order('purchased_at', { ascending: true }),
     supabase.from('sale_payments').select('id,party_id,amount,paid_at,status').eq('business_id', businessId).eq('status', 'active').order('paid_at', { ascending: true }),
     supabase.from('account_vouchers').select('id,party_id,voucher_type,amount,paid_at,status').eq('business_id', businessId).eq('status', 'active').order('paid_at', { ascending: true }),
@@ -93,7 +97,7 @@ export async function GET(request: Request) {
   for (const party of parties ?? []) partyBalances.set(party.id, signedOpening(n(party.opening_balance), party.opening_balance_type))
 
   for (const invoice of partySales ?? []) {
-    const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
+    const date = salesDate(invoice)
     if (!invoice.party_id || date >= endAt) continue
     partyBalances.set(invoice.party_id, (partyBalances.get(invoice.party_id) ?? 0) + n(invoice.grand_total))
   }
