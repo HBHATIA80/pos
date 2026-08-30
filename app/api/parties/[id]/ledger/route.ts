@@ -34,6 +34,16 @@ function daysBetween(from: string, to: string) {
   return Math.max(0, Math.floor((end - start) / 86400000))
 }
 
+// Transaction date is the business date selected by the user when the invoice/voucher
+// is entered. created_at/completed_at are audit timestamps and must never replace it.
+function salesDate(invoice: { sold_at?: string | null; completed_at?: string | null; created_at?: string | null }) {
+  return invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? ''
+}
+
+function purchaseDate(purchase: { purchased_at?: string | null; created_at?: string | null }) {
+  return purchase.purchased_at ?? purchase.created_at ?? ''
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   const { supabase, user, profile } = await getContext()
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -77,7 +87,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .eq('business_id', profile.business_id)
     .eq('party_id', party.id)
     .eq('status', 'completed')
-    .order('completed_at', { ascending: true })
+    .order('sold_at', { ascending: true })
   if (invoiceError) return NextResponse.json({ error: invoiceError.message }, { status: 400 })
 
   const { data: purchases, error: purchaseError } = await supabase
@@ -110,11 +120,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const openingMaster = signedOpening(Number(party.opening_balance ?? 0), party.opening_balance_type)
   let openingBalance = openingMaster
   for (const invoice of invoices ?? []) {
-    const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
+    const date = salesDate(invoice)
     if (date < startAt) openingBalance += Number(invoice.grand_total ?? 0)
   }
   for (const purchase of purchases ?? []) {
-    const date = purchase.purchased_at ?? purchase.created_at
+    const date = purchaseDate(purchase)
     if (date < startAt) openingBalance -= Number(purchase.grand_total ?? 0)
   }
   for (const payment of payments ?? []) {
@@ -150,7 +160,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   })
 
   for (const invoice of invoices ?? []) {
-    const date = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
+    const date = salesDate(invoice)
     if (date < startAt || date >= endExclusive.toISOString()) continue
     entries.push({
       id: invoice.id,
@@ -165,7 +175,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   for (const purchase of purchases ?? []) {
-    const date = purchase.purchased_at ?? purchase.created_at
+    const date = purchaseDate(purchase)
     if (date < startAt || date >= endExclusive.toISOString()) continue
     entries.push({
       id: purchase.id,
@@ -239,7 +249,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   const billWise = (invoices ?? [])
     .map((invoice) => {
-      const invoiceDate = invoice.completed_at ?? invoice.sold_at ?? invoice.created_at
+      const invoiceDate = salesDate(invoice)
       if (invoiceDate < startAt || invoiceDate >= endExclusive.toISOString()) return null
       const total = Number(invoice.grand_total ?? 0)
       const paymentInfo = paymentsByInvoice.get(invoice.id) ?? { paid: 0, lastPaymentDate: null }
