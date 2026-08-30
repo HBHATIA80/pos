@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Download, FileText, Printer, RefreshCw, Search, WalletCards } from 'lucide-react'
+import { Download, FileText, MessageCircle, Printer, RefreshCw, Search, WalletCards } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { buildLedgerPdf } from '@/app/dashboard/ledger-pdf'
 
 type Party = {
   id: string
@@ -43,6 +44,17 @@ const money = (value: number) => `₹${Number(value ?? 0).toLocaleString('en-IN'
 const dateTime = (value: string) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 const csvEscape = (value: string | number) => `"${String(value ?? '').replaceAll('"', '""')}"`
 
+function safeFileName(value: string) {
+  return value.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'party'
+}
+
+function whatsappPhone(phone: string) {
+  const digits = phone.replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.length === 10) return `91${digits}`
+  return digits
+}
+
 export default function LedgerPage() {
   const [parties, setParties] = useState<Party[]>([])
   const [selectedParty, setSelectedParty] = useState('')
@@ -52,6 +64,7 @@ export default function LedgerPage() {
   const [data, setData] = useState<LedgerData | null>(null)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [pdfBusy, setPdfBusy] = useState(false)
 
   async function loadParties() {
     setLoading(true)
@@ -92,6 +105,68 @@ export default function LedgerPage() {
     }
   }
 
+  function buildPdf() {
+    if (!data) return null
+    return buildLedgerPdf({
+      partyName: data.party.name,
+      partyPhone: data.party.phone,
+      partyCode: data.party.party_code,
+      startDate: data.period.start_date,
+      endDate: data.period.end_date,
+      openingBalance: data.opening_balance,
+      debitTotal: data.debit_total,
+      creditTotal: data.credit_total,
+      finalBalance: data.final_balance,
+      balanceType: data.balance_type,
+      entries: data.entries,
+    })
+  }
+
+  function downloadPdf() {
+    const pdf = buildPdf()
+    if (!pdf || !data) return
+    const url = URL.createObjectURL(pdf)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${safeFileName(data.party.name)}-ledger-${data.period.start_date}${data.period.end_date ? `-to-${data.period.end_date}` : ''}.pdf`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+    toast.success('Ledger PDF downloaded')
+  }
+
+  async function sharePdfToWhatsApp() {
+    if (!data || pdfBusy) return
+    setPdfBusy(true)
+    try {
+      const pdf = buildPdf()
+      if (!pdf) return
+      const fileName = `${safeFileName(data.party.name)}-ledger-${data.period.start_date}.pdf`
+      const file = new File([pdf], fileName, { type: 'application/pdf' })
+      const phone = whatsappPhone(data.party.phone ?? '')
+      const message = `Party ledger for ${data.party.name} (${data.period.start_date}${data.period.end_date ? ` to ${data.period.end_date}` : ''}). Final balance: ${money(Math.abs(data.final_balance))} ${data.balance_type}.`
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: `${data.party.name} Ledger`, text: message, files: [file] })
+        toast.success('Share sheet opened with the ledger PDF')
+        return
+      }
+
+      // Desktop browsers cannot attach a generated file to a WhatsApp chat programmatically.
+      // Download it first, then open the exact party chat so the PDF can be attached there.
+      downloadPdf()
+      const target = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`
+      window.open(target, '_blank', 'noopener,noreferrer')
+      toast.success('PDF downloaded and WhatsApp chat opened')
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      toast.error(error instanceof Error ? error.message : 'Unable to share ledger PDF')
+    } finally {
+      setPdfBusy(false)
+    }
+  }
+
   function exportCsv() {
     if (!data) return
     const rows = [
@@ -118,7 +193,7 @@ export default function LedgerPage() {
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
-    const safeName = data.party.name.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'party'
+    const safeName = safeFileName(data.party.name)
     anchor.href = url
     anchor.download = `${safeName}-ledger-${data.period.start_date}${data.period.end_date ? `-to-${data.period.end_date}` : ''}.csv`
     document.body.appendChild(anchor)
@@ -196,7 +271,9 @@ export default function LedgerPage() {
             <section className="rounded-2xl border border-[#dce9df] bg-white shadow-[0_4px_18px_rgba(31,93,43,0.06)]">
               <div className="flex flex-col gap-3 border-b border-[#e4ebe6] p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div><div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-[#24733a]" /><h2 className="font-semibold text-black">{data.party.name} — Ledger</h2></div><p className="mt-1 text-xs text-[#65736a]">{data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}. Debit increases receivable; credit records money received.</p></div>
-                <div className="flex gap-2 print:hidden">
+                <div className="flex flex-wrap gap-2 print:hidden">
+                  <button type="button" onClick={downloadPdf} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#b8e0c2] bg-[#eaf8ee] px-3 text-xs font-semibold text-[#1d642f] hover:bg-[#dff3e5]"><Download className="h-4 w-4" /> PDF</button>
+                  <button type="button" onClick={() => void sharePdfToWhatsApp()} disabled={pdfBusy} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#218c4a] px-3 text-xs font-semibold text-white shadow-sm hover:bg-[#18743b] disabled:cursor-wait disabled:opacity-60"><MessageCircle className="h-4 w-4" /> {pdfBusy ? 'Preparing…' : 'WhatsApp PDF'}</button>
                   <button type="button" onClick={exportCsv} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#d9e4dc] bg-white px-3 text-xs font-semibold text-black hover:bg-[#f2f8f3]"><Download className="h-4 w-4 text-[#24733a]" /> CSV</button>
                   <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#d9e4dc] bg-white px-3 text-xs font-semibold text-black hover:bg-[#f2f8f3]"><Printer className="h-4 w-4 text-[#24733a]" /> Print</button>
                 </div>
