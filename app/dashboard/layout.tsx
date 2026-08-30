@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import '@/app/dashboard/transaction-pages-reference.css'
 import { createClient } from '@/lib/supabase/server'
 import POSShell from './pos-shell'
 import CustomerCatalogGuard from './customer-catalog-guard'
