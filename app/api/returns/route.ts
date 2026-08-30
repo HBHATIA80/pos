@@ -14,6 +14,8 @@ async function getContext() {
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid return date')
 const itemSchema = z.object({ product_id: z.string().uuid(), source_invoice_item_id: z.string().uuid().optional().nullable(), quantity: z.coerce.number().positive(), unit_price: z.coerce.number().min(0), discount_amount: z.coerce.number().min(0).default(0) })
 const returnSchema = z.object({ return_type: z.enum(['sale_return', 'purchase_return']), party_id: z.string().uuid(), source_invoice_id: z.string().uuid().optional().nullable(), source_invoice_type: z.enum(['sale', 'purchase']).optional().nullable(), reason: z.string().trim().max(500).optional().or(z.literal('')), notes: z.string().trim().max(1500).optional().or(z.literal('')), items: z.array(itemSchema).min(1) })
+type ReturnItemRow = { id: string; product_id: string; sku: string; product_name: string; unit_name: string; quantity: number; unit_price: number; discount_amount: number; line_total: number }
+type ReturnQuantityRow = { source_invoice_item_id: string | null; quantity: number }
 
 export async function GET(request: NextRequest) {
   const { supabase, user, profile } = await getContext()
@@ -29,17 +31,12 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.from(table).select(`id,invoice_no,party_id,grand_total,status,${dateColumn},items:${itemsTable}(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)`).eq('business_id', profile.business_id).eq('id', invoiceId).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     if (!data) return NextResponse.json({ invoice: null })
-    const { data: returned, error: returnedError } = await supabase.from('return_voucher_items').select('source_invoice_item_id,quantity,return:return_vouchers!return_voucher_items_return_id_fkey(status)').eq('return.source_invoice_id', invoiceId).eq('return.return_type', type).eq('return_vouchers.status', 'completed')
-    // PostgREST relation filtering is not available consistently across older deployments;
-    // fall back to a direct business-scoped return query when the relation filter is rejected.
-    let returnRows = returned ?? []
-    if (returnedError) {
-      const { data: direct } = await supabase.from('return_voucher_items').select('source_invoice_item_id,quantity,return_vouchers!inner(source_invoice_id,return_type,status,business_id)').eq('return_vouchers.source_invoice_id', invoiceId).eq('return_vouchers.return_type', type).eq('return_vouchers.status', 'completed').eq('return_vouchers.business_id', profile.business_id)
-      returnRows = direct ?? []
-    }
+    const { data: returned, error: returnedError } = await supabase.from('return_voucher_items').select('source_invoice_item_id,quantity,return_vouchers!inner(source_invoice_id,return_type,status,business_id)').eq('return_vouchers.source_invoice_id', invoiceId).eq('return_vouchers.return_type', type).eq('return_vouchers.status', 'completed').eq('return_vouchers.business_id', profile.business_id)
+    if (returnedError) return NextResponse.json({ error: returnedError.message }, { status: 400 })
     const totals = new Map<string, number>()
-    for (const row of returnRows) if (row.source_invoice_item_id) totals.set(row.source_invoice_item_id, (totals.get(row.source_invoice_item_id) ?? 0) + Number(row.quantity || 0))
-    const items = ((data as any).items ?? []).map((item: any) => ({ ...item, returned_quantity: totals.get(item.id) ?? 0, remaining_quantity: Math.max(Number(item.quantity) - (totals.get(item.id) ?? 0), 0) }))
+    for (const row of (returned ?? []) as unknown as ReturnQuantityRow[]) if (row.source_invoice_item_id) totals.set(row.source_invoice_item_id, (totals.get(row.source_invoice_item_id) ?? 0) + Number(row.quantity || 0))
+    const rawItems = ((data as unknown as { items?: ReturnItemRow[] }).items ?? [])
+    const items = rawItems.map(item => ({ ...item, returned_quantity: totals.get(item.id) ?? 0, remaining_quantity: Math.max(Number(item.quantity) - (totals.get(item.id) ?? 0), 0) }))
     return NextResponse.json({ invoice: { ...data, items } })
   }
 
