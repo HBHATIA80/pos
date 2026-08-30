@@ -41,86 +41,107 @@ export default async function DashboardLayout({ children }: Props) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Shared Bill Summary: light-green BIZBook theme for Sales + Purchases */
+        /* Shared Bill Summary: light-yellow BIZBook theme for Sales + Purchases. */
         aside section {
           border-radius: 1rem !important;
-          border: 1px solid #b7e4c7 !important;
+          border: 1px solid #ead9a6 !important;
           background: #ffffff !important;
-          box-shadow: 0 10px 28px rgba(22, 101, 52, 0.10) !important;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08) !important;
           overflow: hidden !important;
         }
-        /* Light-green summary header replaces the old dark slate/teal header. */
+
+        /* Yellow summary header — keep every label/value readable in black. */
         aside section > div:first-child {
-          background: #dcfce7 !important;
-          color: #14532d !important;
+          background: #fff8dc !important;
+          color: #000000 !important;
           min-height: 78px !important;
           padding: 12px 14px !important;
-          border-bottom: 1px solid #bbf7d0 !important;
+          border-bottom: 1px solid #ead9a6 !important;
         }
         aside section > div:first-child,
         aside section > div:first-child * {
-          color: #14532d !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
         aside section > div:first-child div:nth-child(2) {
-          color: #166534 !important;
+          color: #000000 !important;
           font-size: 1.25rem !important;
           line-height: 1.5rem !important;
           font-weight: 900 !important;
           letter-spacing: -0.02em !important;
           margin-top: 2px !important;
         }
-        /* Summary detail area: clean white surface with green accents. */
+
+        /* Summary detail area stays clean white, with black typography. */
         aside section > div:nth-child(2) {
           display: block !important;
           background: #ffffff !important;
-          color: #0f172a !important;
+          color: #000000 !important;
           padding: 12px 14px !important;
         }
-        aside section > div:nth-child(2) span,
-        aside section > div:nth-child(2) b {
-          color: #0f172a !important;
+        aside section > div:nth-child(2),
+        aside section > div:nth-child(2) * {
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
-        /* Final total gets a soft green highlight instead of a dark box. */
+
+        /* Final total uses the same soft yellow family as the reference image. */
         aside section > div:nth-child(2) > div:last-child {
-          border: 1px solid #bbf7d0 !important;
+          border: 1px solid #ead9a6 !important;
           border-radius: 12px !important;
-          background: #ecfdf5 !important;
-          color: #166534 !important;
+          background: #fff8dc !important;
+          color: #000000 !important;
           padding: 12px !important;
         }
         aside section > div:nth-child(2) > div:last-child * {
-          color: #166534 !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
         aside section > div:nth-child(2) > div:last-child span:last-child,
         aside section > div:nth-child(2) > div:last-child b:last-child {
-          color: #15803d !important;
+          color: #000000 !important;
           font-weight: 900 !important;
           font-size: 1.25rem !important;
           line-height: 1.5rem !important;
         }
-        /* Footer/action area stays white; enabled actions use the website green. */
+
+        /* Footer/action area: light surface with black button typography. */
         aside section > div:last-child {
           background: #ffffff !important;
-          border-top: 1px solid #dcfce7 !important;
+          border-top: 1px solid #f3e8bf !important;
           padding: 10px !important;
         }
         aside section > div:last-child button {
           font-weight: 900 !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
         aside section > div:last-child button:not(:disabled) {
-          background: #2f855a !important;
-          border-color: #2f855a !important;
-          color: #ffffff !important;
+          background: #dff5e7 !important;
+          border-color: #9ed7b1 !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
         aside section > div:last-child button:not(:disabled):hover {
-          background: #276749 !important;
-          border-color: #276749 !important;
+          background: #ccebd8 !important;
+          border-color: #7fc796 !important;
         }
         aside section > div:last-child button:disabled {
-          background: #e2e8f0 !important;
-          border-color: #cbd5e1 !important;
-          color: #64748b !important;
+          background: #f1f1f1 !important;
+          border-color: #d6d6d6 !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
         }
+
+        /* Prevent Tailwind text-white utilities inside the Bill Summary from
+           making the yellow header/value text disappear on Sales/Purchases. */
+        aside section [class*="text-white"],
+        aside section [class*="text-slate"],
+        aside section [class*="text-emerald"] {
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+
         @media (max-width: 1279px) {
           aside section > div:first-child {
             min-height: 70px !important;
