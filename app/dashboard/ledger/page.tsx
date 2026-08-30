@@ -138,75 +138,75 @@ export default function LedgerPage() {
   }, [parties, search])
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 print:hidden">
+    <div className="mx-auto max-w-[1500px] space-y-5 text-black">
+      <section className="rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_4px_18px_rgba(31,93,43,0.06)] sm:p-6 print:hidden">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Phase 7.3 · Party Ledger</span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Party Ledger</h1>
-            <p className="mt-2 text-sm text-slate-500">Select a party, choose the starting date, and review every debit, credit, and running balance.</p>
+            <span className="inline-flex rounded-full border border-[#c6e7ce] bg-[#eaf7ed] px-3 py-1 text-xs font-semibold text-[#246b34]">Phase 7.3 · Party Ledger</span>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-3xl">Party Ledger</h1>
+            <p className="mt-2 text-sm text-[#53635a]">Select a party, choose the starting date, and review every debit, credit, and running balance.</p>
           </div>
-          <button type="button" onClick={() => { void loadParties(); void loadLedger() }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            <RefreshCw className="h-4 w-4" /> Refresh
+          <button type="button" onClick={() => { void loadParties(); void loadLedger() }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#d9e4dc] bg-white px-4 text-sm font-semibold text-black hover:bg-[#f2f8f3]">
+            <RefreshCw className="h-4 w-4 text-[#24733a]" /> Refresh
           </button>
         </div>
       </section>
 
       <div className="hidden print:block print:mb-6">
-        <h1 className="text-2xl font-bold">Party Ledger</h1>
-        {data && <p className="mt-1 text-sm">{data.party.name}{data.party.phone ? ` · ${data.party.phone}` : ''} · {data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}</p>}
+        <h1 className="text-2xl font-bold text-black">Party Ledger</h1>
+        {data && <p className="mt-1 text-sm text-black">{data.party.name}{data.party.phone ? ` · ${data.party.phone}` : ''} · {data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}</p>}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm print:hidden">
-          <div className="border-b border-slate-200 p-4">
+      <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+        <section className="rounded-2xl border border-[#dce9df] bg-white shadow-[0_4px_18px_rgba(31,93,43,0.06)] print:hidden">
+          <div className="border-b border-[#e5ece7] p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search party, phone or code" className="min-h-11 w-full rounded-xl border border-slate-200 pl-10 pr-3 text-sm outline-none focus:border-blue-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#24733a]" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search party, phone or code" className="min-h-11 w-full rounded-xl border border-[#d7e3da] bg-white pl-10 pr-3 text-sm text-black outline-none placeholder:text-[#758179] focus:border-[#58b878] focus:ring-2 focus:ring-[#dff3e5]" />
             </div>
           </div>
-          <div className="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
-            {loading ? <div className="p-8 text-center text-sm text-slate-400">Loading parties…</div> : filteredParties.length ? filteredParties.map((party) => (
-              <button key={party.id} type="button" onClick={() => setSelectedParty(party.id)} className={`block w-full p-4 text-left ${selectedParty === party.id ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
-                <div className="flex items-center justify-between gap-3"><b className="text-sm text-slate-900">{party.name}</b><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500">{party.party_type}</span></div>
-                <p className="mt-1 text-xs text-slate-500">{party.phone || party.party_code || 'No contact details'}</p>
+          <div className="max-h-[70vh] divide-y divide-[#edf1ee] overflow-y-auto">
+            {loading ? <div className="p-8 text-center text-sm text-[#69766e]">Loading parties…</div> : filteredParties.length ? filteredParties.map((party) => (
+              <button key={party.id} type="button" onClick={() => setSelectedParty(party.id)} className={`block w-full p-4 text-left transition ${selectedParty === party.id ? 'bg-[#eaf7ed] ring-1 ring-inset ring-[#b8e3c4]' : 'bg-white hover:bg-[#f4faf5]'}`}>
+                <div className="flex items-center justify-between gap-3"><b className="text-sm text-black">{party.name}</b><span className="rounded-full bg-[#edf5ef] px-2 py-1 text-[10px] font-semibold uppercase text-[#3f604a]">{party.party_type}</span></div>
+                <p className="mt-1 text-xs text-[#65736a]">{party.phone || party.party_code || 'No contact details'}</p>
               </button>
-            )) : <div className="p-8 text-center text-sm text-slate-500">No parties found.</div>}
+            )) : <div className="p-8 text-center text-sm text-[#65736a]">No parties found.</div>}
           </div>
         </section>
 
         <section className="space-y-5">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
+          <section className="rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_4px_18px_rgba(31,93,43,0.06)] print:hidden">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px_auto] md:items-end">
-              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Party</label><div className="rounded-xl bg-slate-50 px-4 py-3"><p className="font-semibold text-slate-900">{data?.party.name ?? parties.find((party) => party.id === selectedParty)?.name ?? 'Select a party'}</p><p className="text-xs text-slate-500">{data?.party.phone ?? parties.find((party) => party.id === selectedParty)?.phone ?? ''}</p></div></div>
-              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</label><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="min-h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500" /></div>
-              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</label><input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} className="min-h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500" /></div>
-              <button type="button" onClick={() => void loadLedger()} className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700">Apply</button>
+              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-black">Party</label><div className="rounded-xl border border-[#e0e9e2] bg-[#f4f8f5] px-4 py-3"><p className="font-semibold text-black">{data?.party.name ?? parties.find((party) => party.id === selectedParty)?.name ?? 'Select a party'}</p><p className="text-xs text-[#68766e]">{data?.party.phone ?? parties.find((party) => party.id === selectedParty)?.phone ?? ''}</p></div></div>
+              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-black">Start Date</label><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="min-h-11 w-full rounded-xl border border-[#d7e3da] bg-white px-3 text-sm text-black outline-none focus:border-[#58b878] focus:ring-2 focus:ring-[#dff3e5]" /></div>
+              <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-black">End Date</label><input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} className="min-h-11 w-full rounded-xl border border-[#d7e3da] bg-white px-3 text-sm text-black outline-none focus:border-[#58b878] focus:ring-2 focus:ring-[#dff3e5]" /></div>
+              <button type="button" onClick={() => void loadLedger()} className="min-h-11 rounded-xl bg-[#2f7d32] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#256a2a]">Apply</button>
             </div>
           </section>
 
-          {detailLoading ? <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Loading party ledger…</div> : data ? <>
+          {detailLoading ? <div className="rounded-2xl border border-[#dce9df] bg-white p-12 text-center text-sm text-[#65736a]">Loading party ledger…</div> : data ? <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-[10px] font-semibold uppercase text-slate-400">Opening Balance</p><p className="mt-1 text-lg font-bold">{money(data.opening_balance)}</p></div>
-              <div className="rounded-2xl bg-blue-50 p-4"><p className="text-[10px] font-semibold uppercase text-blue-600">Debit</p><p className="mt-1 text-lg font-bold text-blue-700">{money(data.debit_total)}</p></div>
-              <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-[10px] font-semibold uppercase text-emerald-600">Credit</p><p className="mt-1 text-lg font-bold text-emerald-700">{money(data.credit_total)}</p></div>
-              <div className={`rounded-2xl p-4 ${data.balance_type === 'payable' ? 'bg-amber-50' : data.balance_type === 'receivable' ? 'bg-red-50' : 'bg-slate-50'}`}><p className="text-[10px] font-semibold uppercase text-slate-500">Final Balance</p><p className="mt-1 text-lg font-bold">{money(Math.abs(data.final_balance))}</p><p className="text-xs font-semibold capitalize text-slate-500">{data.balance_type}</p></div>
+              <div className="rounded-2xl border border-[#e2ebe4] bg-[#f4f8f5] p-4"><p className="text-[10px] font-semibold uppercase text-[#506057]">Opening Balance</p><p className="mt-1 text-lg font-bold text-black">{money(data.opening_balance)}</p></div>
+              <div className="rounded-2xl border border-[#f1d0d0] bg-[#fff0f0] p-4"><p className="text-[10px] font-semibold uppercase text-[#b33b3b]">Debit</p><p className="mt-1 text-lg font-bold text-black">{money(data.debit_total)}</p></div>
+              <div className="rounded-2xl border border-[#c9ead4] bg-[#eaf8ee] p-4"><p className="text-[10px] font-semibold uppercase text-[#24733a]">Credit</p><p className="mt-1 text-lg font-bold text-black">{money(data.credit_total)}</p></div>
+              <div className={`rounded-2xl border p-4 ${data.balance_type === 'payable' ? 'border-[#ead9a6] bg-[#fff8dc]' : data.balance_type === 'receivable' ? 'border-[#f1d0d0] bg-[#fff0f0]' : 'border-[#e2ebe4] bg-[#f4f8f5]'}`}><p className="text-[10px] font-semibold uppercase text-black">Final Balance</p><p className="mt-1 text-lg font-bold text-black">{money(Math.abs(data.final_balance))}</p><p className="text-xs font-semibold capitalize text-black">{data.balance_type}</p></div>
             </div>
 
-            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div><div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-blue-600" /><h2 className="font-semibold">{data.party.name} — Ledger</h2></div><p className="mt-1 text-xs text-slate-500">{data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}. Debit increases receivable; credit records money received.</p></div>
+            <section className="rounded-2xl border border-[#dce9df] bg-white shadow-[0_4px_18px_rgba(31,93,43,0.06)]">
+              <div className="flex flex-col gap-3 border-b border-[#e4ebe6] p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div><div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-[#24733a]" /><h2 className="font-semibold text-black">{data.party.name} — Ledger</h2></div><p className="mt-1 text-xs text-[#65736a]">{data.period.start_date}{data.period.end_date ? ` to ${data.period.end_date}` : ''}. Debit increases receivable; credit records money received.</p></div>
                 <div className="flex gap-2 print:hidden">
-                  <button type="button" onClick={exportCsv} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" /> CSV</button>
-                  <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Printer className="h-4 w-4" /> Print</button>
+                  <button type="button" onClick={exportCsv} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#d9e4dc] bg-white px-3 text-xs font-semibold text-black hover:bg-[#f2f8f3]"><Download className="h-4 w-4 text-[#24733a]" /> CSV</button>
+                  <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#d9e4dc] bg-white px-3 text-xs font-semibold text-black hover:bg-[#f2f8f3]"><Printer className="h-4 w-4 text-[#24733a]" /> Print</button>
                 </div>
               </div>
-              <div className="overflow-x-auto"><table className="min-w-[820px] w-full text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-400"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Reference</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Credit</th><th className="px-4 py-3 text-right">Running Balance</th></tr></thead><tbody className="divide-y divide-slate-100">{data.entries.map((entry) => <tr key={entry.id}><td className="px-4 py-3 text-xs text-slate-500">{dateTime(entry.date)}</td><td className="px-4 py-3 font-medium">{entry.description}</td><td className="px-4 py-3 text-xs text-slate-500">{entry.type === 'invoice' && entry.reference ? <button type="button" data-invoice-number={entry.reference} title="Click to view and edit invoice" className="font-semibold text-violet-700 underline decoration-violet-200 underline-offset-2 hover:text-violet-900 hover:decoration-violet-500">{entry.reference}</button> : (entry.reference || '—')}</td><td className="px-4 py-3 text-right font-semibold">{entry.debit ? money(entry.debit) : '—'}</td><td className="px-4 py-3 text-right font-semibold text-emerald-700">{entry.credit ? money(entry.credit) : '—'}</td><td className={`px-4 py-3 text-right font-bold ${entry.balance < 0 ? 'text-amber-700' : 'text-blue-700'}`}>{money(Math.abs(entry.balance))}{entry.balance < 0 ? ' Payable' : entry.balance > 0 ? ' Receivable' : ''}</td></tr>)}</tbody></table></div>
-              {data.entries.length === 1 && <div className="p-8 text-center text-sm text-slate-500">No sales or payments were recorded in this period.</div>}
+              <div className="overflow-x-auto"><table className="min-w-[820px] w-full text-sm text-black"><thead className="bg-[#f0f7f1] text-left text-xs uppercase text-black"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Reference</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Credit</th><th className="px-4 py-3 text-right">Running Balance</th></tr></thead><tbody className="divide-y divide-[#edf1ee]">{data.entries.map((entry) => <tr key={entry.id} className="hover:bg-[#fbfdfb]"><td className="px-4 py-3 text-xs text-[#5e6d64]">{dateTime(entry.date)}</td><td className="px-4 py-3 font-medium text-black">{entry.description}</td><td className="px-4 py-3 text-xs text-[#5e6d64]">{entry.type === 'invoice' && entry.reference ? <button type="button" data-invoice-number={entry.reference} title="Click to view and edit invoice" className="font-semibold text-[#24733a] underline decoration-[#b8dfc2] underline-offset-2 hover:text-[#1c5d2d] hover:decoration-[#58b878]">{entry.reference}</button> : (entry.reference || '—')}</td><td className="px-4 py-3 text-right font-semibold text-black">{entry.debit ? money(entry.debit) : '—'}</td><td className="px-4 py-3 text-right font-semibold text-[#24733a]">{entry.credit ? money(entry.credit) : '—'}</td><td className={`px-4 py-3 text-right font-bold ${entry.balance < 0 ? 'text-[#8a6400]' : 'text-black'}`}>{money(Math.abs(entry.balance))}{entry.balance < 0 ? ' Payable' : entry.balance > 0 ? ' Receivable' : ''}</td></tr>)}</tbody></table></div>
+              {data.entries.length === 1 && <div className="p-8 text-center text-sm text-[#65736a]">No sales or payments were recorded in this period.</div>}
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Final Balance</p><p className="mt-1 text-xs text-slate-500">{data.balance_type === 'receivable' ? 'Party owes the business.' : data.balance_type === 'payable' ? 'Business owes the party.' : 'Account is settled.'}</p></div><p className="text-2xl font-bold text-slate-950">{money(Math.abs(data.final_balance))}</p></div></section>
-          </> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center"><FileText className="mx-auto h-10 w-10 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Select a party to open its ledger</p></div>}
+            <section className="rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_4px_18px_rgba(31,93,43,0.06)]"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-black">Final Balance</p><p className="mt-1 text-xs text-[#65736a]">{data.balance_type === 'receivable' ? 'Party owes the business.' : data.balance_type === 'payable' ? 'Business owes the party.' : 'Account is settled.'}</p></div><p className="text-2xl font-bold text-black">{money(Math.abs(data.final_balance))}</p></div></section>
+          </> : <div className="rounded-2xl border border-dashed border-[#cfdcd3] bg-white p-12 text-center"><FileText className="mx-auto h-10 w-10 text-[#4b9b5a]" /><p className="mt-3 text-sm font-semibold text-black">Select a party to open its ledger</p></div>}
         </section>
       </div>
     </div>
