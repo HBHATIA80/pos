@@ -174,7 +174,9 @@ export default function LedgerPage() {
       const fileName = `${safeFileName(data.party.name)}-ledger-${data.period.start_date}-to-${data.period.end_date}.pdf`
       const file = new File([pdf], fileName, { type: 'application/pdf' })
       const phone = whatsappPhone(data.party.phone ?? '')
-      const message = `Ledger for ${data.party.name} | ${periodLabel(data.period.start_date, data.period.end_date)} | ${data.balance_type === 'receivable' ? 'Receivable' : data.balance_type === 'payable' ? 'Payable' : 'Settled'}: ${money(Math.abs(data.final_balance))}.`
+      const shopName = data.business?.name ?? 'Shop'
+      const messageLabel = data.balance_type === 'receivable' ? `Payable To ${shopName}` : data.balance_type === 'payable' ? `Payable By ${shopName}` : 'Account Settled'
+      const message = `Ledger for ${data.party.name} | ${periodLabel(data.period.start_date, data.period.end_date)} | ${messageLabel}: ${money(Math.abs(data.final_balance))}.`
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: `${data.party.name} Ledger`, text: message, files: [file] })
         toast.success('Share sheet opened with the ledger PDF')
@@ -194,14 +196,15 @@ export default function LedgerPage() {
 
   function exportCsv() {
     if (!data) return
+    const balanceLabel = data.balance_type === 'receivable' ? `Payable To ${data.business?.name ?? 'Shop'}` : data.balance_type === 'payable' ? `Payable By ${data.business?.name ?? 'Shop'}` : 'Account Settled'
     const rows: Array<Array<string | number>> = [
       ['Shop', data.business?.name ?? ''],
       ['Shop Code', data.business?.code ?? ''],
       ['Party', data.party.name],
       ['Party Code', data.party.party_code ?? ''],
       ['Ledger Period', `${data.period.start_date} to ${data.period.end_date}`],
+      ['Balance Status', balanceLabel],
       ['Opening Balance', data.opening_balance.toFixed(2)],
-      ['Receivable / Payable', data.balance_type],
       ['Final Balance', Math.abs(data.final_balance).toFixed(2)],
       [],
       ['Bill-wise Payment Ageing'],
@@ -233,8 +236,10 @@ export default function LedgerPage() {
     return parties.filter((party) => party.name.toLowerCase().includes(query) || (party.phone ?? '').toLowerCase().includes(query) || (party.party_code ?? '').toLowerCase().includes(query))
   }, [parties, search])
 
-  const balanceLabel = data?.balance_type === 'receivable' ? 'Receivable' : data?.balance_type === 'payable' ? 'Payable' : 'Settled'
-  const balanceExplanation = data?.balance_type === 'receivable' ? 'Party owes the business.' : data?.balance_type === 'payable' ? 'Business owes the party.' : 'Account is settled.'
+  const shopName = data?.business?.name ?? 'Shop'
+  const balanceLabel = data?.balance_type === 'receivable' ? `Payable To ${shopName}` : data?.balance_type === 'payable' ? `Payable By ${shopName}` : 'Account Settled'
+  const balanceExplanation = data?.balance_type === 'receivable' ? `Party owes ${shopName}.` : data?.balance_type === 'payable' ? `${shopName} owes the party.` : 'Account is settled.'
+  const entryBalanceLabel = (balance: number) => balance < 0 ? `Payable By ${shopName}` : balance > 0 ? `Payable To ${shopName}` : 'Settled'
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 text-black">
@@ -257,6 +262,7 @@ export default function LedgerPage() {
           <h1 className="mt-1 text-2xl font-bold text-black">Party Ledger</h1>
           <p className="mt-1 text-sm text-black">Party: {data.party.name}{data.party.phone ? ` · ${data.party.phone}` : ''}</p>
           <p className="mt-1 text-sm font-semibold text-black">Ledger Period: {periodLabel(data.period.start_date, data.period.end_date)}</p>
+          <p className="mt-1 text-sm font-bold text-black">{balanceLabel}: {money(Math.abs(data.final_balance))}</p>
         </>}
       </div>
 
@@ -298,7 +304,8 @@ export default function LedgerPage() {
                   {data.business?.code && <p className="mt-1 text-xs text-[#68766e]">Shop Code: {data.business.code}</p>}
                 </div>
                 <div className={`rounded-2xl border px-5 py-4 text-right ${data.balance_type === 'receivable' ? 'border-[#f1caca] bg-[#fff0f0]' : data.balance_type === 'payable' ? 'border-[#ead9a6] bg-[#fff8dc]' : 'border-[#cfe5d5] bg-[#f2f8f3]'}`}>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#526158]">Current {balanceLabel}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#526158]">Balance Status</p>
+                  <p className="mt-1 max-w-[280px] text-lg font-bold leading-tight text-black">{balanceLabel}</p>
                   <p className="mt-1 text-2xl font-bold text-black">{money(Math.abs(data.final_balance))}</p>
                   <p className="text-xs font-semibold text-[#526158]">{balanceExplanation}</p>
                 </div>
@@ -309,7 +316,7 @@ export default function LedgerPage() {
               <div className="rounded-2xl border border-[#e2ebe4] bg-[#f4f8f5] p-4"><p className="text-[10px] font-semibold uppercase text-[#506057]">Opening Balance</p><p className="mt-1 text-lg font-bold text-black">{money(data.opening_balance)}</p></div>
               <div className="rounded-2xl border border-[#f1d0d0] bg-[#fff0f0] p-4"><p className="text-[10px] font-semibold uppercase text-[#b33b3b]">Debit</p><p className="mt-1 text-lg font-bold text-black">{money(data.debit_total)}</p></div>
               <div className="rounded-2xl border border-[#c9ead4] bg-[#eaf8ee] p-4"><p className="text-[10px] font-semibold uppercase text-[#24733a]">Credit</p><p className="mt-1 text-lg font-bold text-black">{money(data.credit_total)}</p></div>
-              <div className={`rounded-2xl border p-4 ${data.balance_type === 'payable' ? 'border-[#ead9a6] bg-[#fff8dc]' : data.balance_type === 'receivable' ? 'border-[#f1d0d0] bg-[#fff0f0]' : 'border-[#e2ebe4] bg-[#f4f8f5]'}`}><p className="text-[10px] font-semibold uppercase text-black">{balanceLabel}</p><p className="mt-1 text-lg font-bold text-black">{money(Math.abs(data.final_balance))}</p><p className="text-xs font-semibold capitalize text-black">{balanceExplanation}</p></div>
+              <div className={`rounded-2xl border p-4 ${data.balance_type === 'payable' ? 'border-[#ead9a6] bg-[#fff8dc]' : data.balance_type === 'receivable' ? 'border-[#f1d0d0] bg-[#fff0f0]' : 'border-[#e2ebe4] bg-[#f4f8f5]'}`}><p className="text-[10px] font-semibold uppercase text-black">Balance Status</p><p className="mt-1 text-sm font-bold leading-tight text-black">{balanceLabel}</p><p className="mt-1 text-lg font-bold text-black">{money(Math.abs(data.final_balance))}</p><p className="text-xs font-semibold text-black">{balanceExplanation}</p></div>
             </div>
 
             <section className="rounded-2xl border border-[#dce9df] bg-white shadow-[0_4px_18px_rgba(31,93,43,0.06)]">
@@ -333,11 +340,11 @@ export default function LedgerPage() {
             </section>
 
             <section className="rounded-2xl border border-[#dce9df] bg-white shadow-[0_4px_18px_rgba(31,93,43,0.06)]">
-              <div className="border-b border-[#e4ebe6] p-5"><div className="flex items-center gap-2"><FileText className="h-5 w-5 text-[#24733a]" /><h2 className="font-semibold text-black">Ledger Entries</h2></div><p className="mt-1 text-xs text-[#65736a]">{periodLabel(data.period.start_date, data.period.end_date)} · Debit increases receivable; credit reduces receivable.</p></div>
-              <div className="overflow-x-auto"><table className="min-w-[820px] w-full text-sm text-black"><thead className="bg-[#f0f7f1] text-left text-xs uppercase text-black"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Reference</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Credit</th><th className="px-4 py-3 text-right">Running Balance</th></tr></thead><tbody className="divide-y divide-[#edf1ee]">{data.entries.map((entry) => <tr key={entry.id} className="hover:bg-[#fbfdfb]"><td className="px-4 py-3 text-xs text-[#5e6d64]">{dateTime(entry.date)}</td><td className="px-4 py-3 font-medium text-black">{entry.description}</td><td className="px-4 py-3 text-xs text-[#5e6d64]">{entry.reference || '—'}</td><td className="px-4 py-3 text-right font-semibold text-black">{entry.debit ? money(entry.debit) : '—'}</td><td className="px-4 py-3 text-right font-semibold text-[#24733a]">{entry.credit ? money(entry.credit) : '—'}</td><td className={`px-4 py-3 text-right font-bold ${entry.balance < 0 ? 'text-[#8a6400]' : 'text-black'}`}>{money(Math.abs(entry.balance))}{entry.balance < 0 ? ' Payable' : entry.balance > 0 ? ' Receivable' : ''}</td></tr>)}</tbody></table></div>
+              <div className="border-b border-[#e4ebe6] p-5"><div className="flex items-center gap-2"><FileText className="h-5 w-5 text-[#24733a]" /><h2 className="font-semibold text-black">Ledger Entries</h2></div><p className="mt-1 text-xs text-[#65736a]">{periodLabel(data.period.start_date, data.period.end_date)} · Debit increases the amount payable to the shop; credit reduces it.</p></div>
+              <div className="overflow-x-auto"><table className="min-w-[820px] w-full text-sm text-black"><thead className="bg-[#f0f7f1] text-left text-xs uppercase text-black"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Reference</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Credit</th><th className="px-4 py-3 text-right">Running Balance</th></tr></thead><tbody className="divide-y divide-[#edf1ee]">{data.entries.map((entry) => <tr key={entry.id} className="hover:bg-[#fbfdfb]"><td className="px-4 py-3 text-xs text-[#5e6d64]">{dateTime(entry.date)}</td><td className="px-4 py-3 font-medium text-black">{entry.description}</td><td className="px-4 py-3 text-xs text-[#5e6d64]">{entry.reference || '—'}</td><td className="px-4 py-3 text-right font-semibold text-black">{entry.debit ? money(entry.debit) : '—'}</td><td className="px-4 py-3 text-right font-semibold text-[#24733a]">{entry.credit ? money(entry.credit) : '—'}</td><td className={`px-4 py-3 text-right font-bold ${entry.balance < 0 ? 'text-[#8a6400]' : 'text-black'}`}>{money(Math.abs(entry.balance))}<span className="ml-1 block text-[10px] font-semibold leading-tight">{entryBalanceLabel(entry.balance)}</span></td></tr>)}</tbody></table></div>
             </section>
 
-            <section className="rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_4px_18px_rgba(31,93,43,0.06)]"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-black">Final Balance</p><p className="mt-1 text-xs text-[#65736a]">{balanceExplanation}</p></div><p className="text-2xl font-bold text-black">{money(Math.abs(data.final_balance))}</p></div></section>
+            <section className="rounded-2xl border border-[#dce9df] bg-white p-5 shadow-[0_4px_18px_rgba(31,93,43,0.06)]"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-black">Final Balance</p><p className="mt-1 text-xs text-[#65736a]">{balanceExplanation}</p></div><div className="text-right"><p className="text-xs font-bold text-[#24733a]">{balanceLabel}</p><p className="text-2xl font-bold text-black">{money(Math.abs(data.final_balance))}</p></div></div></section>
 
             <section className="rounded-2xl border border-[#cfe5d5] bg-[#f1f8f3] px-5 py-4 text-center shadow-[0_4px_18px_rgba(31,93,43,0.04)] print:mt-8">
               <p className="text-sm font-semibold text-[#194d29]">Don’t have a BIZYBUK.IN account yet?</p>
