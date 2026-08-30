@@ -46,7 +46,7 @@ export default function SalesPage() {
   }
   async function searchParties(query: string) {
     setPartyLoading(true)
-    try { const response = await fetch(`/api/pos/parties?q=${encodeURIComponent(query)}&limit=30`, { cache: 'no-store' }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || 'Unable to search customers'); setParties((body.parties || []).filter((party: Party) => party.party_type === 'customer' || party.party_type === 'both')) }
+    try { const response = await fetch(`/api/pos/parties?q=${encodeURIComponent(query)}&limit=30`, { cache: 'no-store' }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || 'Unable to search customers'); setParties(body.parties || []) }
     catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to search customers') }
     finally { setPartyLoading(false) }
   }
