@@ -21,12 +21,41 @@ export type LedgerPdfData = {
   entries: LedgerPdfEntry[]
 }
 
-const esc = (value: string) => String(value ?? '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[^\\x20-\\x7E]/g, '?')
-const money = (value: number) => `Rs. ${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-const dateText = (value: string) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+// The PDF uses standard Helvetica, which is intentionally kept ASCII-safe.
+// Never emit unsupported Unicode as a literal '?' because that makes names,
+// dates and amounts look corrupted in Chrome's PDF viewer.
+const ascii = (value: string) => String(value ?? '')
+  .replace(/₹/g, 'Rs. ')
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/[\u201C\u201D]/g, '"')
+  .replace(/[\u2013\u2014]/g, '-')
+  .replace(/\u00A0/g, ' ')
+  .normalize('NFKD')
+  .replace(/[^\x20-\x7E]/g, '')
+
+const esc = (value: string) => ascii(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+
+const money = (value: number) => `Rs. ${Number(value || 0).toLocaleString('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}`
+
+function dateText(value: string) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) {
+    const [, year, month, day] = match
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${day} ${months[Math.max(0, Math.min(11, Number(month) - 1))]} ${year}`
+  }
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ascii(value)
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][parsed.getMonth()]
+  return `${day} ${month} ${parsed.getFullYear()}`
+}
 
 function wrap(text: string, max: number) {
-  const words = String(text || '').split(/\\s+/).filter(Boolean)
+  const words = ascii(text).split(/\s+/).filter(Boolean)
   const lines: string[] = []
   let current = ''
   for (const word of words) {
@@ -89,7 +118,7 @@ export function buildLedgerPdf(data: LedgerPdfData): Blob {
       const fill = index === 1 ? '0.99 0.94 0.94' : index === 2 ? '0.92 0.98 0.94' : index === 3 ? COLORS.yellow : COLORS.softGreen
       rect(x, summaryY - 48, 119, 42, fill)
       add(label, 6.8, x + 8, summaryY - 19, 'F2', COLORS.muted)
-      add(value.slice(0, 22), 8.8, x + 8, summaryY - 35, 'F2', COLORS.ink)
+      add(value, 8.2, x + 8, summaryY - 35, 'F2', COLORS.ink)
     })
 
     const tableTop = 590
@@ -109,10 +138,11 @@ export function buildLedgerPdf(data: LedgerPdfData): Blob {
       const desc = wrap(entry.description, 27)
       add(dateText(entry.date), 7.3, 48, y, 'F1', COLORS.ink)
       add(desc[0].slice(0, 27), 7.3, 112, y, 'F1', COLORS.ink)
-      add(entry.reference || '—', 7.3, 292, y, 'F1', COLORS.muted)
-      add(entry.debit ? money(entry.debit) : '—', 7.3, 365, y, 'F1', COLORS.ink)
-      add(entry.credit ? money(entry.credit) : '—', 7.3, 425, y, 'F1', COLORS.green)
-      add(`${money(Math.abs(entry.balance))} ${entry.balance < 0 ? 'Payable' : entry.balance > 0 ? 'Receivable' : ''}`.slice(0, 23), 7.1, 482, y, 'F2', COLORS.ink)
+      add(entry.reference || '-', 7.3, 292, y, 'F1', COLORS.muted)
+      add(entry.debit ? money(entry.debit) : '-', 7.3, 365, y, 'F1', COLORS.ink)
+      add(entry.credit ? money(entry.credit) : '-', 7.3, 425, y, 'F1', COLORS.green)
+      const balanceLabel = entry.balance < 0 ? 'Payable' : entry.balance > 0 ? 'Receivable' : 'Settled'
+      add(`${money(Math.abs(entry.balance))} ${balanceLabel}`, 7.1, 482, y, 'F2', COLORS.ink)
       line(42, y - 12, 553, y - 12)
       y -= desc.length > 1 ? 27 : 20
     }
