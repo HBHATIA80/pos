@@ -1,0 +1,194 @@
+/* Reference styling for Sales + Purchases. Visual-only: transaction logic and data flow remain untouched. */
+
+body:has(main input[placeholder*="supplier"]) ,
+body:has(main input[placeholder*="customer"]) {
+  background: #ffffff !important;
+}
+
+/* Keep the transaction workspace aligned like the supplied reference image. */
+body:has(main input[placeholder*="supplier"]) main,
+body:has(main input[placeholder*="customer"]) main {
+  color: #000000;
+}
+
+body:has(main input[placeholder*="supplier"]) main > div,
+body:has(main input[placeholder*="customer"]) main > div {
+  max-width: 1340px !important;
+}
+
+/* Shared transaction cards */
+body:has(main input[placeholder*="supplier"]) main section,
+body:has(main input[placeholder*="customer"]) main section {
+  border-color: #e3e8e3 !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(20, 60, 35, 0.05) !important;
+}
+
+/* Sales / purchase title bars */
+body:has(main input[placeholder*="supplier"]) main section:first-child,
+body:has(main input[placeholder*="customer"]) main section:first-child {
+  border-radius: 18px !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main section:first-child [class*="bg-slate-700"],
+body:has(main input[placeholder*="customer"]) main section:first-child [class*="bg-teal-700"] {
+  background: #2f7d32 !important;
+  color: #ffffff !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main section:first-child [class*="bg-emerald-50"],
+body:has(main input[placeholder*="customer"]) main section:first-child [class*="bg-emerald-50"] {
+  background: #e8f6ea !important;
+  color: #2f7d32 !important;
+}
+
+/* Search / party inputs */
+body:has(main input[placeholder*="supplier"]) main input,
+body:has(main input[placeholder*="customer"]) main input {
+  color: #000000 !important;
+  caret-color: #2f7d32 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main input::placeholder,
+body:has(main input[placeholder*="customer"]) main input::placeholder {
+  color: #657067 !important;
+  opacity: 1 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main section input,
+body:has(main input[placeholder*="customer"]) main section input {
+  background-color: #ffffff !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main section div:has(> input),
+body:has(main input[placeholder*="customer"]) main section div:has(> input) {
+  border-color: #d9e2dc !important;
+}
+
+/* Purchase item / sales item table header: very soft green like the reference. */
+body:has(main input[placeholder*="supplier"]) main section [class*="bg-slate-100"],
+body:has(main input[placeholder*="customer"]) main section [class*="bg-slate-100"] {
+  background: #f1f8f2 !important;
+  color: #000000 !important;
+}
+
+/* Soft green accents used by the reference. */
+body:has(main input[placeholder*="supplier"]) main [class*="text-emerald"],
+body:has(main input[placeholder*="customer"]) main [class*="text-emerald"] {
+  color: #2f7d32 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main [class*="bg-emerald-50"],
+body:has(main input[placeholder*="customer"]) main [class*="bg-emerald-50"] {
+  background: #e8f6ea !important;
+}
+
+/* Primary action buttons: reference green, black text where the reference uses black. */
+body:has(main input[placeholder*="supplier"]) main button[class*="bg-emerald"],
+body:has(main input[placeholder*="customer"]) main button[class*="bg-emerald"] {
+  background: #2f7d32 !important;
+  border-color: #2f7d32 !important;
+  color: #ffffff !important;
+}
+
+body:has(main input[placeholder*="supplier"]) main button[class*="bg-emerald"] *,
+body:has(main input[placeholder*="customer"]) main button[class*="bg-emerald"] * {
+  color: #ffffff !important;
+}
+
+/* Bill Summary — exact reference palette: pale yellow header + black typography. */
+body:has(main input[placeholder*="supplier"]) aside section,
+body:has(main input[placeholder*="customer"]) aside section {
+  border: 1px solid #e7e0c8 !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 18px rgba(50, 50, 20, 0.07) !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:first-child,
+body:has(main input[placeholder*="customer"]) aside section > div:first-child {
+  min-height: 102px !important;
+  padding: 17px 20px !important;
+  background: #fff7d8 !important;
+  border-bottom: 1px solid #eadfb8 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:first-child *,
+body:has(main input[placeholder*="customer"]) aside section > div:first-child * {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:first-child div:nth-child(2),
+body:has(main input[placeholder*="customer"]) aside section > div:first-child div:nth-child(2) {
+  font-size: 1.55rem !important;
+  line-height: 1.8rem !important;
+  font-weight: 900 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:nth-child(2),
+body:has(main input[placeholder*="customer"]) aside section > div:nth-child(2) {
+  background: #ffffff !important;
+  padding: 14px 20px !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:nth-child(2) *,
+body:has(main input[placeholder*="customer"]) aside section > div:nth-child(2) * {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:nth-child(2) > div:last-child,
+body:has(main input[placeholder*="customer"]) aside section > div:nth-child(2) > div:last-child {
+  margin-top: 12px !important;
+  border: 1px solid #eadfb8 !important;
+  border-radius: 12px !important;
+  background: #fff0b8 !important;
+  padding: 12px 14px !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:nth-child(2) > div:last-child *,
+body:has(main input[placeholder*="customer"]) aside section > div:nth-child(2) > div:last-child * {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:last-child,
+body:has(main input[placeholder*="customer"]) aside section > div:last-child {
+  background: #ffffff !important;
+  border-top: 1px solid #efe7ca !important;
+  padding: 12px 20px 20px !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:last-child button:not(:disabled),
+body:has(main input[placeholder*="customer"]) aside section > div:last-child button:not(:disabled) {
+  background: #2f7d32 !important;
+  border-color: #2f7d32 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  min-height: 48px !important;
+  border-radius: 10px !important;
+}
+
+body:has(main input[placeholder*="supplier"]) aside section > div:last-child button:disabled,
+body:has(main input[placeholder*="customer"]) aside section > div:last-child button:disabled {
+  background: #f0f1f0 !important;
+  border-color: #d8dcd8 !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Keep the floating bulk-delete control green, matching the reference. */
+body:has(main input[placeholder*="supplier"]) main button[class*="fixed"][class*="bg-blue"],
+body:has(main input[placeholder*="customer"]) main button[class*="fixed"][class*="bg-blue"] {
+  background: #2f7d32 !important;
+  border-color: #2f7d32 !important;
+}
+
+@media (max-width: 1279px) {
+  body:has(main input[placeholder*="supplier"]) aside section > div:first-child,
+  body:has(main input[placeholder*="customer"]) aside section > div:first-child {
+    min-height: 88px !important;
+  }
+}
