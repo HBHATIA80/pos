@@ -1,0 +1,44 @@
+/* Invoice viewer is a full transaction document, not the compact voucher-list dialog.
+   These rules intentionally override the shared voucher-list sizing so the
+   invoice header, details, item table and totals stay readable. */
+.biz-invoice-viewer > div > div:nth-child(2) {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+}
+
+.biz-invoice-viewer table {
+  min-width: 760px !important;
+  width: 100% !important;
+  table-layout: auto !important;
+  font-size: 13px !important;
+}
+
+.biz-invoice-viewer table th,
+.biz-invoice-viewer table td {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.35 !important;
+  padding: 10px 12px !important;
+}
+
+@media (max-width: 900px) {
+  .biz-invoice-viewer > div {
+    max-height: calc(100vh - 12px) !important;
+    border-radius: 18px !important;
+  }
+
+  .biz-invoice-viewer > div > div:first-child {
+    padding: 10px 12px !important;
+  }
+
+  .biz-invoice-viewer table {
+    min-width: 680px !important;
+  }
+}
