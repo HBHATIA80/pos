@@ -68,6 +68,14 @@ function wrap(text: string, max: number) {
   const lines: string[] = []
   let current = ''
   for (const word of words) {
+    if (word.length > max) {
+      if (current) {
+        lines.push(current)
+        current = ''
+      }
+      for (let i = 0; i < word.length; i += max) lines.push(word.slice(i, i + max))
+      continue
+    }
     const next = current ? `${current} ${word}` : word
     if (next.length > max && current) {
       lines.push(current)
@@ -82,6 +90,13 @@ function chunk<T>(items: T[], size: number) {
   const result: T[][] = []
   for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size))
   return result
+}
+
+function balanceStatementLabel(data: LedgerPdfData) {
+  const shop = ascii(data.businessName || 'Shop')
+  if (data.balanceType === 'receivable') return `Payable To ${shop}`
+  if (data.balanceType === 'payable') return `Payable By ${shop}`
+  return 'Account Settled'
 }
 
 export function buildLedgerPdf(data: LedgerPdfData): Blob {
@@ -119,27 +134,33 @@ export function buildLedgerPdf(data: LedgerPdfData): Blob {
     rect(0, 775, 595, 67, COLORS.paleGreen)
     add(ascii(data.businessName || 'BIZYBUK.IN'), 18, 42, 812, 'F2', COLORS.green)
     add('PARTY LEDGER', 8.5, 43, 793, 'F2', COLORS.muted)
-    add(data.balanceType.toUpperCase(), 10, 470, 812, 'F2', COLORS.ink)
+    add(data.balanceType === 'receivable' ? 'RECEIVABLE' : data.balanceType === 'payable' ? 'PAYABLE' : 'SETTLED', 9.5, 470, 812, 'F2', COLORS.ink)
 
-    rect(42, 710, 511, 51, COLORS.softGreen)
+    // Fixed-width header columns prevent long party names from overwriting the period.
+    rect(42, 696, 511, 65, COLORS.softGreen)
     add('SHOP', 7.2, 54, 746, 'F2', COLORS.green)
-    add(ascii(data.businessName || 'BIZYBUK.IN').slice(0, 45), 10, 54, 730, 'F2', COLORS.ink)
-    if (data.businessCode) add(`Shop Code: ${ascii(data.businessCode)}`, 7.3, 54, 716, 'F1', COLORS.muted)
-    add('PARTY', 7.2, 285, 746, 'F2', COLORS.green)
-    add(ascii(data.partyName).slice(0, 42), 10, 285, 730, 'F2', COLORS.ink)
-    if (data.partyPhone) add(ascii(data.partyPhone), 7.3, 285, 716, 'F1', COLORS.muted)
+    const shopLines = wrap(ascii(data.businessName || 'BIZYBUK.IN'), 25).slice(0, 2)
+    shopLines.forEach((value, index) => add(value, 9.2, 54, 730 - index * 13, 'F2', COLORS.ink))
+    if (data.businessCode) add(`Shop Code: ${ascii(data.businessCode)}`, 6.9, 54, 702, 'F1', COLORS.muted)
 
-    add('LEDGER PERIOD', 7.2, 438, 746, 'F2', COLORS.green)
-    add(`${dateText(data.startDate)} to ${dateText(data.endDate || data.startDate)}`, 7.5, 438, 730, 'F2', COLORS.ink)
-    if (data.partyCode) add(`Party Code: ${ascii(data.partyCode)}`, 7, 438, 716, 'F1', COLORS.muted)
+    add('PARTY', 7.2, 270, 746, 'F2', COLORS.green)
+    const partyLines = wrap(ascii(data.partyName), 22).slice(0, 2)
+    partyLines.forEach((value, index) => add(value, 9.2, 270, 730 - index * 13, 'F2', COLORS.ink))
+    if (data.partyPhone) add(ascii(data.partyPhone), 6.9, 270, 702, 'F1', COLORS.muted)
+    else if (data.partyCode) add(`Party Code: ${ascii(data.partyCode)}`, 6.7, 270, 702, 'F1', COLORS.muted)
 
-    let y = 684
+    add('LEDGER PERIOD', 7.2, 435, 746, 'F2', COLORS.green)
+    const periodLines = wrap(`${dateText(data.startDate)} to ${dateText(data.endDate || data.startDate)}`, 18).slice(0, 2)
+    periodLines.forEach((value, index) => add(value, 7.1, 435, 730 - index * 13, 'F2', COLORS.ink))
+    if (data.partyCode && data.partyPhone) add(`Party Code: ${ascii(data.partyCode)}`, 6.6, 435, 702, 'F1', COLORS.muted)
+
+    let y = 678
     if (pageIndex === 0) {
       const summary = [
         ['OPENING', money(data.openingBalance)],
         ['DEBIT', money(data.debitTotal)],
         ['CREDIT', money(data.creditTotal)],
-        ['CURRENT RECEIVABLE', data.balanceType === 'receivable' ? money(Math.abs(data.finalBalance)) : '-'],
+        ['CURRENT BALANCE', money(Math.abs(data.finalBalance))],
       ]
       summary.forEach(([label, value], index) => {
         const x = 42 + index * 128
@@ -207,9 +228,12 @@ export function buildLedgerPdf(data: LedgerPdfData): Blob {
         add(money(data.debitTotal), 8.2, 480, y - 20, 'F2', COLORS.ink)
         add('CREDIT', 8.2, 380, y - 37, 'F1', COLORS.muted)
         add(money(data.creditTotal), 8.2, 480, y - 37, 'F2', COLORS.green)
-        rect(350, y - 77, 203, 26, COLORS.yellow)
-        add(data.balanceType === 'receivable' ? 'RECEIVABLE' : data.balanceType === 'payable' ? 'PAYABLE' : 'SETTLED', 8.7, 362, y - 68, 'F2', COLORS.green)
-        add(money(Math.abs(data.finalBalance)), 9, 462, y - 68, 'F2', COLORS.ink)
+
+        const statement = balanceStatementLabel(data)
+        const statementLines = wrap(statement, 26).slice(0, 2)
+        rect(350, y - (statementLines.length > 1 ? 91 : 77), 203, statementLines.length > 1 ? 40 : 26, COLORS.yellow)
+        statementLines.forEach((value, index) => add(value, 7.8, 362, y - 68 - index * 11, 'F2', COLORS.green))
+        add(money(Math.abs(data.finalBalance)), 8.7, 465, y - (statementLines.length > 1 ? 80 : 68), 'F2', COLORS.ink)
       }
     }
 
