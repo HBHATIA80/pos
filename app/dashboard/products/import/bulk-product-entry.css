@@ -1,48 +1,58 @@
-/* BIZYBUK Bulk Product Entry — compact spreadsheet layout */
+/* BIZYBUK — Bulk Product Entry
+   Compact Excel-style grid. Presentation-only: no import/database logic changed. */
 :root {
-  --biz-green-900: #166534;
-  --biz-green-800: #15803d;
-  --biz-green-700: #16a34a;
-  --biz-green-100: #dcfce7;
-  --biz-green-50: #f0fdf4;
-  --biz-red-700: #b91c1c;
-  --biz-red-100: #fee2e2;
-  --biz-red-50: #fff7f7;
-  --biz-yellow-100: #fef3c7;
-  --biz-yellow-50: #fffbeb;
-  --biz-border: #dbe7df;
-  --biz-text: #111827;
-  --biz-muted: #64748b;
+  --biz-green: #16833b;
+  --biz-green-dark: #116b30;
+  --biz-green-soft: #eef9f1;
+  --biz-green-border: #ccebd5;
+  --biz-red: #c6283d;
+  --biz-red-soft: #fff1f3;
+  --biz-red-border: #ffb8c2;
+  --biz-yellow-soft: #fff8df;
+  --biz-border: #dce6df;
+  --biz-border-soft: #e8efeb;
+  --biz-text: #000;
+  --biz-muted: #53657a;
+  --biz-surface: #fff;
+  --biz-surface-soft: #f6faf7;
 }
 
-/* Backdrop */
+/* Modal backdrop */
 .fixed.inset-0 {
-  padding: 12px !important;
+  padding: 10px !important;
   background: rgba(15, 23, 42, .48) !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
-/* Main dialog: slightly shorter so the spreadsheet starts much higher. */
+/* Dialog */
 .fixed.inset-0 > div {
-  width: min(1400px, 100%) !important;
+  width: min(1400px, calc(100vw - 20px)) !important;
   max-width: 1400px !important;
-  height: min(90vh, 820px) !important;
-  max-height: 90vh !important;
+  height: min(88vh, 760px) !important;
+  max-height: 88vh !important;
   min-height: 0 !important;
   overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
   border: 1px solid var(--biz-border) !important;
   border-radius: 20px !important;
-  background: #fff !important;
+  background: var(--biz-surface) !important;
   color: var(--biz-text) !important;
-  box-shadow: 0 22px 60px rgba(15, 23, 42, .22) !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .24) !important;
 }
 
-/* Compact header */
+/* Header — intentionally short so the grid starts high */
 .fixed.inset-0 > div > div:first-child {
-  flex: 0 0 auto !important;
-  min-height: 64px !important;
-  padding: 10px 18px !important;
+  flex: 0 0 62px !important;
+  min-height: 62px !important;
+  padding: 9px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid var(--biz-border) !important;
+  background: #fff !important;
 }
 
 .fixed.inset-0 h2,
@@ -57,58 +67,82 @@
 }
 
 .fixed.inset-0 h2 {
+  margin: 0 !important;
   font-size: 18px !important;
-  line-height: 1.2 !important;
-}
-
-.fixed.inset-0 p {
-  color: var(--biz-muted) !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
 }
 
 .fixed.inset-0 > div > div:first-child p {
-  margin-top: 2px !important;
+  margin: 2px 0 0 !important;
+  color: var(--biz-muted) !important;
   font-size: 11px !important;
-  line-height: 1.3 !important;
+  line-height: 1.25 !important;
 }
 
-/* Compact close button */
+/* Green close button */
 .fixed.inset-0 button:has(svg.lucide-x) {
   width: 40px !important;
   height: 40px !important;
   min-width: 40px !important;
+  min-height: 40px !important;
   padding: 0 !important;
-  border: 1px solid #15803d !important;
+  border: 1px solid var(--biz-green) !important;
   border-radius: 10px !important;
-  background: #15803d !important;
+  background: var(--biz-green) !important;
+  color: #fff !important;
+}
+
+.fixed.inset-0 button:has(svg.lucide-x) svg {
   color: #fff !important;
 }
 
 .fixed.inset-0 button:has(svg.lucide-x):hover {
-  background: #166534 !important;
-  border-color: #166534 !important;
+  background: var(--biz-green-dark) !important;
+  border-color: var(--biz-green-dark) !important;
 }
 
-/* Toolbar: all actions stay on ONE compact row. */
+/* Toolbar — one compact row */
 .fixed.inset-0 > div > div:nth-child(2) {
-  flex: 0 0 auto !important;
-  min-height: 54px !important;
-  padding: 7px 18px !important;
+  flex: 0 0 52px !important;
+  min-height: 52px !important;
+  padding: 7px 16px !important;
+  display: flex !important;
+  align-items: center !important;
   gap: 7px !important;
   flex-wrap: nowrap !important;
-  background: #f7faf8 !important;
-  border-bottom: 1px solid #e2ebe6 !important;
+  overflow: hidden !important;
+  background: var(--biz-surface-soft) !important;
+  border-bottom: 1px solid var(--biz-border) !important;
 }
 
 .fixed.inset-0 > div > div:nth-child(2) button {
-  min-height: 34px !important;
+  flex: 0 0 auto !important;
   height: 34px !important;
-  padding: 0 11px !important;
-  gap: 6px !important;
-  border-radius: 9px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
   font-size: 12px !important;
+  font-weight: 700 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
-  flex: 0 0 auto !important;
+  border: 1px solid #d5e3da !important;
+  background: #fff !important;
+  color: var(--biz-green-dark) !important;
+}
+
+.fixed.inset-0 > div > div:nth-child(2) button:first-child {
+  border-color: var(--biz-green) !important;
+  background: var(--biz-green) !important;
+  color: #fff !important;
+}
+
+.fixed.inset-0 > div > div:nth-child(2) button:hover {
+  border-color: var(--biz-green) !important;
+}
+
+.fixed.inset-0 > div > div:nth-child(2) button:first-child:hover {
+  background: var(--biz-green-dark) !important;
 }
 
 .fixed.inset-0 > div > div:nth-child(2) button svg {
@@ -116,43 +150,35 @@
   height: 14px !important;
 }
 
-.fixed.inset-0 > div > div:nth-child(2) button:first-child {
-  background: #15803d !important;
-  border: 1px solid #15803d !important;
-  color: #fff !important;
-}
-
-.fixed.inset-0 > div > div:nth-child(2) button:not(:first-child) {
-  background: #fff !important;
-  border: 1px solid #d5e1da !important;
-  color: #166534 !important;
-}
-
 .fixed.inset-0 > div > div:nth-child(2) span {
   margin-left: auto !important;
-  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+  color: #000 !important;
   font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
 }
 
-/* Spreadsheet viewport consumes all remaining height — no oversized blank area. */
+/* Grid viewport fills all remaining modal space */
 .fixed.inset-0 > div > div:nth-child(3) {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: auto !important;
   overflow: auto !important;
-  align-self: stretch !important;
   display: block !important;
+  align-self: stretch !important;
+  background: #fff !important;
 }
 
-/* Smaller grid footprint. */
 .fixed.inset-0 table {
-  min-width: 1650px !important;
   width: max-content !important;
+  min-width: 100% !important;
   border-collapse: separate !important;
   border-spacing: 0 !important;
   table-layout: auto !important;
 }
 
+/* Header row */
 .fixed.inset-0 table thead th {
   position: sticky !important;
   top: 0 !important;
@@ -160,32 +186,45 @@
   height: 38px !important;
   min-height: 38px !important;
   padding: 6px 8px !important;
-  background: #f2f7f4 !important;
-  color: #111827 !important;
-  border-bottom: 1px solid #dbe7df !important;
+  background: #f1f8f3 !important;
+  color: #000 !important;
+  border-right: 1px solid var(--biz-border) !important;
+  border-bottom: 1px solid var(--biz-border) !important;
   font-size: 10px !important;
   line-height: 1.1 !important;
   font-weight: 800 !important;
-  letter-spacing: .015em !important;
+  letter-spacing: .01em !important;
   white-space: nowrap !important;
 }
 
+/* Required column headers use a light red cue, not an error message */
+.fixed.inset-0 table thead th:nth-child(2),
+.fixed.inset-0 table thead th:nth-child(4),
+.fixed.inset-0 table thead th:nth-child(6),
+.fixed.inset-0 table thead th:nth-child(8),
+.fixed.inset-0 table thead th:nth-child(9),
+.fixed.inset-0 table thead th:nth-child(10) {
+  background: #fff1f3 !important;
+  border-bottom-color: var(--biz-red-border) !important;
+}
+
+/* Body */
 .fixed.inset-0 table tbody td {
-  height: 46px !important;
-  min-height: 46px !important;
-  padding: 3px 5px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 4px 5px !important;
   background: #fff !important;
-  color: #111827 !important;
-  border-bottom: 1px solid #e3ebe7 !important;
+  color: #000 !important;
   border-right: 1px solid #edf2ef !important;
+  border-bottom: 1px solid #e3ebe7 !important;
   vertical-align: middle !important;
 }
 
 .fixed.inset-0 table tbody tr:hover td {
-  background: #f8fcf9 !important;
+  background: #fbfefc !important;
 }
 
-/* Compact row-number column. */
+/* Row number */
 .fixed.inset-0 table thead th:first-child,
 .fixed.inset-0 table tbody td:first-child {
   width: 42px !important;
@@ -193,15 +232,15 @@
   max-width: 42px !important;
   padding: 3px !important;
   text-align: center !important;
-  font-weight: 800 !important;
 }
 
 .fixed.inset-0 table tbody td:first-child {
-  color: #475569 !important;
   background: #f8faf9 !important;
+  color: #000 !important;
+  font-weight: 800 !important;
 }
 
-/* Reduce the width of each text control so the row stays visually compact. */
+/* Compact inputs — enough room for real values without oversized cells */
 .fixed.inset-0 table tbody input,
 .fixed.inset-0 table tbody select {
   box-sizing: border-box !important;
@@ -210,15 +249,16 @@
   height: 34px !important;
   min-height: 34px !important;
   max-height: 34px !important;
+  margin: 0 !important;
   padding: 0 8px !important;
   border: 1px solid #d6e5dc !important;
   border-radius: 7px !important;
+  outline: none !important;
   background: #fff !important;
-  color: #111827 !important;
+  color: #000 !important;
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 34px !important;
-  outline: none !important;
 }
 
 .fixed.inset-0 table tbody select {
@@ -233,32 +273,20 @@
 
 .fixed.inset-0 table tbody input:focus,
 .fixed.inset-0 table tbody select:focus {
-  border-color: #15803d !important;
-  box-shadow: 0 0 0 2px rgba(21, 128, 61, .12) !important;
+  border-color: var(--biz-green) !important;
   background: #fff !important;
+  box-shadow: 0 0 0 2px rgba(22, 131, 59, .12) !important;
 }
 
-/* Required fields — light red, as requested. */
-.fixed.inset-0 table thead th:nth-child(2),
-.fixed.inset-0 table thead th:nth-child(4),
-.fixed.inset-0 table thead th:nth-child(6),
-.fixed.inset-0 table thead th:nth-child(8),
-.fixed.inset-0 table thead th:nth-child(9),
-.fixed.inset-0 table thead th:nth-child(10),
-.fixed.inset-0 table thead th:nth-child(11) {
-  background: #fff1f2 !important;
-  color: #111827 !important;
-  border-bottom: 2px solid #fecdd3 !important;
-}
-
+/* Required fields start as a subtle red-tinted editing area.
+   This is intentionally not a validation error by itself. */
 .fixed.inset-0 table tbody tr td:nth-child(2),
 .fixed.inset-0 table tbody tr td:nth-child(4),
 .fixed.inset-0 table tbody tr td:nth-child(6),
 .fixed.inset-0 table tbody tr td:nth-child(8),
 .fixed.inset-0 table tbody tr td:nth-child(9),
-.fixed.inset-0 table tbody tr td:nth-child(10),
-.fixed.inset-0 table tbody tr td:nth-child(11) {
-  background: #fff8f8 !important;
+.fixed.inset-0 table tbody tr td:nth-child(10) {
+  background: #fffafb !important;
 }
 
 .fixed.inset-0 table tbody tr td:nth-child(2) input,
@@ -266,13 +294,30 @@
 .fixed.inset-0 table tbody tr td:nth-child(6) select,
 .fixed.inset-0 table tbody tr td:nth-child(8) select,
 .fixed.inset-0 table tbody tr td:nth-child(9) input,
-.fixed.inset-0 table tbody tr td:nth-child(10) input,
-.fixed.inset-0 table tbody tr td:nth-child(11) input {
-  background: #fff1f2 !important;
-  border-color: #fda4af !important;
+.fixed.inset-0 table tbody tr td:nth-child(10) input {
+  background: #fff8f9 !important;
 }
 
-/* Numeric fields remain narrow and right-aligned. */
+/* Real invalid state — if the component adds aria-invalid/class state, make it clearly red */
+.fixed.inset-0 table tbody input[aria-invalid="true"],
+.fixed.inset-0 table tbody select[aria-invalid="true"],
+.fixed.inset-0 table tbody .is-invalid input,
+.fixed.inset-0 table tbody .is-invalid select {
+  background: var(--biz-red-soft) !important;
+  border-color: var(--biz-red-border) !important;
+  color: #000 !important;
+}
+
+/* Valid state */
+.fixed.inset-0 table tbody input[aria-invalid="false"],
+.fixed.inset-0 table tbody select[aria-invalid="false"],
+.fixed.inset-0 table tbody .is-valid input,
+.fixed.inset-0 table tbody .is-valid select {
+  border-color: var(--biz-green-border) !important;
+  background: #fff !important;
+}
+
+/* Numeric columns */
 .fixed.inset-0 table tbody tr td:nth-child(9) input,
 .fixed.inset-0 table tbody tr td:nth-child(10) input,
 .fixed.inset-0 table tbody tr td:nth-child(11) input,
@@ -282,19 +327,23 @@
   font-variant-numeric: tabular-nums !important;
 }
 
-/* Keep action column visible and compact. */
+/* Fixed action column */
 .fixed.inset-0 table thead th:last-child,
-.fixed.inset-0 table tbody tr td:last-child {
+.fixed.inset-0 table tbody td:last-child {
   position: sticky !important;
   right: 0 !important;
-  z-index: 40 !important;
+  z-index: 35 !important;
   width: 60px !important;
   min-width: 60px !important;
   max-width: 60px !important;
   padding: 3px !important;
   text-align: center !important;
   background: #f8faf9 !important;
-  box-shadow: -5px 0 8px rgba(15, 23, 42, .05) !important;
+  box-shadow: -5px 0 9px rgba(15, 23, 42, .05) !important;
+}
+
+.fixed.inset-0 table thead th:last-child {
+  z-index: 45 !important;
 }
 
 .fixed.inset-0 table tbody tr td:last-child button {
@@ -306,16 +355,16 @@
   padding: 0 !important;
   align-items: center !important;
   justify-content: center !important;
-  border: 1px solid #15803d !important;
+  border: 1px solid var(--biz-green) !important;
   border-radius: 8px !important;
-  background: #15803d !important;
+  background: var(--biz-green) !important;
   color: #dc2626 !important;
   box-shadow: none !important;
 }
 
 .fixed.inset-0 table tbody tr td:last-child button:hover {
-  background: #166534 !important;
-  border-color: #166534 !important;
+  background: var(--biz-green-dark) !important;
+  border-color: var(--biz-green-dark) !important;
 }
 
 .fixed.inset-0 table tbody tr td:last-child button svg {
@@ -325,35 +374,44 @@
   color: #dc2626 !important;
 }
 
-/* Bottom action bar stays short. */
+/* Footer — compact, always visible */
 .fixed.inset-0 > div > div:last-child {
-  flex: 0 0 auto !important;
-  min-height: 60px !important;
-  padding: 8px 18px !important;
+  flex: 0 0 58px !important;
+  min-height: 58px !important;
+  padding: 7px 16px !important;
+  display: flex !important;
+  align-items: center !important;
   gap: 10px !important;
   background: #fff !important;
-  border-top: 1px solid #e2ebe6 !important;
+  border-top: 1px solid var(--biz-border) !important;
 }
 
 .fixed.inset-0 > div > div:last-child p {
   margin: 0 !important;
+  color: #000 !important;
   font-size: 10px !important;
   line-height: 1.35 !important;
 }
 
 .fixed.inset-0 > div > div:last-child button {
-  min-height: 34px !important;
+  flex: 0 0 auto !important;
   height: 34px !important;
-  padding: 0 13px !important;
+  min-height: 34px !important;
+  padding: 0 14px !important;
   border-radius: 8px !important;
   font-size: 12px !important;
+  font-weight: 700 !important;
   white-space: nowrap !important;
 }
 
 .fixed.inset-0 > div > div:last-child button:last-child {
-  background: #15803d !important;
+  background: var(--biz-green) !important;
   color: #fff !important;
-  border: 1px solid #15803d !important;
+  border: 1px solid var(--biz-green) !important;
+}
+
+.fixed.inset-0 > div > div:last-child button:last-child:hover:not(:disabled) {
+  background: var(--biz-green-dark) !important;
 }
 
 .fixed.inset-0 > div > div:last-child button:last-child:disabled {
@@ -362,12 +420,12 @@
   border-color: #d1d5db !important;
 }
 
-/* Validation text */
+/* Error text */
 .fixed.inset-0 .text-red-600,
 .fixed.inset-0 .text-red-700,
 .fixed.inset-0 .text-rose-600,
 .fixed.inset-0 .text-rose-700 {
-  color: #b91c1c !important;
+  color: var(--biz-red) !important;
 }
 
 /* Scrollbars */
@@ -385,6 +443,12 @@
   height: 8px;
 }
 
+.fixed.inset-0 .overflow-auto::-webkit-scrollbar-track,
+.fixed.inset-0 .overflow-x-auto::-webkit-scrollbar-track,
+.fixed.inset-0 .overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f3;
+}
+
 .fixed.inset-0 .overflow-auto::-webkit-scrollbar-thumb,
 .fixed.inset-0 .overflow-x-auto::-webkit-scrollbar-thumb,
 .fixed.inset-0 .overflow-y-auto::-webkit-scrollbar-thumb {
@@ -392,22 +456,29 @@
   border-radius: 999px;
 }
 
-/* On smaller screens, keep the toolbar usable while allowing the grid to scroll. */
+/* Small screens: toolbar may scroll horizontally; grid remains usable. */
 @media (max-width: 900px) {
-  .fixed.inset-0 { padding: 6px !important; }
+  .fixed.inset-0 {
+    padding: 5px !important;
+  }
+
   .fixed.inset-0 > div {
+    width: calc(100vw - 10px) !important;
     height: 96vh !important;
     max-height: 96vh !important;
     border-radius: 14px !important;
   }
+
   .fixed.inset-0 > div > div:nth-child(2) {
     overflow-x: auto !important;
   }
+
   .fixed.inset-0 > div > div:last-child {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    min-height: 62px !important;
+    flex-wrap: wrap !important;
   }
-  .fixed.inset-0 > div > div:last-child > div {
-    justify-content: flex-end !important;
+
+  .fixed.inset-0 > div > div:last-child p {
+    flex: 1 1 100% !important;
   }
 }
