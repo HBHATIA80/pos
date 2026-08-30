@@ -14,6 +14,7 @@ export default function InvoiceDateSelector() {
   const pathname = usePathname()
   const [date, setDate] = useState(today())
   const [host, setHost] = useState<HTMLElement | null>(null)
+  const [topCard, setTopCard] = useState<HTMLElement | null>(null)
   const [saving, setSaving] = useState(false)
   const visible = pathname === '/dashboard/sales'
 
@@ -30,26 +31,61 @@ export default function InvoiceDateSelector() {
   useEffect(() => {
     if (!visible) {
       setHost(null)
+      setTopCard(null)
       return
     }
-    const findHost = () => {
-      const label = Array.from(document.querySelectorAll('div')).find(element => element.textContent?.trim() === 'Invoice date')
-      const card = label?.parentElement?.parentElement
-      if (!card) return false
-      const existing = Array.from(card.children)
-      existing.forEach(child => {
+
+    const findHosts = () => {
+      const labels = Array.from(document.querySelectorAll<HTMLElement>('div')).filter(
+        element => element.textContent?.trim() === 'Invoice date',
+      )
+
+      // The old global Invoice Date card is the standalone card above the
+      // transaction page. Remove that card completely; it is no longer a
+      // second date control.
+      const standaloneLabel = labels.find(label => {
+        const section = label.closest('section') as HTMLElement | null
+        return Boolean(section && !section.querySelector('div')?.textContent?.includes('Sales Invoice'))
+      })
+      const standaloneCard = standaloneLabel?.closest('section') as HTMLElement | null
+      if (standaloneCard) {
+        standaloneCard.style.display = 'none'
+        setTopCard(standaloneCard)
+      }
+
+      // Keep the existing Sales Invoice Header card/layout. Replace only its
+      // existing date display with the real date picker inside the same slot.
+      const salesTitle = Array.from(document.querySelectorAll<HTMLElement>('div')).find(
+        element => element.textContent?.trim() === 'Sales Invoice',
+      )
+      const salesHeader = salesTitle?.closest('section') as HTMLElement | null
+      const headerLabel = salesHeader
+        ? Array.from(salesHeader.querySelectorAll<HTMLElement>('div')).find(
+            element => element.textContent?.trim() === 'Invoice date',
+          )
+        : null
+      const dateSlot = headerLabel?.parentElement?.parentElement as HTMLElement | null
+
+      if (!dateSlot) return false
+
+      Array.from(dateSlot.children).forEach(child => {
         ;(child as HTMLElement).style.display = 'none'
       })
-      setHost(card)
+      setHost(dateSlot)
       return true
     }
-    if (findHost()) return
+
+    if (findHosts()) return
     const observer = new MutationObserver(() => {
-      if (findHost()) observer.disconnect()
+      if (findHosts()) observer.disconnect()
     })
     observer.observe(document.body, { childList: true, subtree: true })
     return () => observer.disconnect()
   }, [visible])
+
+  useEffect(() => () => {
+    if (topCard) topCard.style.display = ''
+  }, [topCard])
 
   async function saveDate(nextDate: string) {
     setDate(nextDate)
