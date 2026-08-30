@@ -1,0 +1,26 @@
+/* Bulk Product Entry — compact SKU column sizing.
+   Keeps the existing grid logic intact and only changes presentation. */
+
+/* The SKU column is the second column (# is first). Make it roughly 30% of
+   the current desktop width while keeping enough room for normal SKU values. */
+.biz-app-main :where([class*="z-[100]"]) table thead th:nth-child(2),
+.biz-app-main :where([class*="z-[100]"]) table tbody td:nth-child(2) {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) table tbody td:nth-child(2) input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 900px) {
+  .biz-app-main :where([class*="z-[100]"]) table thead th:nth-child(2),
+  .biz-app-main :where([class*="z-[100]"]) table tbody td:nth-child(2) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+  }
+}
