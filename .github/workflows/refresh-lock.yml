@@ -9,21 +9,97 @@ permissions:
 
 jobs:
   refresh:
+    if: github.event.head_commit.message != 'chore: decouple party role from transactions'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
       - run: npm install --package-lock-only --ignore-scripts
-      - name: Commit generated lockfile
+      - name: Apply party role decoupling
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          sales = Path('app/dashboard/sales/page.tsx')
+          text = sales.read_text()
+          old = "setParties((body.parties || []).filter((party: Party) => party.party_type === 'customer' || party.party_type === 'both'))"
+          new = "setParties(body.parties || [])"
+          if old not in text:
+              raise SystemExit('sales party filter pattern not found')
+          sales.write_text(text.replace(old, new, 1))
+
+          purchases = Path('app/dashboard/purchases/page.tsx')
+          text = purchases.read_text()
+          old = "setSuppliers((result.parties || []).filter((party: Party) => party.party_type === 'supplier' || party.party_type === 'both'))"
+          new = "setSuppliers(result.parties || [])"
+          if old not in text:
+              raise SystemExit('purchase party filter pattern not found')
+          purchases.write_text(text.replace(old, new, 1))
+
+          parties = Path('app/dashboard/parties/page.tsx')
+          text = parties.read_text()
+          text = text.replace(
+              "Maintain one business-scoped party master for customers, suppliers, or both. Opening balances are only the starting ledger baseline; invoices, receipts, payments and immutable ledger entries come later.",
+              "Maintain one business-scoped party master. The accounting role is a reporting/opening-balance classification only; it does not restrict whether the party can be used in sales, purchases, receipts, payments or future returns."
+          )
+          text = text.replace(
+              "Keep party identity separate from future invoice and ledger transactions.",
+              "Accounting role is used for opening balances and account grouping only. Any active party may be used in sales or purchase transactions, including return transactions."
+          )
+          text = text.replace('<SelectField label="Type" value={form.party_type}', '<SelectField label="Accounting role" value={form.party_type}')
+          parties.write_text(text)
+          PY
+
+          cat > supabase/migrations/20260831100000_party_role_not_transaction_restriction.sql <<'SQL'
+          -- Party role is an accounting classification, not a transaction permission.
+          -- A party may buy from us, sell to us, or do both regardless of its master role.
+          -- Transaction direction is determined by the voucher/invoice itself.
+          -- This migration removes legacy customer/supplier role gates from sale/purchase RPCs.
+
+          do $$
+          declare
+            r record;
+            v_sql text;
+            v_new text;
+          begin
+            for r in
+              select p.oid, n.nspname, p.proname, pg_get_functiondef(p.oid) as definition
+              from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public'
+                and p.prokind = 'f'
+                and (p.proname ilike '%sale%' or p.proname ilike '%purchase%')
+                and pg_get_functiondef(p.oid) like '%party_type%'
+            loop
+              v_sql := r.definition;
+              v_new := replace(v_sql, '    if v_party.party_type not in (''customer'',''both'') then raise exception ''Customer not found or inactive''; end if;' || chr(10), '');
+              v_new := replace(v_new, '    if v_party.party_type not in (''customer'', ''both'') then raise exception ''Customer not found or inactive''; end if;' || chr(10), '');
+              v_new := replace(v_new, '    if v_party.party_type not in (''supplier'',''both'') then raise exception ''Supplier not found or inactive''; end if;' || chr(10), '');
+              v_new := replace(v_new, '    if v_party.party_type not in (''supplier'', ''both'') then raise exception ''Supplier not found or inactive''; end if;' || chr(10), '');
+              if v_new <> v_sql then execute v_new; end if;
+            end loop;
+          end $$;
+
+          comment on table public.parties is
+            'Business party master. party_type is an accounting classification; transaction eligibility is determined by the transaction type, not party_type.';
+          SQL
+
+          # This one-time workflow was created as a fallback to run the edit.
+          rm -f .github/workflows/one-time-party-role-fix.yml
+
+      - name: Commit generated changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
+          git add package-lock.json app/dashboard/sales/page.tsx app/dashboard/purchases/page.tsx app/dashboard/parties/page.tsx supabase/migrations/20260831100000_party_role_not_transaction_restriction.sql .github/workflows/one-time-party-role-fix.yml .github/workflows/refresh-lock.yml
           if git diff --cached --quiet; then
-            echo "Lockfile already up to date"
+            echo "No changes to commit"
           else
-            git commit -m "chore: regenerate package lock"
+            git commit -m "chore: decouple party role from transactions"
             git push
           fi
