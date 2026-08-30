@@ -233,9 +233,226 @@ body:has(main input[placeholder*="customer"]) main button[class*="fixed"][class*
   border-color: #2f7d32 !important;
 }
 
-@media (max-width: 1279px) {
-  body:has(main input[placeholder*="supplier"]) aside section > div:first-child,
-  body:has(main input[placeholder*="customer"]) aside section > div:first-child {
-    min-height: 88px !important;
+/* ------------------------------------------------------------------------- */
+/* BIZYBUK reference sidebar: match the supplied navigation screenshot.     */
+/* Visual-only: navigation routes, role checks and functionality unchanged. */
+/* ------------------------------------------------------------------------- */
+.biz-app-sidebar {
+  width: 240px !important;
+  background: #ffffff !important;
+  border-right: 1px solid #e4e9e5 !important;
+  box-shadow: none !important;
+}
+
+.biz-app-sidebar > div:first-child {
+  height: 78px !important;
+  min-height: 78px !important;
+  padding: 0 20px !important;
+  border-bottom: 1px solid #e7ebe8 !important;
+  background: #ffffff !important;
+}
+
+.biz-app-sidebar .brand-lockup {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  white-space: nowrap !important;
+}
+
+.biz-app-sidebar .brand-mark {
+  display: none !important;
+}
+
+.biz-app-sidebar .brand-wordmark {
+  color: #2f7d32 !important;
+  font-size: 27px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: -1.25px !important;
+}
+
+.biz-app-sidebar .brand-wordmark span {
+  color: #2f7d32 !important;
+}
+
+.biz-app-sidebar > div:nth-child(2) {
+  padding: 22px 17px 14px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd8ce transparent !important;
+}
+
+.biz-app-sidebar > div:nth-child(2)::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+.biz-app-sidebar > div:nth-child(2)::-webkit-scrollbar-thumb {
+  background: #cbd8ce !important;
+  border-radius: 10px !important;
+}
+
+.biz-app-sidebar .mt-6 {
+  margin-top: 0 !important;
+  margin-bottom: 18px !important;
+}
+
+.biz-app-sidebar .mt-6 + .mt-6 {
+  margin-top: 23px !important;
+}
+
+.biz-app-sidebar .mt-6 > p {
+  padding: 0 5px !important;
+  margin-bottom: 9px !important;
+  color: #7b8580 !important;
+  font-size: 10px !important;
+  line-height: 14px !important;
+  font-weight: 900 !important;
+  letter-spacing: .18em !important;
+}
+
+.biz-app-sidebar .biz-nav-item {
+  min-height: 45px !important;
+  padding: 0 13px !important;
+  margin: 3px 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 13px !important;
+  color: #111111 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  text-decoration: none !important;
+  background: transparent !important;
+}
+
+.biz-app-sidebar .biz-nav-item svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: #1f6b34 !important;
+  stroke-width: 2 !important;
+}
+
+.biz-app-sidebar .biz-nav-item:hover {
+  background: #f1f8f3 !important;
+  color: #111111 !important;
+}
+
+.biz-app-sidebar .biz-nav-item:hover svg {
+  color: #1f6b34 !important;
+}
+
+.biz-app-sidebar .biz-nav-item.bg-emerald-50,
+.biz-app-sidebar .biz-nav-item[class*="bg-emerald-50"] {
+  background: #edf7ef !important;
+  border-color: #d2ead7 !important;
+  color: #111111 !important;
+  box-shadow: none !important;
+}
+
+.biz-app-sidebar .biz-nav-item.bg-emerald-50 svg,
+.biz-app-sidebar .biz-nav-item[class*="bg-emerald-50"] svg {
+  color: #1f6b34 !important;
+}
+
+.biz-app-sidebar .biz-nav-item[class*="text-emerald"] {
+  color: #111111 !important;
+}
+
+.biz-app-sidebar .biz-nav-item span {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.biz-app-sidebar .border-t {
+  border-top-color: #e7ebe8 !important;
+}
+
+.biz-app-sidebar > div:last-child {
+  padding: 12px 12px 15px !important;
+  background: #ffffff !important;
+}
+
+.biz-app-sidebar > div:last-child > div:first-child {
+  min-height: 61px !important;
+  margin-bottom: 7px !important;
+  padding: 10px 10px !important;
+  border: 1px solid #edf1ee !important;
+  border-radius: 14px !important;
+  background: linear-gradient(90deg, #f3faf5 0%, #fbfcfb 100%) !important;
+}
+
+.biz-app-sidebar > div:last-child > div:first-child > span {
+  width: 38px !important;
+  height: 38px !important;
+  background: #2f7d32 !important;
+  color: #ffffff !important;
+}
+
+.biz-app-sidebar > div:last-child > div:first-child p:first-child {
+  color: #111111 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.biz-app-sidebar > div:last-child > div:first-child p:last-child {
+  color: #68736d !important;
+  font-size: 11px !important;
+}
+
+.biz-app-sidebar > div:last-child button {
+  min-height: 30px !important;
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+  color: #657069 !important;
+  background: transparent !important;
+}
+
+.biz-app-sidebar > div:last-child button:hover {
+  background: #f2f7f3 !important;
+  color: #1f6b34 !important;
+}
+
+/* Keep the main content aligned with the 240px reference sidebar. */
+@media (min-width: 1024px) {
+  .biz-app > div.min-h-screen.transition-all {
+    padding-left: 240px !important;
+  }
+
+  .biz-app-sidebar[class*="w-[76px]"] ~ div.min-h-screen.transition-all {
+    padding-left: 76px !important;
+  }
+}
+
+/* Collapsed navigation retains the same palette and icon treatment. */
+.biz-app-sidebar[class*="w-[76px]"] > div:first-child {
+  padding: 0 !important;
+  justify-content: center !important;
+}
+
+.biz-app-sidebar[class*="w-[76px]"] .brand-lockup--compact .brand-mark {
+  display: flex !important;
+  width: 38px !important;
+  height: 38px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 11px !important;
+  background: #2f7d32 !important;
+  color: #ffffff !important;
+}
+
+.biz-app-sidebar[class*="w-[76px]"] .brand-lockup--compact .brand-wordmark {
+  display: none !important;
+}
+
+.biz-app-sidebar[class*="w-[76px]"] > div:nth-child(2) {
+  padding: 15px 9px !important;
+}
+
+.biz-app-sidebar[class*="w-[76px]"] > div:nth-child(2) a {
+  border-radius: 11px !important;
+}
+
+/* Mobile drawer uses the same reference navigation styling. */
+@media (max-width: 1023px) {
+  .biz-app-sidebar {
+    width: 240px !important;
   }
 }
