@@ -1,15 +1,27 @@
 /* Invoice viewer is a full transaction document, not the compact voucher-list dialog.
    These rules intentionally override the shared voucher-list sizing so the
    invoice header, details, item table and totals stay readable. */
+
+/* The invoice dialog must have a real height.  A max-height alone lets the
+   flex container collapse to the height of the header, which can hide the
+   document body behind a large blank area on desktop. */
+.biz-invoice-viewer > div {
+  height: calc(100vh - 32px) !important;
+  max-height: calc(100vh - 32px) !important;
+  min-height: 0 !important;
+}
+
 .biz-invoice-viewer > div > div:nth-child(2) {
-  flex: 1 1 auto !important;
+  flex: 1 1 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
+  height: auto !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   scrollbar-gutter: stable !important;
+  overscroll-behavior: contain !important;
 }
 
 .biz-invoice-viewer table {
@@ -17,6 +29,7 @@
   width: 100% !important;
   table-layout: auto !important;
   font-size: 13px !important;
+  border-collapse: collapse !important;
 }
 
 .biz-invoice-viewer table th,
@@ -26,10 +39,18 @@
   text-overflow: clip !important;
   line-height: 1.35 !important;
   padding: 10px 12px !important;
+  vertical-align: middle !important;
+}
+
+.biz-invoice-viewer .invoice-document-body {
+  display: block !important;
+  width: 100% !important;
+  min-height: 100% !important;
 }
 
 @media (max-width: 900px) {
   .biz-invoice-viewer > div {
+    height: calc(100vh - 12px) !important;
     max-height: calc(100vh - 12px) !important;
     border-radius: 18px !important;
   }
@@ -40,5 +61,11 @@
 
   .biz-invoice-viewer table {
     min-width: 680px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .biz-invoice-viewer > div > div:nth-child(2) {
+    padding: 12px !important;
   }
 }
