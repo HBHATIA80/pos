@@ -1,0 +1,182 @@
+name: Apply physical receiving ledger status
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[physical-status-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Patch ledger and invoice status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          ledger_api = Path('app/api/parties/[id]/ledger/route.ts')
+          text = ledger_api.read_text()
+
+          old = "supabase.from('purchase_invoices').select('id,invoice_no,grand_total,status,purchased_at,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').is('deleted_at', null).order('purchased_at', { ascending: true })"
+          new = "supabase.from('purchase_invoices').select('id,invoice_no,grand_total,status,purchased_at,created_at,purchase_receipt:purchase_receipts(status)').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').is('deleted_at', null).order('purchased_at', { ascending: true })"
+          if old not in text:
+              raise SystemExit('ledger API purchase select anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "entries.push({id:purchase.id,date,type:'purchase',description:`Purchase Invoice ${purchase.invoice_no}`,reference:purchase.invoice_no,debit:0,credit:Number(purchase.grand_total??0),balance:0})"
+          new = "entries.push({id:purchase.id,date,type:'purchase',description:`Purchase Invoice ${purchase.invoice_no}`,reference:purchase.invoice_no,debit:0,credit:Number(purchase.grand_total??0),balance:0,physical_verified:Array.isArray((purchase as any).purchase_receipt)?(purchase as any).purchase_receipt[0]?.status==='verified':((purchase as any).purchase_receipt?.status==='verified')})"
+          if old not in text:
+              raise SystemExit('ledger API purchase entry anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "type Entry = { id: string; date: string; type: 'opening'|'invoice'|'purchase'|'payment'|'receipt_voucher'|'payment_voucher'|'sale_return'|'purchase_return'|'return_void'; description: string; reference: string; debit: number; credit: number; balance: number; payment_method?: string; notes?: string }"
+          new = "type Entry = { id: string; date: string; type: 'opening'|'invoice'|'purchase'|'payment'|'receipt_voucher'|'payment_voucher'|'sale_return'|'purchase_return'|'return_void'; description: string; reference: string; debit: number; credit: number; balance: number; payment_method?: string; notes?: string; physical_verified?: boolean }"
+          if old not in text:
+              raise SystemExit('ledger API Entry type anchor not found')
+          text = text.replace(old, new, 1)
+          ledger_api.write_text(text)
+
+          invoice_api = Path('app/api/invoices/[kind]/[invoiceNo]/route.ts')
+          text = invoice_api.read_text()
+
+          old = "${itemsTable}(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)`"
+          new = "${itemsTable}(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total),${kind === 'purchase' ? 'purchase_receipt:purchase_receipts(status)' : ''}`"
+          if old not in text:
+              raise SystemExit('invoice API select anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "const raw = invoice as unknown as Record<string, unknown>\n  return NextResponse.json({"
+          new = "const raw = invoice as unknown as Record<string, unknown>\n  const receiptRaw = raw.purchase_receipt as unknown\n  const receipt = Array.isArray(receiptRaw) ? receiptRaw[0] : receiptRaw\n  const physicalReceivingStatus = kind === 'purchase' && (receipt as { status?: string } | null | undefined)?.status === 'verified' ? 'verified' : kind === 'purchase' ? 'not_verified' : null\n  return NextResponse.json({"
+          if old not in text:
+              raise SystemExit('invoice API response anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "kind,\n      date: raw[dateColumn] ?? null,"
+          new = "kind,\n      physical_receiving_status: physicalReceivingStatus,\n      date: raw[dateColumn] ?? null,"
+          if old not in text:
+              raise SystemExit('invoice API invoice object anchor not found')
+          text = text.replace(old, new, 1)
+          invoice_api.write_text(text)
+
+          viewer = Path('app/dashboard/invoice-viewer.tsx')
+          text = viewer.read_text()
+
+          old = "type Invoice = { id: string; invoice_no: string; kind: 'purchase' | 'sale'; status: string; party_id?: string | null;"
+          new = "type Invoice = { id: string; invoice_no: string; kind: 'purchase' | 'sale'; status: string; physical_receiving_status?: 'verified' | 'not_verified' | null; party_id?: string | null;"
+          if old not in text:
+              raise SystemExit('invoice viewer type anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  const [productsLoading, setProductsLoading] = useState(false)"
+          new = "  const [productsLoading, setProductsLoading] = useState(false)\n  const [physicalStatus, setPhysicalStatus] = useState<'verified' | 'not_verified' | 'unknown'>('unknown')"
+          if old not in text:
+              raise SystemExit('invoice viewer state anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "setInvoice(body.invoice as Invoice)"
+          new = "const loadedInvoice = body.invoice as Invoice\n        setInvoice(loadedInvoice)\n        setPhysicalStatus(loadedInvoice.physical_receiving_status === 'verified' ? 'verified' : loadedInvoice.kind === 'purchase' ? 'not_verified' : 'unknown')"
+          if old not in text:
+              raise SystemExit('invoice viewer load anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "const close = () => { if (!saving && !pdfBusy) { setInvoice(null); setError(''); setEditing(false) } }"
+          new = "const close = () => { if (!saving && !pdfBusy) { setInvoice(null); setError(''); setEditing(false); setPhysicalStatus('unknown') } }"
+          if old not in text:
+              raise SystemExit('invoice viewer close anchor not found')
+          text = text.replace(old, new, 1)
+
+          anchor = "  const close = () => {"
+          effect = """  useEffect(() => {
+    const existing = document.getElementById('invoice-physical-receiving-status')
+    existing?.remove()
+    if (!invoice || invoice.kind !== 'purchase' || physicalStatus === 'unknown') return
+    const badge = document.createElement('div')
+    badge.id = 'invoice-physical-receiving-status'
+    badge.textContent = physicalStatus === 'verified' ? 'Physical Receiving: VERIFIED ✓' : 'Physical Receiving: NOT VERIFIED ✕'
+    badge.style.position = 'fixed'
+    badge.style.top = '18px'
+    badge.style.right = '18px'
+    badge.style.zIndex = '99999'
+    badge.style.padding = '10px 14px'
+    badge.style.borderRadius = '10px'
+    badge.style.fontWeight = '800'
+    badge.style.fontSize = '13px'
+    badge.style.boxShadow = '0 8px 24px rgba(0,0,0,.14)'
+    badge.style.background = physicalStatus === 'verified' ? '#dcfce7' : '#fee2e2'
+    badge.style.color = physicalStatus === 'verified' ? '#166534' : '#b91c1c'
+    document.body.appendChild(badge)
+    return () => badge.remove()
+  }, [invoice, physicalStatus])
+
+"""
+          if anchor not in text:
+              raise SystemExit('invoice viewer effect anchor not found')
+          text = text.replace(anchor, effect + anchor, 1)
+          viewer.write_text(text)
+
+          ledger = Path('app/dashboard/ledger/page.tsx')
+          text = ledger.read_text()
+
+          old = "  balance: number\n  payment_method?: string"
+          new = "  balance: number\n  physical_verified?: boolean\n  payment_method?: string"
+          if old not in text:
+              raise SystemExit('ledger page Entry type anchor not found')
+          text = text.replace(old, new, 1)
+
+          anchor = "  const entryBalanceLabel = (balance: number) => balance < 0 ? `Payable By ${shopName}` : balance > 0 ? `Payable To ${shopName}` : 'Settled'"
+          effect = """  useEffect(() => {
+    if (!data) return
+    const purchases = data.entries.filter((entry) => entry.type === 'purchase')
+    const mark = () => {
+      purchases.forEach((entry) => {
+        const elements = Array.from(document.querySelectorAll<HTMLElement>('a,button,td,span')).filter((element) => element.textContent?.trim().includes(entry.reference))
+        elements.forEach((element) => {
+          const invoiceText = element.textContent?.trim() || ''
+          if (!invoiceText.includes(entry.reference)) return
+          const color = entry.physical_verified ? '#166534' : '#dc2626'
+          element.style.color = color
+          element.style.setProperty('color', color, 'important')
+          element.style.fontWeight = '800'
+          element.title = entry.physical_verified ? 'Physical Receiving: VERIFIED' : 'Physical Receiving: NOT VERIFIED'
+          if (!entry.physical_verified && element.tagName.toLowerCase() === 'a' && !element.dataset.physicalReceivingMarked) {
+            element.dataset.physicalReceivingMarked = 'true'
+            const badge = document.createElement('span')
+            badge.textContent = ' • NOT VERIFIED'
+            badge.style.color = '#dc2626'
+            badge.style.fontWeight = '800'
+            element.appendChild(badge)
+          }
+        })
+      })
+    }
+    mark()
+    const observer = new MutationObserver(mark)
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true })
+    return () => observer.disconnect()
+  }, [data])
+
+"""
+          if anchor not in text:
+              raise SystemExit('ledger page effect anchor not found')
+          text = text.replace(anchor, anchor + "\n\n" + effect.rstrip(), 1)
+          ledger.write_text(text)
+          PY
+
+      - name: Commit patched files and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/parties/'[id]'/ledger/route.ts app/api/invoices/'[kind]'/'[invoiceNo]'/route.ts app/dashboard/invoice-viewer.tsx app/dashboard/ledger/page.tsx
+          git rm .github/workflows/apply-physical-receiving-ledger-status.yml
+          git commit -m "Add physical receiving status to ledger [physical-status-patched]"
+          git push
