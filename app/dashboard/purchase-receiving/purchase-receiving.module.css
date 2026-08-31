@@ -1,5 +1,14 @@
+.receivingHero {
+  min-height: 100px;
+}
+
+.receivingHeroIcon {
+  color: #111827 !important;
+}
+
 .receivingLayout {
   min-width: 0;
+  align-items: start;
 }
 
 .receivingList,
@@ -10,37 +19,49 @@
 .receivingListBody {
   min-width: 0;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .receivingRow {
   min-width: 0;
+  min-height: 64px;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
 }
 
-.receivingRowParty {
+.receivingRow:hover,
+.receivingRow:focus-visible {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+.receivingRowParty,
+.receivingRowMeta {
   min-width: 0;
   overflow-wrap: break-word;
   word-break: normal;
   white-space: normal;
   color: #000 !important;
-  font-weight: 800;
-}
-
-.receivingRowMeta {
-  overflow-wrap: break-word;
-  word-break: normal;
-  white-space: normal;
-  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
   font-weight: 800;
 }
 
 .receivingRowInvoice {
   color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
   font-weight: 900;
 }
 
 .receivingProductName {
-  color: #166534 !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
   font-weight: 900;
+}
+
+.receivingRow button,
+.receivingRow span,
+.receivingRow svg {
+  -webkit-text-fill-color: currentColor;
 }
 
 .receivingDetailBody {
@@ -71,13 +92,18 @@
 }
 
 @media (max-width: 640px) {
+  .receivingHero {
+    min-height: auto;
+  }
+
   .receivingRow {
     align-items: flex-start;
     gap: 10px;
     padding: 12px;
   }
 
-  .receivingRowParty {
+  .receivingRowParty,
+  .receivingRowMeta {
     font-size: 0.75rem;
     line-height: 1.25rem;
   }
