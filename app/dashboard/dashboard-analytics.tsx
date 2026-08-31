@@ -79,7 +79,7 @@ function HeroMetric({icon,label,value,tone='default',onClick}:{icon:ReactNode;la
 function Kpi({icon,label,value,hint,tone,onClick,featured=false}:{icon:ReactNode;label:string;value:number;hint:string;tone:'green'|'red';onClick:()=>void;featured?:boolean}){return <button onClick={onClick} className={`group rounded-[22px] border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-950 hover:text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-950/20 ${featured?'border-emerald-200 bg-emerald-50/70':'border-slate-200 bg-white'}`}><div className="flex items-start justify-between"><span className={`grid h-9 w-9 place-items-center rounded-xl transition-colors ${tone==='red'?'bg-red-50 text-red-700 group-hover:bg-white/10 group-hover:text-white':'bg-emerald-50 text-emerald-700 group-hover:bg-white/10 group-hover:text-white'}`}>{icon}</span><ChevronRight className="h-4 w-4 text-slate-400 transition-colors group-hover:text-white"/></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-500 transition-colors group-hover:text-slate-300">{label}</p><p className={`mt-1 text-xl font-black transition-colors group-hover:text-white ${tone==='red'&&value>0?'text-red-600':'text-slate-950'}`}>{money(value)}</p><p className="mt-1 text-[11px] text-slate-500 transition-colors group-hover:text-slate-300">{hint}</p></button>}
 function ProgressRow({label,value,max}:{label:string;value:number;max:number}){const width=Math.min(100,Math.max(0,(value/max)*100));return <div><div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-600"><span>{label}</span><span>{money(value)}</span></div><div className="h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full bg-emerald-400 transition-all" style={{width:`${width}%`}}/></div></div>}
 
-function DetailModal({type,detail,loading,selectedInvoice,setSelectedInvoice,partyName,onClose}:{type:string;detail:Detail|null;loading:boolean;selectedInvoice:Invoice|null;setSelectedInvoice:(invoice:Invoice|null)=>void;partyName:(invoice:Invoice)=>string;onClose:()=>void}){const title=type==='grossprofit'?'Gross profit':type==='netprofit'?'Net profit / loss':type==='sales'?'Sales invoices':type==='purchases'?'Purchase invoices':type==='expenses'?'Operating expenses':type==='stock'?'Stock at cost':type==='cashbank'?'Cash & bank activity':type==='receivables'?'Receivables':'Payables';return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-2 backdrop-blur-sm sm:p-4" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-2xl"><div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5"><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-emerald-700">Dashboard details</p><h2 className="mt-0.5 truncate text-lg font-black text-slate-950">{selectedInvoice?selectedInvoice.invoice_no:title}</h2>{selectedInvoice&&<p className="truncate text-[11px] text-slate-500">{partyName(selectedInvoice)} · {formatDateTime(selectedInvoice.sold_at||selectedInvoice.created_at)}</p>}</div><button onClick={onClose} className="ml-3 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-950 hover:text-white" aria-label="Close"><X className="h-4 w-4"/></button></div>{selectedInvoice?<InvoiceProfit invoice={selectedInvoice} onBack={()=>setSelectedInvoice(null)}/>:<div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">{loading?<div className="grid place-items-center py-20 text-sm font-semibold text-slate-500"><RefreshCw className="mb-2 h-5 w-5 animate-spin text-emerald-600"/>Loading details…</div>:detail?.rows?.[0]?.error?<div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">{detail.rows[0].error}</div>:<DetailRows type={type} rows={detail?.rows||[]} setSelectedInvoice={setSelectedInvoice}/>}</div>}</div></div>}
+function DetailModal({type,detail,loading,selectedInvoice,setSelectedInvoice,partyName,onClose}:{type:string;detail:Detail|null;loading:boolean;selectedInvoice:Invoice|null;setSelectedInvoice:(invoice:Invoice|null)=>void;partyName:(invoice:Invoice)=>string;onClose:()=>void}){const title=type==='grossprofit'?'Gross profit':type==='netprofit'?'Net profit / loss':type==='sales'?'Sales invoices':type==='purchases'?'Purchase invoices':type==='expenses'?'Operating expenses':type==='stock'?'Stock at cost':type==='cashbank'?'Cash & bank activity':type==='receivables'?'Receivables':'Payables';return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-2 backdrop-blur-sm sm:p-4" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="flex max-h-[82vh] w-full max-w-3xl min-w-0 flex-col overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-2xl"><div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-2.5 sm:px-5"><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-emerald-700">Dashboard details</p><h2 className="mt-0.5 truncate text-base font-black text-slate-950">{selectedInvoice?selectedInvoice.invoice_no:title}</h2>{selectedInvoice&&<p className="truncate text-[10px] text-slate-500">{partyName(selectedInvoice)} · {formatDateTime(selectedInvoice.sold_at||selectedInvoice.created_at)}</p>}</div><button onClick={onClose} className="ml-3 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-950 hover:text-white" aria-label="Close"><X className="h-4 w-4"/></button></div>{selectedInvoice?<InvoiceProfit invoice={selectedInvoice} onBack={()=>setSelectedInvoice(null)}/>:<div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">{loading?<div className="grid place-items-center py-20 text-sm font-semibold text-slate-500"><RefreshCw className="mb-2 h-5 w-5 animate-spin text-emerald-600"/>Loading details…</div>:detail?.rows?.[0]?.error?<div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">{detail.rows[0].error}</div>:<DetailRows type={type} rows={detail?.rows||[]} setSelectedInvoice={setSelectedInvoice}/>}</div>}</div></div>}
 
 function DetailRows({type,rows,setSelectedInvoice}:{type:string;rows:any[];setSelectedInvoice:(invoice:Invoice|null)=>void}){if(!rows.length)return <div className="grid place-items-center py-16 text-center"><p className="font-black text-slate-800">No records found</p><p className="mt-1 text-sm text-slate-500">There is no data for this period.</p></div>;if(type==='grossprofit'||type==='netprofit')return <div className="overflow-hidden rounded-xl border border-slate-200"><div className="hidden grid-cols-[1.2fr_1fr_.7fr_.7fr] gap-3 bg-slate-50 px-3 py-2.5 text-[9px] font-black uppercase tracking-wider text-slate-500 sm:grid"><span>Invoice</span><span>Party / date</span><span className="text-right">Sales</span><span className="text-right">Profit / loss</span></div>{rows.map((row,index)=>row.kind==='sale'?<button key={`${row.id}-${index}`} onClick={()=>setSelectedInvoice(row.invoice)} className="group grid w-full gap-1.5 border-b border-slate-100 px-3 py-3 text-left transition last:border-0 hover:bg-slate-950 hover:text-white sm:grid-cols-[1.2fr_1fr_.7fr_.7fr] sm:items-center sm:gap-3"><div><p className="text-sm font-black underline decoration-emerald-400 underline-offset-2">{row.invoice_no}</p><p className="mt-0.5 text-[10px] text-slate-500 group-hover:text-slate-300">Click for item-wise weighted cost</p></div><div className="text-[11px]"><p className="font-semibold">{Array.isArray(row.party)?row.party[0]?.name:row.party?.name||'Walk-in / Other'}</p><p className="mt-0.5 text-slate-500 group-hover:text-slate-300">{formatDateTime(row.date)}</p></div><div className="text-right text-sm font-bold">{money(row.sales)}</div><div className={`text-right text-sm font-black ${row.gross_profit>=0?'text-emerald-600':'text-red-600'}`}>{money(row.gross_profit)}</div></button>:<div key={`${row.id}-${index}`} className="grid gap-1.5 border-b border-slate-100 px-3 py-3 sm:grid-cols-[1.2fr_1fr_.7fr_.7fr] sm:items-center sm:gap-3"><div className="text-sm font-black">{row.reference_id||'Expense'}</div><div className="text-[11px] text-slate-500">{row.account||row.description}</div><div/><div className="text-right text-sm font-black text-red-600">{money(-Math.abs(row.amount||0))}</div></div>)}</div>;
 if(type==='sales'||type==='purchases')return <div className="space-y-1.5">{rows.map(row=><div key={row.id} className="flex items-center justify-between rounded-xl border border-slate-200 p-3 transition hover:bg-slate-950 hover:text-white"><div><p className="text-sm font-black">{row.invoice_no}</p><p className="mt-0.5 text-[11px] text-slate-500">{row.party?.name||(Array.isArray(row.parties)?row.parties[0]?.name:row.parties?.name)||'Walk-in / Other'} · {formatDateTime(row.sold_at||row.purchased_at||row.created_at)}</p></div><p className="text-sm font-black">{money(row.grand_total)}</p></div>)}</div>;
@@ -98,31 +98,32 @@ function InvoiceProfit({invoice,onBack}:{invoice:Invoice;onBack:()=>void}){
   return <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
     <button onClick={onBack} className="mb-3 rounded-lg px-2.5 py-1.5 text-[11px] font-black text-slate-600 transition hover:bg-slate-950 hover:text-white">← Back to invoices</button>
 
-    <div className="grid gap-2 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <SummaryBox label="Total qty" value={quantity(totalQty)}/>
       <SummaryBox label="Sell value" value={money(totalSales)}/>
       <SummaryBox label="Weighted cost" value={money(totalCost)}/>
       <SummaryBox label="Total profit / loss" value={money(totalProfit)} negative={totalProfit<0}/>
     </div>
 
-    <div className="mt-3 w-full overflow-hidden rounded-xl border border-slate-200">
-      <table className="w-full table-fixed border-collapse text-[12px] leading-4">
+    {/* Compact accounting table: fixed columns, no horizontal scrolling. */}
+    <div className="mt-3 w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
+      <table className="w-full min-w-0 table-fixed border-collapse text-[11px] leading-4 sm:text-[12px]">
         <colgroup>
-          <col className="w-[30%]" />
-          <col className="w-[8%]" />
-          <col className="w-[14%]" />
-          <col className="w-[14%]" />
-          <col className="w-[16%]" />
-          <col className="w-[18%]" />
+          <col style={{ width: '34%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '13%' }} />
+          <col style={{ width: '13%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '17%' }} />
         </colgroup>
-        <thead className="bg-slate-50 text-[9px] font-black uppercase tracking-wide text-slate-500">
+        <thead className="bg-slate-50 text-[8px] font-black uppercase tracking-[.04em] text-slate-600 sm:text-[9px]">
           <tr>
-            <th className="px-2 py-2 text-left sm:px-3">ITEM</th>
-            <th className="px-1 py-2 text-center sm:px-2">QTY</th>
-            <th className="px-1 py-2 text-right sm:px-2">BUY / PC</th>
-            <th className="px-1 py-2 text-right sm:px-2">SELL / PC</th>
-            <th className="px-1 py-2 text-right sm:px-2">P/L / PC</th>
-            <th className="px-1 py-2 text-right sm:px-2">TOTAL P/L</th>
+            <th className="min-w-0 px-2 py-2 text-left sm:px-2.5">ITEM</th>
+            <th className="min-w-0 px-0.5 py-2 text-center sm:px-1">QTY</th>
+            <th className="min-w-0 px-0.5 py-2 text-right sm:px-1.5">BUY / PC</th>
+            <th className="min-w-0 px-0.5 py-2 text-right sm:px-1.5">SELL / PC</th>
+            <th className="min-w-0 px-0.5 py-2 text-right sm:px-1.5">P/L / PC</th>
+            <th className="min-w-0 px-1 py-2 text-right sm:px-1.5">TOTAL P/L</th>
           </tr>
         </thead>
         <tbody>
@@ -133,24 +134,24 @@ function InvoiceProfit({invoice,onBack}:{invoice:Invoice;onBack:()=>void}){
             const perPc=sellPc-costPc
             const total=perPc*qty
             return <tr key={item.id} className="border-t border-slate-100 align-middle transition hover:bg-slate-950 hover:text-white">
-              <td className="px-2 py-2 sm:px-3 sm:py-2.5">
-                <p className="font-black break-words [overflow-wrap:anywhere]">{item.product_name}</p>
-                <p className="mt-0.5 break-words text-[9px] leading-3 text-slate-500">{item.sku} · {item.unit_name}</p>
+              <td className="min-w-0 px-2 py-2 sm:px-2.5 sm:py-2.5">
+                <p className="break-words [overflow-wrap:anywhere] text-[11px] font-black leading-[1.25] sm:text-[12px]">{item.product_name}</p>
+                <p className="mt-0.5 break-words text-[8px] leading-3 text-slate-500 sm:text-[9px]">{item.sku} · {item.unit_name}</p>
               </td>
-              <td className="px-1 py-2 text-center font-black sm:px-2">{quantity(qty)}</td>
-              <td className="px-1 py-2 text-right font-semibold whitespace-normal break-words sm:px-2">{money(costPc,2)}</td>
-              <td className="px-1 py-2 text-right font-semibold whitespace-normal break-words sm:px-2">{money(sellPc,2)}</td>
-              <td className={`px-1 py-2 text-right font-black whitespace-normal break-words ${perPc>=0?'text-emerald-600':'text-red-600'}`}>{money(perPc,2)}</td>
-              <td className={`px-1 py-2 text-right font-black whitespace-normal break-words ${total>=0?'text-emerald-600':'text-red-600'}`}>{money(total,2)}</td>
+              <td className="min-w-0 px-0.5 py-2 text-center text-[11px] font-black sm:px-1 sm:text-[12px]">{quantity(qty)}</td>
+              <td className="min-w-0 px-0.5 py-2 text-right text-[10px] font-semibold whitespace-nowrap sm:px-1.5 sm:text-[11px]">{money(costPc,2)}</td>
+              <td className="min-w-0 px-0.5 py-2 text-right text-[10px] font-semibold whitespace-nowrap sm:px-1.5 sm:text-[11px]">{money(sellPc,2)}</td>
+              <td className={`min-w-0 px-0.5 py-2 text-right text-[10px] font-black whitespace-nowrap sm:px-1.5 sm:text-[11px] ${perPc>=0?'text-emerald-600':'text-red-600'}`}>{money(perPc,2)}</td>
+              <td className={`min-w-0 px-1 py-2 text-right text-[10px] font-black whitespace-nowrap sm:px-1.5 sm:text-[11px] ${total>=0?'text-emerald-600':'text-red-600'}`}>{money(total,2)}</td>
             </tr>
           })}
         </tbody>
       </table>
     </div>
 
-    <p className="mt-2 text-[10px] leading-4 text-slate-500">Purchase cost is the moving weighted-average cost available at the sale date, based on completed purchase invoices. Sale-line discounts are included in the effective selling price per piece.</p>
+    <p className="mt-2 text-[9px] leading-4 text-slate-500 sm:text-[10px]">Purchase cost is the moving weighted-average cost available at the sale date, based on completed purchase invoices. Sale-line discounts are included in the effective selling price per piece.</p>
   </div>
 }
 
-function SummaryBox({label,value,negative=false}:{label:string;value:string;negative?:boolean}){return <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"><p className="text-[9px] font-black uppercase tracking-wider text-slate-500">{label}</p><p className={`mt-0.5 text-base font-black ${negative?'text-red-600':'text-slate-950'}`}>{value}</p></div>}
+function SummaryBox({label,value,negative=false}:{label:string;value:string;negative?:boolean}){return <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 sm:px-3 sm:py-2.5"><p className="truncate text-[8px] font-black uppercase tracking-wider text-slate-500 sm:text-[9px]">{label}</p><p className={`mt-0.5 truncate text-sm font-black sm:text-base ${negative?'text-red-600':'text-slate-950'}`}>{value}</p></div>}
 function DashboardSkeleton(){return <div className="space-y-5"><div className="h-[330px] animate-pulse rounded-[30px] bg-slate-100"/><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{[1,2,3,4,5].map(i=><div key={i} className="h-32 animate-pulse rounded-[22px] bg-slate-100"/>)}</div><div className="h-80 animate-pulse rounded-[26px] bg-slate-100"/></div>}
