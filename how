@@ -1,0 +1,8 @@
+[33mcommit 482409a30cd054b8301bdd793a3f3ca49697dea6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: HBHATIA80 <61718992+HBHATIA80@users.noreply.github.com>
+Date:   Mon Aug 31 12:39:00 2026 +0530
+
+    Tune purchase receiving list readability and layout
+
+ .../purchase-receiving.module.css                  | 42 [32m+++++++++++++++++[m[31m-----[m
+ 1 file changed, 34 insertions(+), 8 deletions(-)

@@ -1,10 +1,147 @@
+.page {
+  color: #000;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
 .receivingHero {
-  min-height: 100px;
+  min-height: 98px;
+  border: 1px solid #dcefe0;
+  border-radius: 16px;
+  background: #edf9ef;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  padding: 16px 20px;
+}
+
+.heroContent {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.heroLeft {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .receivingHeroIcon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+  background: #e3f6e7;
+
   color: #111827 !important;
 }
+
+.receivingHeroIcon svg {
+  width: 24px;
+  height: 24px;
+  stroke: #111827 !important;
+  color: #111827 !important;
+}
+
+.heroText {
+  min-width: 0;
+}
+
+.heroText h1 {
+  margin: 0;
+  color: #000 !important;
+  font-size: 25px;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.heroText p {
+  margin: 4px 0 0;
+  color: #000 !important;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.heroActions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pendingBadge {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 15px;
+
+  border: 1px solid #f2d88c;
+  border-radius: 12px;
+
+  background: #fffaf0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.refreshButton {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 0 15px;
+
+  border: 1px solid #dfe3e8;
+  border-radius: 12px;
+
+  background: #fff;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.refreshButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.refreshButton svg {
+  width: 16px;
+  height: 16px;
+  stroke: #000 !important;
+  color: #000 !important;
+}
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
 
 .receivingLayout {
   min-width: 0;
@@ -14,70 +151,850 @@
 .receivingList,
 .receivingDetail {
   min-width: 0;
+  overflow: hidden;
+
+  border: 1px solid #e1e5e9;
+  border-radius: 16px;
+
+  background: #fff;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
+
+/* ============================================================
+   LIST HEADER
+   ============================================================ */
+
+.listHeader {
+  height: 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  padding: 0 15px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  background: #fff;
+}
+
+.listHeading {
+  min-width: 0;
+}
+
+.listHeading h2 {
+  margin: 0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.listHeading p {
+  margin: 3px 0 0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+
+.searchBox {
+  width: 278px;
+  height: 40px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 11px;
+
+  border: 1px solid #dfe4e8;
+  border-radius: 12px;
+
+  background: #f8fafb;
+
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.searchBox svg {
+  width: 17px;
+  height: 17px;
+
+  flex-shrink: 0;
+
+  stroke: #111827 !important;
+  color: #111827 !important;
+}
+
+.searchBox input {
+  min-width: 0;
+  width: 100%;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.searchBox input::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1;
+}
+
+/* ============================================================
+   LIST BODY
+   ============================================================ */
 
 .receivingListBody {
   min-width: 0;
+
   overflow-x: hidden;
+
   scrollbar-gutter: stable;
 }
 
+.listMessage {
+  min-height: 260px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   VOUCHER ROW
+   ============================================================ */
+
 .receivingRow {
+  position: relative;
+
+  width: 100%;
   min-width: 0;
   min-height: 64px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  border: 0;
+  border-bottom: 1px solid #e2e8e5;
+
+  background: #fff !important;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/*
+ * This is the important fix for the screenshot.
+ * Some global button styles can force white text.
+ */
+.receivingRow,
+.receivingRow *,
+.receivingRow span,
+.receivingRow p,
+.receivingRow svg {
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
 }
 
-.receivingRow:hover,
+.receivingRow:hover {
+  background: #f7fcf8 !important;
+}
+
 .receivingRow:focus-visible {
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
+  outline: none;
+
+  background: #f7fcf8 !important;
+
+  box-shadow:
+    inset 0 0 0 2px #b7e2c1;
 }
 
-.receivingRowParty,
-.receivingRowMeta {
+.receivingRowSelected {
+  background: #eef9f0 !important;
+
+  box-shadow:
+    inset 3px 0 0 #16a34a;
+}
+
+/* ============================================================
+   ROW STATUS ICON
+   ============================================================ */
+
+.rowStatusIcon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #fff8e8 !important;
+
+  color: #f59e0b !important;
+}
+
+.rowStatusIcon svg {
+  width: 18px;
+  height: 18px;
+
+  stroke: #f59e0b !important;
+  color: #f59e0b !important;
+}
+
+/* ============================================================
+   ROW MAIN TEXT
+   ============================================================ */
+
+.rowMain {
   min-width: 0;
-  overflow-wrap: break-word;
-  word-break: normal;
-  white-space: normal;
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
-  font-weight: 800;
+  flex: 1;
+}
+
+.rowTopLine {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .receivingRowInvoice {
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
+
+  font-size: 15px;
+  line-height: 1.2;
   font-weight: 900;
 }
 
-.receivingProductName {
+.notCheckedBadge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 3px 8px;
+
+  border-radius: 6px;
+
+  background: #fff7e7 !important;
+
+  color: #9a6700 !important;
+  -webkit-text-fill-color: #9a6700 !important;
+
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 900;
+
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.receivingRowMeta {
+  display: block;
+
+  margin-top: 3px;
+
+  min-width: 0;
+
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
+
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+
+  overflow-wrap: break-word;
+}
+
+/* ============================================================
+   ROW RIGHT SIDE
+   ============================================================ */
+
+.rowRight {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+.amountBlock {
+  min-width: 90px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  text-align: right;
+}
+
+.amount {
+  display: block;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 14px;
+  line-height: 1.2;
   font-weight: 900;
 }
 
-.receivingRow button,
-.receivingRow span,
-.receivingRow svg {
-  -webkit-text-fill-color: currentColor;
+.rowStatusText {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 10px;
+  line-height: 1.1;
+  font-weight: 900;
+
+  text-transform: uppercase;
 }
+
+.rowChevron {
+  width: 19px;
+  height: 19px;
+
+  stroke: #000 !important;
+  color: #000 !important;
+}
+
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
+
+.receivingDetail {
+  min-height: 410px;
+
+  position: relative;
+}
+
+.detailHeader {
+  min-height: 88px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 16px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  background: #fff;
+}
+
+.detailEyebrow {
+  margin: 0;
+
+  color: #15803d !important;
+  -webkit-text-fill-color: #15803d !important;
+
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 900;
+
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.detailHeader h2 {
+  margin: 5px 0 0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.detailMeta {
+  margin: 3px 0 0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.verifiedBadge,
+.detailNotVerifiedBadge {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 10px;
+
+  border-radius: 8px;
+
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 900;
+
+  text-transform: uppercase;
+}
+
+.verifiedBadge {
+  background: #dcfce7;
+  color: #166534 !important;
+}
+
+.detailNotVerifiedBadge {
+  background: #fff4d6;
+  color: #92400e !important;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.emptyState {
+  min-height: 410px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 32px;
+
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background: #edf9ef;
+
+  color: #15803d !important;
+}
+
+.emptyIcon svg {
+  width: 32px;
+  height: 32px;
+
+  stroke: #15803d !important;
+}
+
+.emptyState h2 {
+  margin: 16px 0 0;
+
+  color: #000 !important;
+
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.emptyState p {
+  max-width: 380px;
+
+  margin: 5px 0 0;
+
+  color: #000 !important;
+
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+/* ============================================================
+   DETAIL BODY
+   ============================================================ */
 
 .receivingDetailBody {
   min-height: 0;
+
   max-height: calc(100vh - 300px);
+
   overflow-y: auto;
   overflow-x: hidden;
 }
 
+.detailContent {
+  padding: 16px;
+}
+
+/* ============================================================
+   QUICK ACTIONS
+   ============================================================ */
+
+.quickActionContainer {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+.secondaryButton {
+  height: 36px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d8dee4;
+  border-radius: 9px;
+
+  background: #fff;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: #f8fafc;
+}
+
+/* ============================================================
+   PRODUCT TABLE
+   ============================================================ */
+
+.productTable {
+  overflow: hidden;
+
+  border: 1px solid #dfe4e8;
+  border-radius: 12px;
+
+  background: #fff;
+}
+
+.productTableHeader {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    92px
+    92px;
+
+  align-items: center;
+
+  min-height: 38px;
+
+  padding: 0 12px;
+
+  background: #f1f4f5;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.productTableHeader span:nth-child(2),
+.productTableHeader span:nth-child(3) {
+  text-align: center;
+}
+
+.productRow {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    92px
+    92px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-height: 72px;
+
+  padding: 10px 12px;
+
+  border-top: 1px solid #edf0f2;
+}
+
+.productInfo {
+  min-width: 0;
+}
+
+.receivingProductName {
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 900;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productMeta {
+  margin: 3px 0 0;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.difference {
+  margin: 4px 0 0;
+
+  color: #b45309 !important;
+  -webkit-text-fill-color: #b45309 !important;
+
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.expectedQuantity {
+  text-align: center;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.receivedInput {
+  width: 100%;
+  height: 38px;
+
+  padding: 0 8px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+
+  background: #fff;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  outline: none;
+
+  text-align: center;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.receivedInput:focus {
+  border-color: #16a34a;
+
+  box-shadow:
+    0 0 0 2px rgba(22, 163, 74, 0.12);
+}
+
+.receivedInputMismatch {
+  border-color: #f2c46d;
+
+  background: #fffaf0;
+}
+
+/* ============================================================
+   NOTES
+   ============================================================ */
+
+.notesInput {
+  width: 100%;
+  min-height: 82px;
+
+  margin-top: 12px;
+
+  padding: 11px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+
+  background: #fff;
+
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+
+  outline: none;
+
+  resize: vertical;
+
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.notesInput::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+.notesInput:focus {
+  border-color: #16a34a;
+
+  box-shadow:
+    0 0 0 2px rgba(22, 163, 74, 0.12);
+}
+
+/* ============================================================
+   SAVE BUTTON
+   ============================================================ */
+
+.saveButton {
+  width: 100%;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 12px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #15803d;
+
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+
+  font-size: 13px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 7px rgba(21, 128, 61, 0.16);
+
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #166534;
+}
+
+.saveButton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveButton svg {
+  width: 19px;
+  height: 19px;
+
+  stroke: #fff !important;
+  color: #fff !important;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
 @media (max-width: 1279px) {
   .receivingLayout {
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 480px) !important;
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(360px, 480px) !important;
   }
 }
 
 @media (max-width: 900px) {
+  .heroContent {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heroActions {
+    width: 100%;
+  }
+
+  .pendingBadge {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .refreshButton {
+    flex-shrink: 0;
+  }
+
   .receivingLayout {
     grid-template-columns: minmax(0, 1fr) !important;
   }
@@ -94,17 +1011,84 @@
 @media (max-width: 640px) {
   .receivingHero {
     min-height: auto;
+    padding: 14px;
+  }
+
+  .heroLeft {
+    align-items: flex-start;
+  }
+
+  .heroText h1 {
+    font-size: 21px;
+  }
+
+  .heroText p {
+    font-size: 12px;
+  }
+
+  .listHeader {
+    height: auto;
+
+    align-items: stretch;
+    flex-direction: column;
+
+    padding: 14px;
+  }
+
+  .searchBox {
+    width: 100%;
   }
 
   .receivingRow {
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px;
+    gap: 9px;
+    padding: 11px;
   }
 
-  .receivingRowParty,
+  .rowStatusIcon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+
+  .receivingRowInvoice {
+    font-size: 13px;
+  }
+
   .receivingRowMeta {
-    font-size: 0.75rem;
-    line-height: 1.25rem;
+    font-size: 11px;
+  }
+
+  .rowRight {
+    gap: 4px;
+  }
+
+  .amountBlock {
+    min-width: 70px;
+  }
+
+  .amount {
+    font-size: 12px;
+  }
+
+  .rowStatusText {
+    font-size: 9px;
+  }
+
+  .rowChevron {
+    width: 17px;
+    height: 17px;
+  }
+
+  .productTableHeader,
+  .productRow {
+    grid-template-columns:
+      minmax(0, 1fr)
+      70px
+      76px;
+  }
+
+  .detailContent {
+    padding: 12px;
   }
 }
