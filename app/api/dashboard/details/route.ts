@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const businessId = profile.business_id
 
   if (type === 'sales') {
-    const { data, error } = await supabase.from('sales_invoices').select('id,invoice_no,status,party_id,subtotal,discount_amount,grand_total,notes,sold_at,completed_at,created_at,parties(id,name,phone,party_type),sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).is('deleted_at', null).gte('created_at', iso(start)).lte('created_at', iso(end, true)).order('created_at', { ascending: false }).limit(100)
+    const { data, error } = await supabase.from('sales_invoices').select('id,invoice_no,status,party_id,subtotal,discount_amount,grand_total,notes,sold_at,completed_at,created_at,parties(id,name,phone,party_type),sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total,cost_unit_price)').eq('business_id', businessId).is('deleted_at', null).gte('created_at', iso(start)).lte('created_at', iso(end, true)).order('created_at', { ascending: false }).limit(100)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ type, rows: await attachPartyNames(supabase, businessId, data ?? []) })
   }
@@ -48,11 +48,18 @@ export async function GET(request: Request) {
     ])
     if (salesError || productsError) return NextResponse.json({ error: salesError?.message || productsError?.message }, { status: 400 })
 
-    const invoices = await attachPartyNames(supabase, businessId, (sales ?? []) as InvoiceRow[])
     const productCost = new Map((products ?? []).map(product => [product.id, num(product.purchase_price)]))
+    const invoices = (await attachPartyNames(supabase, businessId, (sales ?? []) as InvoiceRow[])).map(invoice => ({
+      ...invoice,
+      sales_invoice_items: (invoice.sales_invoice_items ?? []).map(item => ({
+        ...item,
+        cost_unit_price: item.cost_unit_price == null ? (productCost.get(item.product_id) ?? 0) : num(item.cost_unit_price),
+      })),
+    }))
+
     const saleRows = invoices.map(invoice => {
       const items = invoice.sales_invoice_items ?? []
-      const cogs = items.reduce((sum, item) => sum + num(item.quantity) * (item.cost_unit_price == null ? (productCost.get(item.product_id) ?? 0) : num(item.cost_unit_price)), 0)
+      const cogs = items.reduce((sum, item) => sum + num(item.quantity) * num(item.cost_unit_price), 0)
       return { kind: 'sale', id: invoice.id, invoice_no: invoice.invoice_no, date: invoice.sold_at || invoice.created_at, party: invoice.party, status: invoice.status, sales: num(invoice.grand_total), cogs, gross_profit: num(invoice.grand_total) - cogs, invoice }
     })
 
