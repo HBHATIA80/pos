@@ -17,7 +17,6 @@
   z-index: 20;
 }
 
-/* Keep the voucher list wide enough for normal words while giving the preview the larger share. */
 .modalRoot > div > div.grid {
   grid-template-columns: minmax(320px, 43%) minmax(0, 57%) !important;
   min-width: 0;
@@ -33,17 +32,13 @@
   overflow-x: hidden;
 }
 
-.modalRoot > div > div.grid > section:first-child > button {
+.modalRoot > div > div.grid > section:first-child > div {
   min-width: 0;
 }
 
-/* Voucher rows: Select / Voucher / Party. Never allow the party column to collapse to character-width. */
-.modalRoot > div > div.grid > section:first-child > button > div {
+.modalRoot > div > div.grid > section:first-child > div > div {
   grid-template-columns: 52px minmax(130px, 160px) minmax(0, 1fr) !important;
-}
-
-.modalRoot > div > div.grid > section:first-child > button > div:last-child {
-  grid-template-columns: 52px minmax(130px, 160px) minmax(0, 1fr) !important;
+  min-width: 0;
 }
 
 @media (max-width: 1023px) {
@@ -90,7 +85,7 @@
     padding: 0.875rem !important;
   }
 
-  .modalRoot > div > div.grid > section:first-child > button {
+  .modalRoot > div > div.grid > section:first-child > div {
     padding: 0.75rem 1rem !important;
   }
 
@@ -100,11 +95,7 @@
     flex: 0 0 auto;
   }
 
-  .modalRoot > div > div.grid > section:first-child > button > div {
-    grid-template-columns: 48px 132px minmax(0, 1fr) !important;
-  }
-
-  .modalRoot > div > div.grid > section:first-child > button > div:last-child {
+  .modalRoot > div > div.grid > section:first-child > div > div {
     grid-template-columns: 48px 132px minmax(0, 1fr) !important;
   }
 }
@@ -133,11 +124,7 @@
     max-width: 97vw !important;
   }
 
-  .modalRoot > div > div.grid > section:first-child > button > div {
-    grid-template-columns: 44px 124px minmax(0, 1fr) !important;
-  }
-
-  .modalRoot > div > div.grid > section:first-child > button > div:last-child {
+  .modalRoot > div > div.grid > section:first-child > div > div {
     grid-template-columns: 44px 124px minmax(0, 1fr) !important;
   }
 }
