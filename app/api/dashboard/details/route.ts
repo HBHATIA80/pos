@@ -5,8 +5,42 @@ const iso = (v: string | null, end = false) => `${v || new Date().toISOString().
 const num = (v: unknown) => Number(v ?? 0)
 
 type PartyRow = { id: string; name: string; phone?: string | null; party_type?: string | null }
+type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }
+type PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }
 type InvoiceItem = { id: string; product_id: string; sku: string; product_name: string; unit_name: string; quantity: number; unit_price: number; discount_amount: number; line_total: number; cost_unit_price?: number | null }
-type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; sold_at?: string | null; purchased_at?: string | null; completed_at?: string | null; created_at: string; parties?: PartyRow | PartyRow[] | null; party?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[]; purchase_invoice_items?: InvoiceItem[] }
+type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; parties?: PartyRow | PartyRow[] | null; party?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[] }
+
+function buildWeightedAverageLookup(purchases: PurchaseInvoice[], fallbackCosts: Map<string, number>) {
+  const events = [...purchases].sort((a, b) => {
+    const ad = a.purchased_at ?? a.completed_at ?? a.created_at ?? ''
+    const bd = b.purchased_at ?? b.completed_at ?? b.created_at ?? ''
+    return ad.localeCompare(bd)
+  })
+  const state = new Map<string, { qty: number; value: number }>()
+  const snapshots: Array<{ date: string; costs: Map<string, number> }> = []
+  for (const invoice of events) {
+    const date = invoice.purchased_at ?? invoice.completed_at ?? invoice.created_at ?? ''
+    for (const item of invoice.purchase_invoice_items ?? []) {
+      const qty = num(item.quantity)
+      if (qty <= 0) continue
+      const lineTotal = item.line_total == null ? num(item.unit_price) * qty - num(item.discount_amount) : num(item.line_total)
+      const value = lineTotal > 0 ? lineTotal : num(item.unit_price) * qty
+      const old = state.get(item.product_id) ?? { qty: 0, value: 0 }
+      old.qty += qty
+      old.value += value
+      state.set(item.product_id, old)
+    }
+    snapshots.push({ date, costs: new Map([...state.entries()].map(([id, x]) => [id, x.qty > 0 ? x.value / x.qty : (fallbackCosts.get(id) ?? 0)])) })
+  }
+  return (productId: string, atDate: string) => {
+    let best: Map<string, number> | null = null
+    for (const snapshot of snapshots) {
+      if (snapshot.date <= atDate) best = snapshot.costs
+      else break
+    }
+    return best?.get(productId) ?? fallbackCosts.get(productId) ?? 0
+  }
+}
 
 async function attachPartyNames<T extends { party_id?: string | null; parties?: unknown }>(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string, rows: T[]) {
   const partyIds = [...new Set(rows.map(row => row.party_id).filter((id): id is string => Boolean(id)))]
@@ -42,27 +76,24 @@ export async function GET(request: Request) {
   }
 
   if (type === 'grossprofit' || type === 'netprofit') {
-    const [{ data: sales, error: salesError }, { data: products, error: productsError }] = await Promise.all([
+    const [{ data: sales, error: salesError }, { data: products, error: productsError }, { data: purchases, error: purchasesError }] = await Promise.all([
       supabase.from('sales_invoices').select('id,invoice_no,status,party_id,subtotal,discount_amount,grand_total,notes,sold_at,completed_at,created_at,parties(id,name,phone,party_type),sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total,cost_unit_price)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).gte('sold_at', iso(start)).lte('sold_at', iso(end, true)).order('sold_at', { ascending: false }).limit(200),
       supabase.from('products').select('id,purchase_price').eq('business_id', businessId),
+      supabase.from('purchase_invoices').select('purchased_at,completed_at,created_at,purchase_invoice_items(product_id,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).lte('purchased_at', iso(end, true)).order('purchased_at'),
     ])
-    if (salesError || productsError) return NextResponse.json({ error: salesError?.message || productsError?.message }, { status: 400 })
+    if (salesError || productsError || purchasesError) return NextResponse.json({ error: salesError?.message || productsError?.message || purchasesError?.message }, { status: 400 })
 
-    const productCost = new Map((products ?? []).map(product => [product.id, num(product.purchase_price)]))
-    const invoices = (await attachPartyNames(supabase, businessId, (sales ?? []) as InvoiceRow[])).map(invoice => ({
-      ...invoice,
-      sales_invoice_items: (invoice.sales_invoice_items ?? []).map(item => ({
-        ...item,
-        cost_unit_price: item.cost_unit_price == null ? (productCost.get(item.product_id) ?? 0) : num(item.cost_unit_price),
-      })),
-    }))
-
-    const saleRows = invoices.map(invoice => {
-      const items = invoice.sales_invoice_items ?? []
-      const cogs = items.reduce((sum, item) => sum + num(item.quantity) * num(item.cost_unit_price), 0)
-      return { kind: 'sale', id: invoice.id, invoice_no: invoice.invoice_no, date: invoice.sold_at || invoice.created_at, party: invoice.party, status: invoice.status, sales: num(invoice.grand_total), cogs, gross_profit: num(invoice.grand_total) - cogs, invoice }
+    const fallbackCosts = new Map((products ?? []).map(product => [product.id, num(product.purchase_price)]))
+    const weightedCostAt = buildWeightedAverageLookup((purchases ?? []) as PurchaseInvoice[], fallbackCosts)
+    const invoices = (await attachPartyNames(supabase, businessId, (sales ?? []) as InvoiceRow[])).map(invoice => {
+      const saleDate = invoice.sold_at || invoice.completed_at || invoice.created_at
+      const salesItems = (invoice.sales_invoice_items ?? []).map(item => ({ ...item, cost_unit_price: weightedCostAt(item.product_id, saleDate || '') }))
+      const cogs = salesItems.reduce((sum, item) => sum + num(item.quantity) * num(item.cost_unit_price), 0)
+      const salesValue = num(invoice.grand_total)
+      return { ...invoice, sales_invoice_items: salesItems, cogs, gross_profit: salesValue - cogs }
     })
 
+    const saleRows = invoices.map(invoice => ({ kind: 'sale', id: invoice.id, invoice_no: invoice.invoice_no, date: invoice.sold_at || invoice.created_at, party: invoice.party, status: invoice.status, sales: num(invoice.grand_total), cogs: num(invoice.cogs), gross_profit: num(invoice.gross_profit), invoice }))
     if (type === 'grossprofit') return NextResponse.json({ type, rows: saleRows, summary: { sales: saleRows.reduce((s, row) => s + row.sales, 0), cogs: saleRows.reduce((s, row) => s + row.cogs, 0), grossProfit: saleRows.reduce((s, row) => s + row.gross_profit, 0) } })
 
     const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }] = await Promise.all([
@@ -78,15 +109,12 @@ export async function GET(request: Request) {
       if (!account) return []
       const group = groupMap.get(account.account_group_id) || ''
       const nature = account.account_nature
-      const isPurchase = nature === 'expense' && group.toLowerCase().includes('purchase')
-      const isSales = nature === 'income' && group.toLowerCase().includes('sales')
-      if (isPurchase || isSales) return []
+      if ((nature === 'expense' && group.toLowerCase().includes('purchase')) || (nature === 'income' && group.toLowerCase().includes('sales'))) return []
       const id = line.journal_line_id
       if (nature === 'expense') return [{ kind: 'expense', id, date: line.entry_date, account: account.name, reference_type: line.voucher_type, reference_id: line.voucher_no, description: line.narration || 'Operating expense', amount: num(line.debit) - num(line.credit) }]
       if (nature === 'income') return [{ kind: 'income', id, date: line.entry_date, account: account.name, reference_type: line.voucher_type, reference_id: line.voucher_no, description: line.narration || 'Other income', amount: num(line.credit) - num(line.debit) }]
       return []
     }).filter(row => row.amount !== 0)
-
     const operatingExpense = Math.max(ledgerRows.filter(row => row.kind === 'expense').reduce((s, row) => s + row.amount, 0), 0)
     const otherIncome = Math.max(ledgerRows.filter(row => row.kind === 'income').reduce((s, row) => s + row.amount, 0), 0)
     const salesTotal = saleRows.reduce((s, row) => s + row.sales, 0)
