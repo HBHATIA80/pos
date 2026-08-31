@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Check, FileText, Loader2, Package, RefreshCw, RotateCcw, Search, UserRound, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Check, FileText, Loader2, Package, RefreshCw, RotateCcw, UserRound, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type ReturnType = 'sale_return' | 'purchase_return'
@@ -23,7 +23,6 @@ export default function ReturnsPage() {
   const [party, setParty] = useState<Party | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [invoice, setInvoice] = useState<Invoice | null>(null)
-  const [sourceItems, setSourceItems] = useState<SourceItem[]>([])
   const [lines, setLines] = useState<ReturnLine[]>([])
   const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
@@ -70,7 +69,6 @@ export default function ReturnsPage() {
       if (!response.ok) throw new Error(body.error || 'Unable to load invoice')
       setInvoice(selected)
       const available = ((body.invoice?.items || []) as SourceItem[]).filter(item => Number(item.remaining_quantity) > 0)
-      setSourceItems(available)
       setLines(available.map(item => ({ ...item, return_quantity: 0 })))
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to load invoice') }
     finally { setInvoiceLoading(false) }
@@ -84,11 +82,11 @@ export default function ReturnsPage() {
 
   useEffect(() => { void loadDate(); void searchParties(''); void loadHistory() }, [])
   useEffect(() => {
-    if (party) { setInvoice(null); setSourceItems([]); setLines([]); void loadInvoices(party) }
-    else { setInvoices([]); setInvoice(null); setSourceItems([]); setLines([]) }
+    if (party) { setInvoice(null); setLines([]); void loadInvoices(party) }
+    else { setInvoices([]); setInvoice(null); setLines([]) }
   }, [type, party])
 
-  function chooseParty(next: Party) {
+  function chooseParty(next: Party | null) {
     setParty(next); setPartySearch(''); setPartyOpen(false)
   }
 
@@ -99,7 +97,7 @@ export default function ReturnsPage() {
   }
 
   function resetForm() {
-    setInvoice(null); setInvoices([]); setSourceItems([]); setLines([]); setParty(null); setPartySearch(''); setReason(''); setNotes('')
+    setInvoice(null); setInvoices([]); setLines([]); setParty(null); setPartySearch(''); setReason(''); setNotes('')
   }
 
   async function saveReturn() {
@@ -147,7 +145,7 @@ export default function ReturnsPage() {
     <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
       <div className="grid gap-3 xl:grid-cols-[230px_minmax(240px,1fr)_minmax(280px,1fr)]">
         <div><label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Return type</label><div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1"><button type="button" onClick={() => setType('sale_return')} className={`min-h-11 rounded-lg px-2 text-xs font-black ${type === 'sale_return' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'}`}><ArrowDownLeft className="mx-auto mb-0.5 h-4 w-4" />Sale Return</button><button type="button" onClick={() => setType('purchase_return')} className={`min-h-11 rounded-lg px-2 text-xs font-black ${type === 'purchase_return' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'}`}><ArrowUpRight className="mx-auto mb-0.5 h-4 w-4" />Purchase Return</button></div></div>
-        <div className="relative"><label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Party — all parties available</label><div className="flex h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3"><UserRound className="h-5 w-5 shrink-0 text-emerald-700" /><input value={party?.name || partySearch} onChange={e => { setParty(null); setPartySearch(e.target.value); setPartyOpen(true); void searchParties(e.target.value) }} onFocus={() => setPartyOpen(true)} placeholder="Search name, code or mobile" className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" />{loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />}{party && <button type="button" onClick={() => chooseParty(null as any)}><X className="h-4 w-4 text-slate-500" /></button>}</div>{partyOpen && !party && <div className="absolute left-0 right-0 top-[72px] z-50 max-h-64 overflow-auto rounded-xl border border-slate-200 bg-white shadow-2xl">{parties.slice(0, 15).map(item => <button type="button" key={item.id} onClick={() => chooseParty(item)} className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-3 text-left hover:bg-emerald-50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-xs font-black text-emerald-800">{item.name.slice(0, 2).toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-black">{item.name}</span><span className="block truncate text-xs text-slate-500">{item.party_code || 'No code'} · {item.phone || 'No mobile'}</span></span></button>)}{!parties.length && <div className="p-4 text-sm text-slate-500">No parties found.</div>}</div>}</div>
+        <div className="relative"><label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Party — all parties available</label><div className="flex h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3"><UserRound className="h-5 w-5 shrink-0 text-emerald-700" /><input value={party?.name || partySearch} onChange={e => { setParty(null); setPartySearch(e.target.value); setPartyOpen(true); void searchParties(e.target.value) }} onFocus={() => setPartyOpen(true)} placeholder="Search name, code or mobile" className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" />{loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />}{party && <button type="button" onClick={() => chooseParty(null)}><X className="h-4 w-4 text-slate-500" /></button>}</div>{partyOpen && !party && <div className="absolute left-0 right-0 top-[72px] z-50 max-h-64 overflow-auto rounded-xl border border-slate-200 bg-white shadow-2xl">{parties.slice(0, 15).map(item => <button type="button" key={item.id} onClick={() => chooseParty(item)} className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-3 text-left hover:bg-emerald-50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-xs font-black text-emerald-800">{item.name.slice(0, 2).toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-black">{item.name}</span><span className="block truncate text-xs text-slate-500">{item.party_code || 'No code'} · {item.phone || 'No mobile'}</span></span></button>)}{!parties.length && <div className="p-4 text-sm text-slate-500">No parties found.</div>}</div>}</div>
         <div><label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Original invoice</label><select value={invoice?.id || ''} onChange={e => { const next = invoices.find(item => item.id === e.target.value); if (next) void loadInvoice(next) }} disabled={!party || invoiceLoading || !invoices.length} className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold outline-none disabled:bg-slate-100"><option value="">{invoiceLoading ? 'Loading invoices…' : party ? (invoices.length ? 'Select invoice' : 'No completed invoices') : 'Select party first'}</option>{invoices.map(item => <option key={item.id} value={item.id}>{item.invoice_no} • {money(Number(item.grand_total))} • {dateLabel(item.sold_at || item.purchased_at)}</option>)}</select></div>
       </div>
     </section>
