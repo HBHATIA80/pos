@@ -3,8 +3,8 @@
 }
 
 .modalRoot > div {
-  width: min(95vw, 960px) !important;
-  max-width: 960px !important;
+  width: min(96vw, 1040px) !important;
+  max-width: 1040px !important;
   height: min(92vh, 860px) !important;
   max-height: 92vh !important;
   margin: 2vh auto !important;
@@ -17,8 +17,9 @@
   z-index: 20;
 }
 
+/* Keep the voucher list wide enough for normal words while giving the preview the larger share. */
 .modalRoot > div > div.grid {
-  grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(320px, 43%) minmax(0, 57%) !important;
   min-width: 0;
 }
 
@@ -36,6 +37,15 @@
   min-width: 0;
 }
 
+/* Voucher rows: Select / Voucher / Party. Never allow the party column to collapse to character-width. */
+.modalRoot > div > div.grid > section:first-child > button > div {
+  grid-template-columns: 52px minmax(130px, 160px) minmax(0, 1fr) !important;
+}
+
+.modalRoot > div > div.grid > section:first-child > button > div:last-child {
+  grid-template-columns: 52px minmax(130px, 160px) minmax(0, 1fr) !important;
+}
+
 @media (max-width: 1023px) {
   .modalRoot > div {
     width: 95vw !important;
@@ -46,7 +56,7 @@
   }
 
   .modalRoot > div > div.grid {
-    grid-template-columns: minmax(260px, 36%) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(320px, 43%) minmax(0, 57%) !important;
   }
 }
 
@@ -89,6 +99,14 @@
     height: 1.25rem;
     flex: 0 0 auto;
   }
+
+  .modalRoot > div > div.grid > section:first-child > button > div {
+    grid-template-columns: 48px 132px minmax(0, 1fr) !important;
+  }
+
+  .modalRoot > div > div.grid > section:first-child > button > div:last-child {
+    grid-template-columns: 48px 132px minmax(0, 1fr) !important;
+  }
 }
 
 @media (max-width: 430px) {
@@ -113,5 +131,13 @@
   .modalRoot > div {
     width: 97vw !important;
     max-width: 97vw !important;
+  }
+
+  .modalRoot > div > div.grid > section:first-child > button > div {
+    grid-template-columns: 44px 124px minmax(0, 1fr) !important;
+  }
+
+  .modalRoot > div > div.grid > section:first-child > button > div:last-child {
+    grid-template-columns: 44px 124px minmax(0, 1fr) !important;
   }
 }
