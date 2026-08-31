@@ -55,7 +55,7 @@ export async function GET() {
       completed_at,
       created_at,
       created_by,
-      parties(id,name,party_type),
+      parties(id,name,phone,party_type),
       sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)
     `)
     .eq('business_id', profile.business_id)
