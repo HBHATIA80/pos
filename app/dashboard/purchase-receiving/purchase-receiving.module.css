@@ -21,12 +21,21 @@
   overflow-wrap: break-word;
   word-break: normal;
   white-space: normal;
+  color: #166534 !important;
+  font-weight: 800;
 }
 
 .receivingRowMeta {
   overflow-wrap: break-word;
   word-break: normal;
   white-space: normal;
+  color: #166534 !important;
+  font-weight: 800;
+}
+
+.receivingRowInvoice {
+  color: #000 !important;
+  font-weight: 900;
 }
 
 .receivingDetailBody {
@@ -34,6 +43,10 @@
   max-height: calc(100vh - 300px);
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.receivingDetailBody p.text-sm.font-black {
+  color: #166534 !important;
 }
 
 @media (max-width: 1279px) {
