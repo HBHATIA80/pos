@@ -1,40 +1,117 @@
-.voucherModalScope {}
+.modalRoot {
+  overscroll-behavior: contain;
+}
 
-/* Targeted responsive polish for LatestVoucherScreen only. */
-:global(body:has(.fixed.inset-0.z-\[120px\])) { overflow: hidden; }
-:global(.fixed.inset-0.z-\[120px\]) { overscroll-behavior: contain; }
-:global(.fixed.inset-0.z-\[120px\] > div) { width: min(95vw, 960px) !important; max-width: 960px !important; height: min(92vh, 860px) !important; max-height: 92vh !important; margin: 2vh auto !important; border-radius: 1.5rem !important; }
-:global(.fixed.inset-0.z-\[120px\] > div > header) { position: sticky; top: 0; z-index: 20; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid) { grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) !important; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child) { min-width: 0; scrollbar-width: thin; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child > button), :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child > button > div) { min-width: 0; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child span), :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child div) { overflow-wrap: anywhere; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:last-child) { min-width: 0; overscroll-behavior: contain; scrollbar-width: thin; }
-:global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:last-child > div) { min-width: 0; }
+.modalRoot > div {
+  width: min(95vw, 960px) !important;
+  max-width: 960px !important;
+  height: min(92vh, 860px) !important;
+  max-height: 92vh !important;
+  margin: 2vh auto !important;
+  border-radius: 1.5rem !important;
+}
+
+.modalRoot > div > header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.modalRoot > div > div.grid {
+  grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) !important;
+  min-width: 0;
+}
+
+.modalRoot > div > div.grid > section {
+  min-width: 0;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+.modalRoot > div > div.grid > section:first-child {
+  overflow-x: hidden;
+}
+
+.modalRoot > div > div.grid > section:first-child > button {
+  min-width: 0;
+}
+
 @media (max-width: 1023px) {
-  :global(.fixed.inset-0.z-\[120px\] > div) { width: 95vw !important; max-width: 95vw !important; height: 94vh !important; max-height: 94vh !important; margin: 3vh auto !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid) { grid-template-columns: minmax(260px, 36%) minmax(0, 1fr) !important; }
+  .modalRoot > div {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    margin: 3vh auto !important;
+  }
+
+  .modalRoot > div > div.grid {
+    grid-template-columns: minmax(260px, 36%) minmax(0, 1fr) !important;
+  }
 }
+
 @media (max-width: 639px) {
-  :global(.fixed.inset-0.z-\[120px\]) { padding: 0 !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div) { width: 95vw !important; max-width: 95vw !important; height: 94vh !important; max-height: 94vh !important; margin: 3vh auto !important; border-radius: 1.25rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header) { padding: 1rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:last-child) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:last-child > div) { grid-column: 1 / -1; min-width: 0 !important; width: 100%; max-width: none !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:last-child > button) { min-height: 40px; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid) { display: flex !important; flex-direction: column !important; overflow: hidden; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child) { flex: 0 1 42%; min-height: 180px; max-height: 42%; border-right: 0 !important; border-bottom: 1px solid rgb(226 232 240); }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:last-child) { flex: 1 1 58%; min-height: 0; padding: 0.875rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child > button) { padding: 0.75rem 1rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child > button input) { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; }
+  .modalRoot > div {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    margin: 3vh auto !important;
+    border-radius: 1.25rem !important;
+  }
+
+  .modalRoot > div > div.grid {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden;
+  }
+
+  .modalRoot > div > div.grid > section:first-child {
+    flex: 0 1 42%;
+    min-height: 180px;
+    max-height: 42%;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgb(226 232 240);
+  }
+
+  .modalRoot > div > div.grid > section:last-child {
+    flex: 1 1 58%;
+    min-height: 0;
+    padding: 0.875rem !important;
+  }
+
+  .modalRoot > div > div.grid > section:first-child > button {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .modalRoot > div > div.grid > section:first-child input[type='checkbox'] {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+  }
 }
+
 @media (max-width: 430px) {
-  :global(.fixed.inset-0.z-\[120px\] > div) { width: 96vw !important; max-width: 96vw !important; height: 95vh !important; max-height: 95vh !important; margin: 2.5vh auto !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:first-child h1) { font-size: 1.05rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:first-child p) { font-size: 0.68rem !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > header > div:last-child) { gap: 0.5rem; }
+  .modalRoot > div {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    height: 95vh !important;
+    max-height: 95vh !important;
+    margin: 2.5vh auto !important;
+  }
+
+  .modalRoot > div > header h1 {
+    font-size: 1.05rem !important;
+  }
+
+  .modalRoot > div > header p {
+    font-size: 0.68rem !important;
+  }
 }
+
 @media (max-width: 359px) {
-  :global(.fixed.inset-0.z-\[120px\] > div) { width: 97vw !important; max-width: 97vw !important; }
-  :global(.fixed.inset-0.z-\[120px\] > div > div.grid > section:first-child) { flex-basis: 40%; max-height: 40%; }
+  .modalRoot > div {
+    width: 97vw !important;
+    max-width: 97vw !important;
+  }
 }
