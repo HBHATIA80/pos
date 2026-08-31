@@ -8,7 +8,7 @@ type PartyRow = { id: string; name: string; phone?: string | null; party_type?: 
 type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }
 type PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }
 type InvoiceItem = { id: string; product_id: string; sku: string; product_name: string; unit_name: string; quantity: number; unit_price: number; discount_amount: number; line_total: number; cost_unit_price?: number | null }
-type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; parties?: PartyRow | PartyRow[] | null; party?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[] }
+type InvoiceRow = { id: string; invoice_no: string; status: string; party_id: string | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; sold_at?: string | null; completed_at?: string | null; created_at: string; parties?: PartyRow | PartyRow[] | null; party?: PartyRow | PartyRow[] | null; sales_invoice_items?: InvoiceItem[] }
 
 function buildWeightedAverageLookup(purchases: PurchaseInvoice[], fallbackCosts: Map<string, number>) {
   const events = [...purchases].sort((a, b) => {
@@ -105,10 +105,8 @@ export async function GET(request: Request) {
     const accountMap = new Map((accounts ?? []).map(account => [account.id, account]))
     const groupMap = new Map((groups ?? []).map(group => [group.id, group.name]))
     const ledgerRows = (lines ?? []).flatMap(line => {
-      const account = accountMap.get(line.account_id)
-      if (!account) return []
-      const group = groupMap.get(account.account_group_id) || ''
-      const nature = account.account_nature
+      const account = accountMap.get(line.account_id); if (!account) return []
+      const group = groupMap.get(account.account_group_id) || ''; const nature = account.account_nature
       if ((nature === 'expense' && group.toLowerCase().includes('purchase')) || (nature === 'income' && group.toLowerCase().includes('sales'))) return []
       const id = line.journal_line_id
       if (nature === 'expense') return [{ kind: 'expense', id, date: line.entry_date, account: account.name, reference_type: line.voucher_type, reference_id: line.voucher_no, description: line.narration || 'Operating expense', amount: num(line.debit) - num(line.credit) }]
@@ -117,10 +115,8 @@ export async function GET(request: Request) {
     }).filter(row => row.amount !== 0)
     const operatingExpense = Math.max(ledgerRows.filter(row => row.kind === 'expense').reduce((s, row) => s + row.amount, 0), 0)
     const otherIncome = Math.max(ledgerRows.filter(row => row.kind === 'income').reduce((s, row) => s + row.amount, 0), 0)
-    const salesTotal = saleRows.reduce((s, row) => s + row.sales, 0)
-    const cogsTotal = saleRows.reduce((s, row) => s + row.cogs, 0)
-    const grossProfit = salesTotal - cogsTotal
-    const netProfit = grossProfit + otherIncome - operatingExpense
+    const salesTotal = saleRows.reduce((s, row) => s + row.sales, 0); const cogsTotal = saleRows.reduce((s, row) => s + row.cogs, 0)
+    const grossProfit = salesTotal - cogsTotal; const netProfit = grossProfit + otherIncome - operatingExpense
     return NextResponse.json({ type, rows: [...saleRows, ...ledgerRows], summary: { sales: salesTotal, cogs: cogsTotal, grossProfit, operatingExpense, otherIncome, netProfit } })
   }
 
@@ -129,19 +125,16 @@ export async function GET(request: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ type, rows: data ?? [] })
   }
-
   if (type === 'payments') {
     const { data, error } = await supabase.from('sale_payments').select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,sales_invoices!inner(invoice_no,grand_total),parties(id,name,phone)').eq('business_id', businessId).gte('paid_at', iso(start)).lte('paid_at', iso(end, true)).order('paid_at', { ascending: false }).limit(100)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ type, rows: data ?? [] })
   }
-
   if (type === 'stock') {
     const { data, error } = await supabase.from('stock_analysis').select('product_id,name,sku,current_stock,purchase_price,sale_price,stock_cost_value,stock_retail_value').eq('business_id', businessId).eq('is_active', true).order('stock_cost_value', { ascending: false }).limit(200)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ type, rows: data ?? [] })
   }
-
   if (type === 'cashbank') {
     const [{ data: accounts, error: accountsError }, { data: lines, error: linesError }] = await Promise.all([
       supabase.from('accounts').select('id,name,account_code').eq('business_id', businessId).eq('is_active', true).in('account_code', ['SYS_CASH','SYS_BANK']),
@@ -151,6 +144,5 @@ export async function GET(request: Request) {
     const map = new Map((accounts ?? []).map(a => [a.id, a]))
     return NextResponse.json({ type, rows: (lines ?? []).filter(r => map.has(r.account_id)).map(r => ({ ...r, id: r.journal_line_id, account: map.get(r.account_id)?.name || map.get(r.account_id)?.account_code || 'Cash / Bank' })) })
   }
-
   return NextResponse.json({ error: 'Unsupported detail type' }, { status: 400 })
 }
