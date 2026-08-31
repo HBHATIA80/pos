@@ -2,93 +2,1118 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
-type RouteContext = { params: Promise<{ id: string }> }
+type RouteContext = {
+  params: Promise<{ id: string }>
+}
+
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
 async function getContext() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, profile: null }
-  const { data: profile } = await supabase.from('profiles').select('id,business_id,role,is_active').eq('id', user.id).maybeSingle()
-  return { supabase, user, profile }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return {
+      supabase,
+      user: null,
+      profile: null,
+    }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id,business_id,role,is_active')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  return {
+    supabase,
+    user,
+    profile,
+  }
 }
-function signedOpening(amount: number, type: string) { if (type === 'payable') return -Math.abs(amount); if (type === 'receivable') return Math.abs(amount); return 0 }
-function dateOnly(value: string) { return new Date(`${value}T00:00:00Z`).toISOString() }
-function dateKey(value: string) { return String(value || '').slice(0, 10) }
-function daysBetween(from: string, to: string) { const start = new Date(`${dateKey(from)}T00:00:00Z`).getTime(); const end = new Date(`${dateKey(to)}T00:00:00Z`).getTime(); if (!Number.isFinite(start) || !Number.isFinite(end)) return 0; return Math.max(0, Math.floor((end - start) / 86400000)) }
-function salesDate(invoice: { sold_at?: string | null; completed_at?: string | null; created_at?: string | null }) { return invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '' }
-function purchaseDate(purchase: { purchased_at?: string | null; created_at?: string | null }) { return purchase.purchased_at ?? purchase.created_at ?? '' }
 
-type ReturnRow = { id: string; return_no: string; return_type: 'sale_return' | 'purchase_return'; status: 'completed' | 'void' | 'draft'; source_invoice_id: string | null; return_date: string; grand_total: number }
+function signedOpening(amount: number, type: string) {
+  if (type === 'payable') {
+    return -Math.abs(amount)
+  }
 
-export async function GET(request: NextRequest, context: RouteContext) {
-  const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (type === 'receivable') {
+    return Math.abs(amount)
+  }
+
+  return 0
+}
+
+function dateOnly(value: string) {
+  return new Date(`${value}T00:00:00Z`).toISOString()
+}
+
+function dateKey(value: string) {
+  return String(value || '').slice(0, 10)
+}
+
+function daysBetween(from: string, to: string) {
+  const start = new Date(
+    `${dateKey(from)}T00:00:00Z`
+  ).getTime()
+
+  const end = new Date(
+    `${dateKey(to)}T00:00:00Z`
+  ).getTime()
+
+  if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    return 0
+  }
+
+  return Math.max(
+    0,
+    Math.floor((end - start) / 86400000)
+  )
+}
+
+function salesDate(invoice: {
+  sold_at?: string | null
+  completed_at?: string | null
+  created_at?: string | null
+}) {
+  return (
+    invoice.sold_at ??
+    invoice.completed_at ??
+    invoice.created_at ??
+    ''
+  )
+}
+
+function purchaseDate(purchase: {
+  purchased_at?: string | null
+  created_at?: string | null
+}) {
+  return (
+    purchase.purchased_at ??
+    purchase.created_at ??
+    ''
+  )
+}
+
+type ReturnRow = {
+  id: string
+  return_no: string
+  return_type: 'sale_return' | 'purchase_return'
+  status: 'completed' | 'void' | 'draft'
+  source_invoice_id: string | null
+  return_date: string
+  grand_total: number
+}
+
+type PurchaseReceiptRow = {
+  purchase_invoice_id: string
+  status: 'verified' | 'partial' | 'pending' | string
+  received_at: string | null
+}
+
+type LedgerEntry = {
+  id: string
+  date: string
+  type:
+    | 'opening'
+    | 'invoice'
+    | 'purchase'
+    | 'payment'
+    | 'receipt_voucher'
+    | 'payment_voucher'
+    | 'sale_return'
+    | 'purchase_return'
+    | 'return_void'
+  description: string
+  reference: string
+  debit: number
+  credit: number
+  balance: number
+  payment_method?: string
+  notes?: string
+
+  /*
+   * Physical receiving information.
+   *
+   * Only purchase invoices use these fields.
+   */
+  physical_verification_status?:
+    | 'verified'
+    | 'partial'
+    | 'pending'
+    | 'not_verified'
+
+  physical_verified_at?: string | null
+}
+
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+) {
+  const {
+    supabase,
+    user,
+    profile,
+  } = await getContext()
+
+  if (
+    !user ||
+    !profile?.is_active ||
+    !profile.business_id
+  ) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    )
+  }
+
   const { id } = await context.params
-  const partyId = z.string().uuid().safeParse(id)
-  if (!partyId.success) return NextResponse.json({ error: 'Invalid party id' }, { status: 400 })
-  const params = request.nextUrl.searchParams
-  const today = new Date().toISOString().slice(0, 10)
-  const rawStart = params.get('start_date') ?? today
-  const rawEnd = params.get('end_date') ?? today
-  if (!dateSchema.safeParse(rawStart).success || !dateSchema.safeParse(rawEnd).success) return NextResponse.json({ error: 'Dates must use YYYY-MM-DD format' }, { status: 400 })
-  if (rawEnd < rawStart) return NextResponse.json({ error: 'End date cannot be before start date' }, { status: 400 })
 
-  const { data: party, error: partyError } = await supabase.from('parties').select('id,party_code,party_type,name,phone,opening_balance,opening_balance_type,is_active').eq('id', partyId.data).eq('business_id', profile.business_id).maybeSingle()
-  if (partyError) return NextResponse.json({ error: partyError.message }, { status: 400 })
-  if (!party) return NextResponse.json({ error: 'Party not found' }, { status: 404 })
-  const { data: business, error: businessError } = await supabase.from('businesses').select('id,name,code,phone,address,logo_url').eq('id', profile.business_id).maybeSingle()
-  if (businessError) return NextResponse.json({ error: businessError.message }, { status: 400 })
+  const partyId = z
+    .string()
+    .uuid()
+    .safeParse(id)
+
+  if (!partyId.success) {
+    return NextResponse.json(
+      { error: 'Invalid party id' },
+      { status: 400 }
+    )
+  }
+
+  const params =
+    request.nextUrl.searchParams
+
+  const today = new Date()
+    .toISOString()
+    .slice(0, 10)
+
+  const rawStart =
+    params.get('start_date') ?? today
+
+  const rawEnd =
+    params.get('end_date') ?? today
+
+  if (
+    !dateSchema.safeParse(rawStart).success ||
+    !dateSchema.safeParse(rawEnd).success
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          'Dates must use YYYY-MM-DD format',
+      },
+      { status: 400 }
+    )
+  }
+
+  if (rawEnd < rawStart) {
+    return NextResponse.json(
+      {
+        error:
+          'End date cannot be before start date',
+      },
+      { status: 400 }
+    )
+  }
+
+  const {
+    data: party,
+    error: partyError,
+  } = await supabase
+    .from('parties')
+    .select(
+      'id,party_code,party_type,name,phone,opening_balance,opening_balance_type,is_active'
+    )
+    .eq('id', partyId.data)
+    .eq('business_id', profile.business_id)
+    .maybeSingle()
+
+  if (partyError) {
+    return NextResponse.json(
+      { error: partyError.message },
+      { status: 400 }
+    )
+  }
+
+  if (!party) {
+    return NextResponse.json(
+      { error: 'Party not found' },
+      { status: 404 }
+    )
+  }
+
+  const {
+    data: business,
+    error: businessError,
+  } = await supabase
+    .from('businesses')
+    .select(
+      'id,name,code,phone,address,logo_url'
+    )
+    .eq('id', profile.business_id)
+    .maybeSingle()
+
+  if (businessError) {
+    return NextResponse.json(
+      { error: businessError.message },
+      { status: 400 }
+    )
+  }
 
   const startAt = dateOnly(rawStart)
-  const endExclusive = new Date(`${rawEnd}T00:00:00Z`); endExclusive.setUTCDate(endExclusive.getUTCDate() + 1); const endAt = `${rawEnd}T23:59:59.999Z`
 
-  const [{ data: invoices, error: invoiceError }, { data: purchases, error: purchaseError }, { data: payments, error: paymentError }, { data: vouchers, error: voucherError }, { data: returns, error: returnError }] = await Promise.all([
-    supabase.from('sales_invoices').select('id,invoice_no,grand_total,status,completed_at,sold_at,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).order('sold_at', { ascending: true }),
-    supabase.from('purchase_invoices').select('id,invoice_no,grand_total,status,purchased_at,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'completed').is('deleted_at', null).order('purchased_at', { ascending: true }),
-    supabase.from('sale_payments').select('id,invoice_id,payment_method,amount,reference_no,notes,paid_at,status,created_at').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'active').order('paid_at', { ascending: true }),
-    supabase.from('account_vouchers').select('id,voucher_no,voucher_type,payment_method,account_name,amount,reference_no,notes,paid_at,status').eq('business_id', profile.business_id).eq('party_id', party.id).eq('status', 'active').order('paid_at', { ascending: true }),
-    supabase.from('return_vouchers').select('id,return_no,return_type,status,source_invoice_id,return_date,grand_total').eq('business_id', profile.business_id).eq('party_id', party.id).in('status', ['completed','void']).order('return_date', { ascending: true }),
+  const endExclusive = new Date(
+    `${rawEnd}T00:00:00Z`
+  )
+
+  endExclusive.setUTCDate(
+    endExclusive.getUTCDate() + 1
+  )
+
+  const endAt =
+    `${rawEnd}T23:59:59.999Z`
+
+  /*
+   * Load all ledger sources plus physical
+   * receiving records.
+   */
+  const [
+    {
+      data: invoices,
+      error: invoiceError,
+    },
+    {
+      data: purchases,
+      error: purchaseError,
+    },
+    {
+      data: payments,
+      error: paymentError,
+    },
+    {
+      data: vouchers,
+      error: voucherError,
+    },
+    {
+      data: returns,
+      error: returnError,
+    },
+    {
+      data: purchaseReceipts,
+      error: purchaseReceiptError,
+    },
+  ] = await Promise.all([
+    supabase
+      .from('sales_invoices')
+      .select(
+        'id,invoice_no,grand_total,status,completed_at,sold_at,created_at'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      )
+      .eq('party_id', party.id)
+      .eq('status', 'completed')
+      .is('deleted_at', null)
+      .is('cancelled_at', null)
+      .order('sold_at', {
+        ascending: true,
+      }),
+
+    supabase
+      .from('purchase_invoices')
+      .select(
+        'id,invoice_no,grand_total,status,purchased_at,created_at'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      )
+      .eq('party_id', party.id)
+      .eq('status', 'completed')
+      .is('deleted_at', null)
+      .order('purchased_at', {
+        ascending: true,
+      }),
+
+    supabase
+      .from('sale_payments')
+      .select(
+        'id,invoice_id,payment_method,amount,reference_no,notes,paid_at,status,created_at'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      )
+      .eq('party_id', party.id)
+      .eq('status', 'active')
+      .order('paid_at', {
+        ascending: true,
+      }),
+
+    supabase
+      .from('account_vouchers')
+      .select(
+        'id,voucher_no,voucher_type,payment_method,account_name,amount,reference_no,notes,paid_at,status'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      )
+      .eq('party_id', party.id)
+      .eq('status', 'active')
+      .order('paid_at', {
+        ascending: true,
+      }),
+
+    supabase
+      .from('return_vouchers')
+      .select(
+        'id,return_no,return_type,status,source_invoice_id,return_date,grand_total'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      )
+      .eq('party_id', party.id)
+      .in('status', [
+        'completed',
+        'void',
+      ])
+      .order('return_date', {
+        ascending: true,
+      }),
+
+    /*
+     * This is the important new query.
+     *
+     * It uses the SAME purchase_receipts table
+     * already used by Purchase Receiving.
+     */
+    supabase
+      .from('purchase_receipts')
+      .select(
+        'purchase_invoice_id,status,received_at'
+      )
+      .eq(
+        'business_id',
+        profile.business_id
+      ),
   ])
-  for (const e of [invoiceError, purchaseError, paymentError, voucherError, returnError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
 
-  const returnRows = (returns ?? []) as ReturnRow[]
-  let openingBalance = signedOpening(Number(party.opening_balance ?? 0), party.opening_balance_type)
-  for (const invoice of invoices ?? []) if (salesDate(invoice) < startAt) openingBalance += Number(invoice.grand_total ?? 0)
-  for (const purchase of purchases ?? []) if (purchaseDate(purchase) < startAt) openingBalance -= Number(purchase.grand_total ?? 0)
-  for (const payment of payments ?? []) if (payment.paid_at < startAt) openingBalance -= Number(payment.amount ?? 0)
-  for (const voucher of vouchers ?? []) if (voucher.paid_at < startAt) openingBalance += voucher.voucher_type === 'payment' ? Number(voucher.amount ?? 0) : -Number(voucher.amount ?? 0)
-  for (const row of returnRows) if (row.return_date < rawStart) {
-    const amount = Number(row.grand_total ?? 0)
-    const effect = row.return_type === 'sale_return' ? -amount : amount
-    openingBalance += row.status === 'void' ? -effect : effect
+  for (const error of [
+    invoiceError,
+    purchaseError,
+    paymentError,
+    voucherError,
+    returnError,
+    purchaseReceiptError,
+  ]) {
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
   }
 
-  type Entry = { id: string; date: string; type: 'opening'|'invoice'|'purchase'|'payment'|'receipt_voucher'|'payment_voucher'|'sale_return'|'purchase_return'|'return_void'; description: string; reference: string; debit: number; credit: number; balance: number; payment_method?: string; notes?: string }
-  const entries: Entry[] = [{ id: `opening-${party.id}-${rawStart}`, date: startAt, type: 'opening', description: 'Opening Balance', reference: '', debit: openingBalance > 0 ? openingBalance : 0, credit: openingBalance < 0 ? Math.abs(openingBalance) : 0, balance: openingBalance }]
-  for (const invoice of invoices ?? []) { const date=salesDate(invoice); if(date<startAt||date>=endExclusive.toISOString()) continue; entries.push({id:invoice.id,date,type:'invoice',description:`Sales Invoice ${invoice.invoice_no}`,reference:invoice.invoice_no,debit:Number(invoice.grand_total??0),credit:0,balance:0}) }
-  for (const purchase of purchases ?? []) { const date=purchaseDate(purchase); if(date<startAt||date>=endExclusive.toISOString()) continue; entries.push({id:purchase.id,date,type:'purchase',description:`Purchase Invoice ${purchase.invoice_no}`,reference:purchase.invoice_no,debit:0,credit:Number(purchase.grand_total??0),balance:0}) }
-  for (const payment of payments ?? []) { if(payment.paid_at<startAt||payment.paid_at>=endExclusive.toISOString()) continue; entries.push({id:payment.id,date:payment.paid_at,type:'payment',description:payment.payment_method==='cash'?'Cash Receipt Against Invoice':'Bank Receipt Against Invoice',reference:payment.reference_no??'',debit:0,credit:Number(payment.amount??0),balance:0,payment_method:payment.payment_method,notes:payment.notes??''}) }
-  for (const voucher of vouchers ?? []) { if(voucher.paid_at<startAt||voucher.paid_at>=endExclusive.toISOString()) continue; const isReceipt=voucher.voucher_type==='receipt'; entries.push({id:voucher.id,date:voucher.paid_at,type:isReceipt?'receipt_voucher':'payment_voucher',description:isReceipt?`Receipt Voucher ${voucher.voucher_no}`:`Payment Voucher ${voucher.voucher_no}`,reference:voucher.reference_no||voucher.voucher_no,debit:isReceipt?0:Number(voucher.amount??0),credit:isReceipt?Number(voucher.amount??0):0,balance:0,payment_method:voucher.payment_method,notes:[voucher.account_name,voucher.notes].filter(Boolean).join(' · ')}) }
-  for (const row of returnRows) {
-    const date = `${row.return_date}T00:00:00.000Z`
-    if (date < startAt || date >= endExclusive.toISOString()) continue
-    const amount = Number(row.grand_total ?? 0)
-    const normalDebit = row.return_type === 'purchase_return' ? amount : 0
-    const normalCredit = row.return_type === 'sale_return' ? amount : 0
-    const isVoid = row.status === 'void'
-    entries.push({ id:`${row.id}-return`, date, type:row.return_type, description:`${row.return_type==='sale_return'?'Sale Return':'Purchase Return'} ${row.return_no}`, reference:row.return_no, debit:isVoid?normalCredit:normalDebit, credit:isVoid?normalDebit:normalCredit, balance:0, notes: row.source_invoice_id ? 'Against original invoice' : 'General return' })
+  /*
+   * Map:
+   *
+   * purchase_invoice_id
+   *       ↓
+   * physical receiving status
+   */
+  const receiptByPurchaseId =
+    new Map<
+      string,
+      PurchaseReceiptRow
+    >()
+
+  for (
+    const receipt of
+      (purchaseReceipts ??
+        []) as PurchaseReceiptRow[]
+  ) {
+    receiptByPurchaseId.set(
+      receipt.purchase_invoice_id,
+      receipt
+    )
   }
-  entries.sort((a,b)=>a.type==='opening'?-1:b.type==='opening'?1:new Date(a.date).getTime()-new Date(b.date).getTime())
-  let running=0
-  const ledger=entries.map(entry=>{running+=entry.debit-entry.credit;return {...entry,balance:Number(running.toFixed(2))}})
-  const debitTotal=ledger.reduce((sum,e)=>sum+e.debit,0), creditTotal=ledger.reduce((sum,e)=>sum+e.credit,0), finalBalance=Number((debitTotal-creditTotal).toFixed(2))
 
-  const paymentsByInvoice=new Map<string,{paid:number;lastPaymentDate:string|null}>()
-  for(const payment of payments??[]){if(!payment.invoice_id||payment.paid_at>endAt)continue;const current=paymentsByInvoice.get(payment.invoice_id)??{paid:0,lastPaymentDate:null};current.paid+=Number(payment.amount??0);if(!current.lastPaymentDate||payment.paid_at>current.lastPaymentDate)current.lastPaymentDate=payment.paid_at;paymentsByInvoice.set(payment.invoice_id,current)}
-  const returnsByInvoice=new Map<string,number>()
-  for(const row of returnRows){if(row.status!=='completed'||row.return_type!=='sale_return'||!row.source_invoice_id||row.return_date>rawEnd)continue;returnsByInvoice.set(row.source_invoice_id,(returnsByInvoice.get(row.source_invoice_id)??0)+Number(row.grand_total??0))}
-  const billWise=(invoices??[]).map(invoice=>{const invoiceDate=salesDate(invoice);if(invoiceDate<startAt||invoiceDate>=endExclusive.toISOString())return null;const total=Number(invoice.grand_total??0);const paymentInfo=paymentsByInvoice.get(invoice.id)??{paid:0,lastPaymentDate:null};const returnAmount=Math.min(total,Number((returnsByInvoice.get(invoice.id)??0).toFixed(2)));const paid=Math.min(total-returnAmount,Number(paymentInfo.paid.toFixed(2)));const balance=Number(Math.max(total-returnAmount-paid,0).toFixed(2));const fullyPaid=balance<=0;const asOfDate=fullyPaid&&(paymentInfo.lastPaymentDate||returnAmount)?(paymentInfo.lastPaymentDate??endAt):endAt;return{invoice_id:invoice.id,invoice_no:invoice.invoice_no,invoice_date:invoiceDate,bill_amount:total,paid_amount:paid,return_amount:returnAmount,balance_amount:balance,payment_date:fullyPaid?paymentInfo.lastPaymentDate:null,days_past:daysBetween(invoiceDate,asOfDate),status:fullyPaid?'paid':paid>0||returnAmount>0?'partial':'unpaid'}}).filter(Boolean)
+  const returnRows =
+    (returns ?? []) as ReturnRow[]
 
-  return NextResponse.json({ business:business?{id:business.id,name:business.name,code:business.code,phone:business.phone,address:business.address,logo_url:business.logo_url}:null, party:{id:party.id,party_code:party.party_code,party_type:party.party_type,name:party.name,phone:party.phone,opening_balance:Number(party.opening_balance??0),opening_balance_type:party.opening_balance_type}, period:{start_date:rawStart,end_date:rawEnd}, opening_balance:Number(openingBalance.toFixed(2)), debit_total:Number(debitTotal.toFixed(2)), credit_total:Number(creditTotal.toFixed(2)), final_balance:finalBalance, balance_type:finalBalance>0?'receivable':finalBalance<0?'payable':'settled', entries:ledger, bill_wise:billWise })
+  let openingBalance = signedOpening(
+    Number(
+      party.opening_balance ?? 0
+    ),
+    party.opening_balance_type
+  )
+
+  for (
+    const invoice of invoices ?? []
+  ) {
+    if (
+      salesDate(invoice) <
+      startAt
+    ) {
+      openingBalance += Number(
+        invoice.grand_total ?? 0
+      )
+    }
+  }
+
+  for (
+    const purchase of purchases ?? []
+  ) {
+    if (
+      purchaseDate(purchase) <
+      startAt
+    ) {
+      openingBalance -= Number(
+        purchase.grand_total ?? 0
+      )
+    }
+  }
+
+  for (
+    const payment of payments ?? []
+  ) {
+    if (
+      payment.paid_at <
+      startAt
+    ) {
+      openingBalance -= Number(
+        payment.amount ?? 0
+      )
+    }
+  }
+
+  for (
+    const voucher of vouchers ?? []
+  ) {
+    if (
+      voucher.paid_at <
+      startAt
+    ) {
+      openingBalance +=
+        voucher.voucher_type ===
+        'payment'
+          ? Number(voucher.amount ?? 0)
+          : -Number(voucher.amount ?? 0)
+    }
+  }
+
+  for (
+    const row of returnRows
+  ) {
+    if (row.return_date < rawStart) {
+      const amount = Number(
+        row.grand_total ?? 0
+      )
+
+      const effect =
+        row.return_type ===
+        'sale_return'
+          ? -amount
+          : amount
+
+      openingBalance +=
+        row.status === 'void'
+          ? -effect
+          : effect
+    }
+  }
+
+  const entries: LedgerEntry[] = [
+    {
+      id: `opening-${party.id}-${rawStart}`,
+      date: startAt,
+      type: 'opening',
+      description: 'Opening Balance',
+      reference: '',
+      debit:
+        openingBalance > 0
+          ? openingBalance
+          : 0,
+      credit:
+        openingBalance < 0
+          ? Math.abs(openingBalance)
+          : 0,
+      balance: openingBalance,
+    },
+  ]
+
+  /*
+   * Sales invoices
+   */
+  for (
+    const invoice of invoices ?? []
+  ) {
+    const date = salesDate(invoice)
+
+    if (
+      date < startAt ||
+      date >= endExclusive.toISOString()
+    ) {
+      continue
+    }
+
+    entries.push({
+      id: invoice.id,
+      date,
+      type: 'invoice',
+      description:
+        `Sales Invoice ${invoice.invoice_no}`,
+      reference:
+        invoice.invoice_no,
+      debit:
+        Number(invoice.grand_total ?? 0),
+      credit: 0,
+      balance: 0,
+    })
+  }
+
+  /*
+   * Purchase invoices.
+   *
+   * Physical receiving status is attached
+   * directly to the ledger entry.
+   */
+  for (
+    const purchase of purchases ?? []
+  ) {
+    const date =
+      purchaseDate(purchase)
+
+    if (
+      date < startAt ||
+      date >= endExclusive.toISOString()
+    ) {
+      continue
+    }
+
+    const receipt =
+      receiptByPurchaseId.get(
+        purchase.id
+      )
+
+    let physicalStatus:
+      | 'verified'
+      | 'partial'
+      | 'pending'
+      | 'not_verified'
+
+    if (!receipt) {
+      physicalStatus =
+        'not_verified'
+    } else if (
+      receipt.status ===
+      'verified'
+    ) {
+      physicalStatus =
+        'verified'
+    } else if (
+      receipt.status ===
+      'partial'
+    ) {
+      physicalStatus =
+        'partial'
+    } else {
+      physicalStatus =
+        'pending'
+    }
+
+    entries.push({
+      id: purchase.id,
+      date,
+      type: 'purchase',
+      description:
+        `Purchase Invoice ${purchase.invoice_no}`,
+      reference:
+        purchase.invoice_no,
+      debit: 0,
+      credit:
+        Number(
+          purchase.grand_total ?? 0
+        ),
+      balance: 0,
+
+      physical_verification_status:
+        physicalStatus,
+
+      physical_verified_at:
+        receipt?.received_at ??
+        null,
+    })
+  }
+
+  /*
+   * Payments
+   */
+  for (
+    const payment of payments ?? []
+  ) {
+    if (
+      payment.paid_at < startAt ||
+      payment.paid_at >=
+        endExclusive.toISOString()
+    ) {
+      continue
+    }
+
+    entries.push({
+      id: payment.id,
+      date: payment.paid_at,
+      type: 'payment',
+      description:
+        payment.payment_method ===
+        'cash'
+          ? 'Cash Receipt Against Invoice'
+          : 'Bank Receipt Against Invoice',
+      reference:
+        payment.reference_no ?? '',
+      debit: 0,
+      credit:
+        Number(payment.amount ?? 0),
+      balance: 0,
+      payment_method:
+        payment.payment_method,
+      notes:
+        payment.notes ?? '',
+    })
+  }
+
+  /*
+   * Account vouchers
+   */
+  for (
+    const voucher of vouchers ?? []
+  ) {
+    if (
+      voucher.paid_at < startAt ||
+      voucher.paid_at >=
+        endExclusive.toISOString()
+    ) {
+      continue
+    }
+
+    const isReceipt =
+      voucher.voucher_type ===
+      'receipt'
+
+    entries.push({
+      id: voucher.id,
+      date: voucher.paid_at,
+      type: isReceipt
+        ? 'receipt_voucher'
+        : 'payment_voucher',
+      description: isReceipt
+        ? `Receipt Voucher ${voucher.voucher_no}`
+        : `Payment Voucher ${voucher.voucher_no}`,
+      reference:
+        voucher.reference_no ||
+        voucher.voucher_no,
+      debit: isReceipt
+        ? 0
+        : Number(voucher.amount ?? 0),
+      credit: isReceipt
+        ? Number(voucher.amount ?? 0)
+        : 0,
+      balance: 0,
+      payment_method:
+        voucher.payment_method,
+      notes: [
+        voucher.account_name,
+        voucher.notes,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    })
+  }
+
+  /*
+   * Returns
+   */
+  for (
+    const row of returnRows
+  ) {
+    const date =
+      `${row.return_date}T00:00:00.000Z`
+
+    if (
+      date < startAt ||
+      date >=
+        endExclusive.toISOString()
+    ) {
+      continue
+    }
+
+    const amount =
+      Number(row.grand_total ?? 0)
+
+    const normalDebit =
+      row.return_type ===
+      'purchase_return'
+        ? amount
+        : 0
+
+    const normalCredit =
+      row.return_type ===
+      'sale_return'
+        ? amount
+        : 0
+
+    const isVoid =
+      row.status === 'void'
+
+    entries.push({
+      id:
+        `${row.id}-return`,
+      date,
+      type:
+        row.return_type,
+      description:
+        `${
+          row.return_type ===
+          'sale_return'
+            ? 'Sale Return'
+            : 'Purchase Return'
+        } ${row.return_no}`,
+      reference:
+        row.return_no,
+      debit: isVoid
+        ? normalCredit
+        : normalDebit,
+      credit: isVoid
+        ? normalDebit
+        : normalCredit,
+      balance: 0,
+      notes:
+        row.source_invoice_id
+          ? 'Against original invoice'
+          : 'General return',
+    })
+  }
+
+  /*
+   * Keep original ledger ordering.
+   */
+  entries.sort(
+    (a, b) =>
+      a.type === 'opening'
+        ? -1
+        : b.type === 'opening'
+          ? 1
+          : new Date(
+              a.date
+            ).getTime() -
+            new Date(
+              b.date
+            ).getTime()
+  )
+
+  /*
+   * Calculate running balance.
+   */
+  let running = 0
+
+  const ledger =
+    entries.map((entry) => {
+      running +=
+        entry.debit -
+        entry.credit
+
+      return {
+        ...entry,
+        balance:
+          Number(
+            running.toFixed(2)
+          ),
+      }
+    })
+
+  const debitTotal =
+    ledger.reduce(
+      (sum, entry) =>
+        sum + entry.debit,
+      0
+    )
+
+  const creditTotal =
+    ledger.reduce(
+      (sum, entry) =>
+        sum + entry.credit,
+      0
+    )
+
+  const finalBalance =
+    Number(
+      (
+        debitTotal -
+        creditTotal
+      ).toFixed(2)
+    )
+
+  /*
+   * Bill-wise payment ageing.
+   */
+  const paymentsByInvoice =
+    new Map<
+      string,
+      {
+        paid: number
+        lastPaymentDate: string | null
+      }
+    >()
+
+  for (
+    const payment of payments ?? []
+  ) {
+    if (
+      !payment.invoice_id ||
+      payment.paid_at > endAt
+    ) {
+      continue
+    }
+
+    const current =
+      paymentsByInvoice.get(
+        payment.invoice_id
+      ) ?? {
+        paid: 0,
+        lastPaymentDate: null,
+      }
+
+    current.paid += Number(
+      payment.amount ?? 0
+    )
+
+    if (
+      !current.lastPaymentDate ||
+      payment.paid_at >
+        current.lastPaymentDate
+    ) {
+      current.lastPaymentDate =
+        payment.paid_at
+    }
+
+    paymentsByInvoice.set(
+      payment.invoice_id,
+      current
+    )
+  }
+
+  const returnsByInvoice =
+    new Map<string, number>()
+
+  for (
+    const row of returnRows
+  ) {
+    if (
+      row.status !==
+        'completed' ||
+      row.return_type !==
+        'sale_return' ||
+      !row.source_invoice_id ||
+      row.return_date >
+        rawEnd
+    ) {
+      continue
+    }
+
+    returnsByInvoice.set(
+      row.source_invoice_id,
+      (
+        returnsByInvoice.get(
+          row.source_invoice_id
+        ) ?? 0
+      ) +
+        Number(
+          row.grand_total ?? 0
+        )
+    )
+  }
+
+  const billWise =
+    (invoices ?? [])
+      .map((invoice) => {
+        const invoiceDate =
+          salesDate(invoice)
+
+        if (
+          invoiceDate <
+            startAt ||
+          invoiceDate >=
+            endExclusive.toISOString()
+        ) {
+          return null
+        }
+
+        const total =
+          Number(
+            invoice.grand_total ?? 0
+          )
+
+        const paymentInfo =
+          paymentsByInvoice.get(
+            invoice.id
+          ) ?? {
+            paid: 0,
+            lastPaymentDate: null,
+          }
+
+        const returnAmount =
+          Math.min(
+            total,
+            Number(
+              (
+                returnsByInvoice.get(
+                  invoice.id
+                ) ?? 0
+              ).toFixed(2)
+            )
+          )
+
+        const paid =
+          Math.min(
+            total -
+              returnAmount,
+            Number(
+              paymentInfo.paid.toFixed(
+                2
+              )
+            )
+          )
+
+        const balance =
+          Number(
+            Math.max(
+              total -
+                returnAmount -
+                paid,
+              0
+            ).toFixed(2)
+          )
+
+        const fullyPaid =
+          balance <= 0
+
+        const asOfDate =
+          fullyPaid &&
+          (
+            paymentInfo.lastPaymentDate ||
+            returnAmount
+          )
+            ? (
+                paymentInfo.lastPaymentDate ??
+                endAt
+              )
+            : endAt
+
+        return {
+          invoice_id:
+            invoice.id,
+          invoice_no:
+            invoice.invoice_no,
+          invoice_date:
+            invoiceDate,
+          bill_amount:
+            total,
+          paid_amount:
+            paid,
+          return_amount:
+            returnAmount,
+          balance_amount:
+            balance,
+          payment_date:
+            fullyPaid
+              ? paymentInfo.lastPaymentDate
+              : null,
+          days_past:
+            daysBetween(
+              invoiceDate,
+              asOfDate
+            ),
+          status:
+            fullyPaid
+              ? 'paid'
+              : paid > 0 ||
+                  returnAmount > 0
+                ? 'partial'
+                : 'unpaid',
+        }
+      })
+      .filter(Boolean)
+
+  return NextResponse.json({
+    business: business
+      ? {
+          id: business.id,
+          name: business.name,
+          code: business.code,
+          phone: business.phone,
+          address: business.address,
+          logo_url:
+            business.logo_url,
+        }
+      : null,
+
+    party: {
+      id: party.id,
+      party_code:
+        party.party_code,
+      party_type:
+        party.party_type,
+      name: party.name,
+      phone: party.phone,
+      opening_balance:
+        Number(
+          party.opening_balance ??
+            0
+        ),
+      opening_balance_type:
+        party.opening_balance_type,
+    },
+
+    period: {
+      start_date: rawStart,
+      end_date: rawEnd,
+    },
+
+    opening_balance:
+      Number(
+        openingBalance.toFixed(2)
+      ),
+
+    debit_total:
+      Number(
+        debitTotal.toFixed(2)
+      ),
+
+    credit_total:
+      Number(
+        creditTotal.toFixed(2)
+      ),
+
+    final_balance:
+      finalBalance,
+
+    balance_type:
+      finalBalance > 0
+        ? 'receivable'
+        : finalBalance < 0
+          ? 'payable'
+          : 'settled',
+
+    entries: ledger,
+
+    bill_wise: billWise,
+  })
 }

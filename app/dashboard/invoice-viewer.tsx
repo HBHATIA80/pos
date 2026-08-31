@@ -6,7 +6,39 @@ import toast from 'react-hot-toast'
 import { buildInvoicePdf } from './invoice-pdf'
 
 type InvoiceItem = { id: string; product_id: string; sku: string | null; product_name: string; unit_name: string | null; quantity: number; unit_price: number; discount_amount: number; line_total: number }
-type Invoice = { id: string; invoice_no: string; kind: 'purchase' | 'sale'; status: string; party_id?: string | null; party?: { id: string; name: string; phone?: string | null; party_type?: string } | null; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; date: string | null; created_at: string; items: InvoiceItem[] }
+type Invoice = {
+  id: string
+  invoice_no: string
+  kind: 'purchase' | 'sale'
+  status: string
+
+  physical_verification_status:
+    | 'verified'
+    | 'partial'
+    | 'pending'
+    | 'not_verified'
+    | null
+
+  physical_verified_at:
+    | string
+    | null
+
+  party_id?: string | null
+  party?: {
+    id: string
+    name: string
+    phone?: string | null
+    party_type?: string
+  } | null
+
+  subtotal: number
+  discount_amount: number
+  grand_total: number
+  notes?: string | null
+  date: string | null
+  created_at: string
+  items: InvoiceItem[]
+}
 type EditLine = { product_id: string; product_name: string; sku: string | null; unit_name: string | null; quantity: number; unit_price: number; discount_amount: number }
 type Product = { id: string; sku: string; name: string; unit_id: string; purchase_price: number; sale_price: number; catalog_units?: { short_name?: string | null } | null }
 
@@ -167,6 +199,105 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
       {error && !loading && <div className="p-10 text-center text-sm font-semibold text-red-600">{error}</div>}
 
       {invoice && !loading && <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-white p-5 sm:p-6">
+        {invoice.kind === 'purchase' && (
+  <div
+    className={`mt-4 rounded-2xl border p-4 ${
+      invoice.physical_verification_status ===
+      'verified'
+        ? 'border-[#b7e1c1] bg-[#edf9f0]'
+        : invoice.physical_verification_status ===
+            'partial'
+          ? 'border-[#f3d59b] bg-[#fff9eb]'
+          : 'border-[#f1bcbc] bg-[#fff2f2]'
+    }`}
+  >
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-full text-lg font-black ${
+            invoice.physical_verification_status ===
+            'verified'
+              ? 'bg-[#d9f2df] text-[#24733a]'
+              : invoice.physical_verification_status ===
+                  'partial'
+                ? 'bg-[#fff0c9] text-[#a16207]'
+                : 'bg-[#ffe0e0] text-[#dc2626]'
+          }`}
+        >
+          {invoice.physical_verification_status ===
+          'verified'
+            ? '✓'
+            : invoice.physical_verification_status ===
+                'partial'
+              ? '!'
+              : '✕'}
+        </div>
+
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+            Physical Receiving
+          </p>
+
+          <p
+            className={`mt-1 text-base font-black ${
+              invoice.physical_verification_status ===
+              'verified'
+                ? 'text-[#24733a]'
+                : invoice.physical_verification_status ===
+                    'partial'
+                  ? 'text-[#a16207]'
+                  : 'text-[#dc2626]'
+            }`}
+          >
+            {invoice.physical_verification_status ===
+            'verified'
+              ? 'PHYSICALLY VERIFIED'
+              : invoice.physical_verification_status ===
+                  'partial'
+                ? 'PARTIALLY VERIFIED'
+                : 'NOT PHYSICALLY VERIFIED'}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-600">
+            {invoice.physical_verification_status ===
+            'verified'
+              ? 'All physical quantities have been checked against the invoice.'
+              : invoice.physical_verification_status ===
+                  'partial'
+                ? 'Some physical quantities have been received, but the invoice is not fully verified.'
+                : 'Physical goods have not been fully checked.'}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={`shrink-0 rounded-full px-4 py-2 text-[10px] font-black uppercase ${
+          invoice.physical_verification_status ===
+          'verified'
+            ? 'bg-[#d9f2df] text-[#24733a]'
+            : invoice.physical_verification_status ===
+                'partial'
+              ? 'bg-[#fff0c9] text-[#a16207]'
+              : 'bg-[#ffe0e0] text-[#dc2626]'
+        }`}
+      >
+        {invoice.physical_verification_status ===
+        'verified'
+          ? 'OK'
+          : 'ACTION REQUIRED'}
+      </div>
+    </div>
+
+    {invoice.physical_verified_at && (
+      <p className="mt-3 border-t border-black/5 pt-3 text-xs font-medium text-slate-500">
+        Verified on{' '}
+        {new Date(
+          invoice.physical_verified_at
+        ).toLocaleString('en-IN')}
+      </p>
+    )}
+  </div>
+)}
         <div className="grid gap-3 rounded-2xl border border-green-100 bg-green-50/60 p-4 sm:grid-cols-[1.3fr_1fr_0.8fr]">
           <div><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{invoice.kind === 'purchase' ? 'Supplier' : 'Customer'}</p><p className="mt-1 font-black text-slate-900">{invoice.party?.name || 'Walk-in / Other'}</p>{invoice.party?.phone && <p className="text-xs font-medium text-slate-500">{invoice.party.phone}</p>}</div>
           <div>{editing ? <><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Invoice Date & Time</label><input type="datetime-local" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="mt-1 w-full rounded-lg border border-green-200 bg-white px-2 py-2 text-sm font-semibold outline-none focus:border-green-600" /></> : <><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Date</p><p className="mt-1 font-semibold text-slate-900">{new Date(invoice.date || invoice.created_at).toLocaleString('en-IN')}</p></>}</div>
