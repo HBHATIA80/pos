@@ -3,101 +3,21 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
-  Package,
-  Printer,
-  RefreshCw,
-  ShoppingBag,
-  ShoppingCart,
-  Sparkles,
-  WalletCards,
-  X,
-} from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, BarChart3, ChevronRight, CircleDollarSign, Package, RefreshCw, ShoppingBag, ShoppingCart, Sparkles, WalletCards, X } from 'lucide-react'
 
-type Day = {
-  date: string
-  sales: number
-  purchases: number
-  cogs: number
-  expenses: number
-  otherIncome: number
-  grossProfit: number
-  netProfit: number
-  entries: number
-}
-
-type Report = {
-  period: { start: string; end: string }
-  summary: {
-    sales: number
-    purchases: number
-    expense: number
-    costOfGoodsSold: number
-    grossProfit: number
-    netProfit: number
-    debtors: number
-    creditors: number
-    cash: number
-    bank: number
-    stock: number
-    income: number
-    otherIncome?: number
-  }
-  daily: Day[]
-  aging?: { name: string; party_id: string; type: string; amount: number }[]
-}
-
+type Day = { date: string; sales: number; purchases: number; cogs: number; expenses: number; otherIncome: number; grossProfit: number; netProfit: number; entries: number }
+type Report = { period: { start: string; end: string }; summary: { sales: number; purchases: number; expense: number; costOfGoodsSold: number; grossProfit: number; netProfit: number; debtors: number; creditors: number; cash: number; bank: number; stock: number; income: number; otherIncome?: number; todaySales?: number; todayGrossProfit?: number; todayNetProfit?: number; todayExpenses?: number; todayCogs?: number; todayOtherIncome?: number }; daily: Day[]; aging?: { name: string; party_id: string; type: string; amount: number }[] }
 type Detail = { type: string; rows: any[]; summary?: any }
-
-type InvoiceItem = {
-  id: string
-  product_id: string
-  sku: string
-  product_name: string
-  unit_name: string
-  quantity: number
-  unit_price: number
-  discount_amount: number
-  line_total: number
-  cost_unit_price?: number | null
-}
-
-type Invoice = {
-  id: string
-  invoice_no: string
-  status: string
-  subtotal: number
-  discount_amount: number
-  grand_total: number
-  notes?: string | null
-  sold_at?: string | null
-  purchased_at?: string | null
-  completed_at?: string | null
-  created_at: string
-  party?: { id: string; name: string; phone?: string | null; party_type?: string } | Array<{ id: string; name: string }> | null
-  parties?: { id: string; name: string; phone?: string | null; party_type?: string } | null
-  sales_invoice_items?: InvoiceItem[]
-  purchase_invoice_items?: InvoiceItem[]
-}
+type InvoiceItem = { id: string; product_id: string; sku: string; product_name: string; unit_name: string; quantity: number; unit_price: number; discount_amount: number; line_total: number; cost_unit_price?: number | null }
+type Invoice = { id: string; invoice_no: string; status: string; subtotal: number; discount_amount: number; grand_total: number; notes?: string | null; sold_at?: string | null; created_at: string; party?: any; parties?: any; sales_invoice_items?: InvoiceItem[] }
 
 const money = (value: number, fraction = 0) => `₹${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: fraction, maximumFractionDigits: fraction })}`
 const quantity = (value: number) => Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 3 })
-const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 const fullDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 const formatDateTime = (value?: string | null) => value ? new Date(value).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 
-function periodDates(days: 7 | 14 | 30) {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - (days - 1))
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) }
-}
+function periodDates(days: 7 | 14 | 30) { const end = new Date(); const start = new Date(); start.setDate(start.getDate() - (days - 1)); return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) } }
 
 export default function DashboardAnalytics() {
   const [data, setData] = useState<Report | null>(null)
@@ -111,263 +31,63 @@ export default function DashboardAnalytics() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
 
   async function load(selectedDays = days, silent = false) {
-    if (silent) setRefreshing(true)
-    else setLoading(true)
-    setError('')
-    try {
-      const { start, end } = periodDates(selectedDays)
-      const response = await fetch(`/api/accounting/reports?start=${start}&end=${end}`, { cache: 'no-store' })
-      const json = await response.json()
-      if (!response.ok) throw new Error(json.error || 'Unable to load dashboard')
-      setData(json)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load dashboard')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
+    if (silent) setRefreshing(true); else setLoading(true); setError('')
+    try { const { start, end } = periodDates(selectedDays); const response = await fetch(`/api/accounting/reports?start=${start}&end=${end}`, { cache: 'no-store' }); const json = await response.json(); if (!response.ok) throw new Error(json.error || 'Unable to load dashboard'); setData(json) }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to load dashboard') }
+    finally { setLoading(false); setRefreshing(false) }
   }
-
   useEffect(() => { void load(7) }, [])
+  const changePeriod = (value: 7 | 14 | 30) => { setDays(value); void load(value, true) }
 
-  const changePeriod = (value: 7 | 14 | 30) => {
-    setDays(value)
-    void load(value, true)
-  }
-
-  const trend = useMemo(() => {
-    const rows = data?.daily || []
-    const map = new Map(rows.map(row => [row.date, row]))
-    const output: Day[] = []
-    for (let index = days - 1; index >= 0; index -= 1) {
-      const date = new Date()
-      date.setDate(date.getDate() - index)
-      const key = date.toISOString().slice(0, 10)
-      output.push(map.get(key) || { date: key, sales: 0, purchases: 0, cogs: 0, expenses: 0, otherIncome: 0, grossProfit: 0, netProfit: 0, entries: 0 })
-    }
-    return output
-  }, [data, days])
-
-  const totals = useMemo(() => trend.reduce((acc, row) => ({
-    sales: acc.sales + row.sales,
-    purchases: acc.purchases + row.purchases,
-    expenses: acc.expenses + row.expenses,
-    gross: acc.gross + row.grossProfit,
-    net: acc.net + row.netProfit,
-  }), { sales: 0, purchases: 0, expenses: 0, gross: 0, net: 0 }), [trend])
-
+  const trend = useMemo(() => { const rows = data?.daily || []; const map = new Map(rows.map(row => [row.date, row])); const output: Day[] = []; for (let index = days - 1; index >= 0; index -= 1) { const date = new Date(); date.setDate(date.getDate() - index); const key = date.toISOString().slice(0, 10); output.push(map.get(key) || { date: key, sales: 0, purchases: 0, cogs: 0, expenses: 0, otherIncome: 0, grossProfit: 0, netProfit: 0, entries: 0 }) } return output }, [data, days])
+  const totals = useMemo(() => trend.reduce((a, r) => ({ sales: a.sales + r.sales, purchases: a.purchases + r.purchases, expenses: a.expenses + r.expenses, gross: a.gross + r.grossProfit, net: a.net + r.netProfit }), { sales: 0, purchases: 0, expenses: 0, gross: 0, net: 0 }), [trend])
   const maxChart = Math.max(1, ...trend.map(row => Math.max(row.sales, row.purchases)))
-  const margin = totals.sales ? (totals.net / totals.sales) * 100 : 0
   const s = data?.summary
 
   async function openDetails(type: string) {
-    setDetailType(type)
-    setDetail(null)
-    setSelectedInvoice(null)
-    setDetailLoading(true)
-    try {
-      const { start, end } = periodDates(days)
-      if (type === 'receivables' || type === 'payables') {
-        const response = await fetch(`/api/accounting/reports?start=${start}&end=${end}`, { cache: 'no-store' })
-        const json = await response.json()
-        if (!response.ok) throw new Error(json.error || 'Unable to load details')
-        const wanted = type === 'receivables' ? 'receivable' : 'payable'
-        setDetail({ type, rows: (json.aging || []).filter((row: any) => row.type === wanted) })
-      } else {
-        const response = await fetch(`/api/dashboard/details?type=${type}&start=${start}&end=${end}`, { cache: 'no-store' })
-        const json = await response.json()
-        if (!response.ok) throw new Error(json.error || 'Unable to load details')
-        setDetail(json)
-      }
-    } catch (e) {
-      setDetail({ type, rows: [{ error: e instanceof Error ? e.message : 'Unable to load details' }] })
-    } finally {
-      setDetailLoading(false)
-    }
+    setDetailType(type); setDetail(null); setSelectedInvoice(null); setDetailLoading(true)
+    try { const { start, end } = periodDates(days); if (type === 'receivables' || type === 'payables') { const response = await fetch(`/api/accounting/reports?start=${start}&end=${end}`, { cache: 'no-store' }); const json = await response.json(); if (!response.ok) throw new Error(json.error || 'Unable to load details'); const wanted = type === 'receivables' ? 'receivable' : 'payable'; setDetail({ type, rows: (json.aging || []).filter((row: any) => row.type === wanted) }) } else { const response = await fetch(`/api/dashboard/details?type=${type}&start=${start}&end=${end}`, { cache: 'no-store' }); const json = await response.json(); if (!response.ok) throw new Error(json.error || 'Unable to load details'); setDetail(json) } }
+    catch (e) { setDetail({ type, rows: [{ error: e instanceof Error ? e.message : 'Unable to load details' }] }) }
+    finally { setDetailLoading(false) }
   }
-
-  function partyName(invoice: Invoice) {
-    const party = invoice.party || invoice.parties
-    if (Array.isArray(party)) return party[0]?.name || 'Walk-in / Other'
-    return party?.name || 'Walk-in / Other'
-  }
+  const partyName = (invoice: Invoice) => { const party = invoice.party || invoice.parties; if (Array.isArray(party)) return party[0]?.name || 'Walk-in / Other'; return party?.name || 'Walk-in / Other' }
 
   if (loading) return <DashboardSkeleton />
-  if (error) return (
-    <section className="rounded-[24px] border border-red-200 bg-red-50 p-6">
-      <p className="font-black text-red-900">Dashboard data unavailable</p>
-      <p className="mt-1 text-sm text-red-700">{error}</p>
-      <button onClick={() => void load(days)} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm ring-1 ring-red-200">Try again</button>
-    </section>
-  )
+  if (error) return <section className="rounded-[26px] border border-red-200 bg-red-50 p-6"><p className="font-black text-red-900">Dashboard data unavailable</p><p className="mt-1 text-sm text-red-700">{error}</p><button onClick={() => void load(days)} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 ring-1 ring-red-200">Try again</button></section>
   if (!data || !s) return null
 
-  return <div className="space-y-5 pb-6">
-    <section className="relative overflow-hidden rounded-[28px] border border-emerald-200 bg-gradient-to-br from-[#eaf8ef] via-[#dff4e6] to-[#ccebd7] p-5 shadow-sm sm:p-7">
-      <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/75 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 left-1/3 h-72 w-72 rounded-full bg-emerald-300/20 blur-3xl" />
-      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/75 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.16em] text-emerald-800"><Sparkles className="h-3.5 w-3.5" /> Live business pulse</span>
-          <h1 className="mt-4 text-2xl font-black tracking-[-.035em] text-slate-950 sm:text-3xl"><Greeting /> — here&apos;s your business at a glance.</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Sales, inventory purchases, operating expenses and profit are shown separately. Stock purchases do not directly reduce Profit &amp; Loss until the goods are sold.</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600"><span className="rounded-full bg-white/80 px-3 py-1.5 ring-1 ring-emerald-100">{fullDate(data.period.start)} – {fullDate(data.period.end)}</span><span className="rounded-full bg-white/80 px-3 py-1.5 ring-1 ring-emerald-100">Live data</span></div>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          {[7, 14, 30].map(value => <button key={value} onClick={() => changePeriod(value as 7 | 14 | 30)} className={`rounded-xl px-4 py-2.5 text-xs font-black transition ${days === value ? 'bg-slate-950 text-white shadow-sm' : 'bg-white/80 text-slate-700 ring-1 ring-emerald-100 hover:bg-white'}`}>{value} days</button>)}
-          <button onClick={() => void load(days, true)} disabled={refreshing} className="rounded-xl bg-white/80 p-2.5 text-slate-700 ring-1 ring-emerald-100 hover:bg-white disabled:opacity-60" title="Refresh dashboard"><RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /></button>
-        </div>
-      </div>
-      <div className="relative mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <HeroMetric icon={<ShoppingCart />} label="Sales" value={s.sales} onClick={() => void openDetails('sales')} />
-        <HeroMetric icon={<ShoppingBag />} label="Inventory purchases" value={s.purchases} onClick={() => void openDetails('purchases')} />
-        <HeroMetric icon={<WalletCards />} label="Operating expenses" value={s.expense} onClick={() => void openDetails('expenses')} />
-        <HeroMetric icon={<CircleDollarSign />} label="Gross profit" value={s.grossProfit} tone={s.grossProfit >= 0 ? 'positive' : 'negative'} onClick={() => void openDetails('grossprofit')} />
-        <HeroMetric icon={<BarChart3 />} label="Net profit / loss" value={s.netProfit} tone={s.netProfit >= 0 ? 'positive' : 'negative'} onClick={() => void openDetails('netprofit')} />
-      </div>
+  const todayProfit = Number(s.todayNetProfit ?? trend.find(row => row.date === data.period.end)?.netProfit ?? 0)
+  const todayGross = Number(s.todayGrossProfit ?? trend.find(row => row.date === data.period.end)?.grossProfit ?? 0)
+
+  return <div className="space-y-5 pb-8">
+    <section className="relative overflow-hidden rounded-[30px] border border-emerald-200 bg-gradient-to-br from-[#f0fbf4] via-[#e2f5e8] to-[#ccebd8] p-5 shadow-[0_14px_40px_rgba(22,101,52,.08)] sm:p-7">
+      <div className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/80 blur-3xl" /><div className="pointer-events-none absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl" />
+      <div className="relative flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"><div className="max-w-3xl"><span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.16em] text-emerald-800"><Sparkles className="h-3.5 w-3.5" /> Live business pulse</span><h1 className="mt-4 text-2xl font-black tracking-[-.04em] text-slate-950 sm:text-[32px]"><Greeting /> — here&apos;s your business at a glance.</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Sales, inventory purchases, operating expenses and profit are separated correctly. Profit uses moving weighted-average purchase cost from completed purchases.</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-600"><span className="rounded-full bg-white/85 px-3 py-1.5 ring-1 ring-emerald-100">{fullDate(data.period.start)} – {fullDate(data.period.end)}</span><span className="rounded-full bg-white/85 px-3 py-1.5 ring-1 ring-emerald-100">Live data</span></div></div><div className="flex shrink-0 flex-wrap gap-2">{[7,14,30].map(value => <button key={value} onClick={() => changePeriod(value as 7 | 14 | 30)} className={`rounded-xl px-4 py-2.5 text-xs font-black transition ${days === value ? 'bg-slate-950 text-white shadow-md' : 'bg-white/90 text-slate-800 ring-1 ring-emerald-100 hover:bg-slate-950 hover:text-white'}`}>{value} days</button>)}<button onClick={() => void load(days, true)} disabled={refreshing} className="rounded-xl bg-white/90 p-2.5 text-slate-800 ring-1 ring-emerald-100 transition hover:bg-slate-950 hover:text-white disabled:opacity-60" title="Refresh dashboard"><RefreshCw className={refreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /></button></div></div>
+      <div className="relative mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><HeroMetric icon={<ShoppingCart />} label="Sales" value={s.sales} onClick={() => void openDetails('sales')} /><HeroMetric icon={<ShoppingBag />} label="Inventory purchases" value={s.purchases} onClick={() => void openDetails('purchases')} /><HeroMetric icon={<WalletCards />} label="Operating expenses" value={s.expense} onClick={() => void openDetails('expenses')} /><HeroMetric icon={<CircleDollarSign />} label="Gross profit" value={s.grossProfit} tone={s.grossProfit >= 0 ? 'positive' : 'negative'} onClick={() => void openDetails('grossprofit')} /><HeroMetric icon={<BarChart3 />} label="Net profit / loss" value={s.netProfit} tone={s.netProfit >= 0 ? 'positive' : 'negative'} onClick={() => void openDetails('netprofit')} /></div>
     </section>
 
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Kpi icon={<ArrowUpRight />} label="Receivables" value={s.debtors} hint="Customer money due" tone="green" onClick={() => void openDetails('receivables')} />
-      <Kpi icon={<ArrowDownRight />} label="Payables" value={s.creditors} hint="Supplier money due" tone="red" onClick={() => void openDetails('payables')} />
-      <Kpi icon={<WalletCards />} label="Cash + Bank" value={s.cash + s.bank} hint="Liquid funds" tone="green" onClick={() => void openDetails('cashbank')} />
-      <Kpi icon={<Package />} label="Stock at cost" value={s.stock} hint="Current inventory value" tone="green" onClick={() => void openDetails('stock')} />
-    </section>
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"><Kpi icon={<CircleDollarSign />} label="Today&apos;s profit" value={todayProfit} hint={`Gross profit ${money(todayGross)}`} tone={todayProfit >= 0 ? 'green' : 'red'} onClick={() => void openDetails('netprofit')} featured /><Kpi icon={<ArrowUpRight />} label="Receivables" value={s.debtors} hint="Customer money due" tone="green" onClick={() => void openDetails('receivables')} /><Kpi icon={<ArrowDownRight />} label="Payables" value={s.creditors} hint="Supplier money due" tone="red" onClick={() => void openDetails('payables')} /><Kpi icon={<WalletCards />} label="Cash + Bank" value={s.cash + s.bank} hint="Liquid funds" tone="green" onClick={() => void openDetails('cashbank')} /><Kpi icon={<Package />} label="Stock at cost" value={s.stock} hint="Current inventory value" tone="green" onClick={() => void openDetails('stock')} /></section>
 
-    <section className="grid gap-5 xl:grid-cols-[1.55fr_.9fr]">
-      <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-emerald-700" /><h2 className="text-lg font-black text-slate-950">Daily sales &amp; purchases</h2></div><p className="mt-1 text-xs text-slate-500">Posted activity for the selected period.</p></div><Link href="/dashboard/analysis" className="inline-flex items-center gap-1 text-xs font-black text-emerald-700">Full analysis <ChevronRight className="h-4 w-4" /></Link></div>
-        <div className="mt-6 flex h-[270px] items-end gap-1 overflow-x-auto pb-1">{trend.map((row, index) => <div key={row.date} className="group flex min-w-[34px] flex-1 flex-col items-center justify-end gap-2" title={`${row.date} · Sales ${money(row.sales)} · Purchases ${money(row.purchases)} · Net ${money(row.netProfit)}`}><div className="flex h-52 w-full max-w-[46px] items-end gap-1 rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100"><div className="w-1/2 rounded-t-md bg-rose-300 transition-all group-hover:bg-rose-400" style={{ height: `${Math.max(row.sales ? 4 : 1, (row.sales / maxChart) * 100)}%` }} /><div className="w-1/2 rounded-t-md bg-emerald-300 transition-all group-hover:bg-emerald-400" style={{ height: `${Math.max(row.purchases ? 4 : 1, (row.purchases / maxChart) * 100)}%` }} /></div><span className={`text-[9px] font-semibold ${index % 2 ? 'text-slate-300' : 'text-slate-500'}`}>{shortDate(row.date)}</span></div>)}</div>
-        <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500"><span className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-rose-300" /> Sales</span><span className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-emerald-300" /> Inventory purchases</span><span className="ml-auto">Net <b className={totals.net >= 0 ? 'text-emerald-700' : 'text-red-600'}>{money(totals.net)}</b></span></div>
-      </section>
+    <section className="grid gap-5 xl:grid-cols-[1.55fr_.9fr]"><section className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-emerald-700" /><h2 className="text-lg font-black text-slate-950">Daily sales &amp; purchases</h2></div><p className="mt-1 text-xs text-slate-500">Posted activity for the selected period.</p></div><Link href="/dashboard/analysis" className="inline-flex items-center gap-1 text-xs font-black text-emerald-700 transition hover:text-slate-950">Full analysis <ChevronRight className="h-4 w-4" /></Link></div><div className="mt-6 flex h-[270px] items-end gap-1 overflow-x-auto pb-1">{trend.map((row,index)=><div key={row.date} className="group flex min-w-[34px] flex-1 flex-col items-center justify-end gap-2" title={`${row.date} · Sales ${money(row.sales)} · Purchases ${money(row.purchases)} · Net ${money(row.netProfit)}`}><div className="flex h-52 w-full max-w-[46px] items-end gap-1 rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100"><div className="w-1/2 rounded-t-md bg-rose-300 transition-all group-hover:bg-slate-950" style={{height:`${Math.max(row.sales?4:1,(row.sales/maxChart)*100)}%`}}/><div className="w-1/2 rounded-t-md bg-emerald-300 transition-all group-hover:bg-slate-950" style={{height:`${Math.max(row.purchases?4:1,(row.purchases/maxChart)*100)}%`}}/></div><span className={`text-[9px] font-semibold ${index%2?'text-slate-300':'text-slate-500'}`}>{shortDate(row.date)}</span></div>)}</div><div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500"><span className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-rose-300"/>Sales</span><span className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-emerald-300"/>Inventory purchases</span><span className="ml-auto">Period net <b className={totals.net>=0?'text-emerald-700':'text-red-600'}>{money(totals.net)}</b></span></div></section><section className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-black text-slate-950">Period performance</h2><p className="mt-1 text-xs text-slate-500">{days} days · profit after cost and operating expenses</p></div><span className={`rounded-full px-3 py-1 text-[11px] font-black ${totals.sales && totals.net>=0?'bg-emerald-50 text-emerald-700':'bg-red-50 text-red-600'}`}>{totals.sales?`${((totals.net/totals.sales)*100).toFixed(1)}% net margin`:'0.0% net margin'}</span></div><div className="mt-6 space-y-5"><ProgressRow label="Sales" value={totals.sales} max={Math.max(totals.sales,totals.purchases,totals.expenses,1)}/><ProgressRow label="Inventory purchases" value={totals.purchases} max={Math.max(totals.sales,totals.purchases,totals.expenses,1)}/><ProgressRow label="Operating expenses" value={totals.expenses} max={Math.max(totals.sales,totals.purchases,totals.expenses,1)}/><div className="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center justify-between"><span className="text-xs font-black uppercase tracking-wider text-slate-500">Today&apos;s profit</span><span className={`text-lg font-black ${todayProfit>=0?'text-emerald-700':'text-red-600'}`}>{money(todayProfit)}</span></div><p className="mt-1 text-xs text-slate-500">Sales {money(s.todaySales||0)} · COGS {money(s.todayCogs||0)} · Expenses {money(s.todayExpenses||0)}</p></div></div></section></section>
 
-      <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-black text-slate-950">Period performance</h2><p className="mt-1 text-xs text-slate-500">Last {days} days</p></div><span className={`rounded-full px-3 py-1 text-xs font-black ${margin >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{margin.toFixed(1)}% net margin</span></div>
-        <div className="mt-6 space-y-5"><Progress label="Sales" value={totals.sales} max={Math.max(totals.sales, totals.purchases, totals.expenses, 1)} tone="rose" /><Progress label="Inventory purchases" value={totals.purchases} max={Math.max(totals.sales, totals.purchases, totals.expenses, 1)} tone="green" /><Progress label="Operating expenses" value={totals.expenses} max={Math.max(totals.sales, totals.purchases, totals.expenses, 1)} tone="slate" /><div className="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-600">Gross profit</span><b className={`text-lg font-black ${totals.gross >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{money(totals.gross)}</b></div><p className="mt-1 text-xs text-slate-500">Sales less cost of goods actually sold.</p></div><div className={`rounded-2xl p-4 ${totals.net >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">Net profit / loss</span><b className={`text-lg font-black ${totals.net >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{money(totals.net)}</b></div><p className="mt-1 text-xs text-slate-500">Gross profit + other income − operating expenses.</p></div></div>
-      </section>
-    </section>
-
-    <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-700" /><h2 className="text-lg font-black text-slate-950">Business health</h2></div><p className="mt-1 text-xs text-slate-500">Current balances from the same accounting data used across the dashboard.</p></div><Link href="/dashboard/ledger" className="inline-flex items-center gap-1 text-xs font-black text-emerald-700">Open ledger <ChevronRight className="h-4 w-4" /></Link></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><Health label="Customer receivables" value={s.debtors} hint="Outstanding customer balances" tone="green" /><Health label="Supplier payables" value={s.creditors} hint="Outstanding supplier balances" tone="red" /><Health label="Inventory value" value={s.stock} hint="Current stock at cost" tone="green" /></div></section>
-
-    {detailType && <DetailModal detailType={detailType} detail={detail} loading={detailLoading} selectedInvoice={selectedInvoice} onClose={() => { setDetailType(null); setDetail(null); setSelectedInvoice(null) }} onInvoice={setSelectedInvoice} onBack={() => setSelectedInvoice(null)} onPrint={printInvoice} partyName={partyName} />}
+    {detailType && <DetailModal type={detailType} detail={detail} loading={detailLoading} selectedInvoice={selectedInvoice} setSelectedInvoice={setSelectedInvoice} partyName={partyName} onClose={() => { setDetailType(null); setDetail(null); setSelectedInvoice(null) }} />}
   </div>
 }
 
-function Greeting() {
-  const [text, setText] = useState('Good day')
-  useEffect(() => { const update = () => { const hour = new Date().getHours(); setText(hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night') }; update(); const timer = window.setInterval(update, 60_000); return () => window.clearInterval(timer) }, [])
-  return <>{text}</>
-}
+function Greeting(){const hour=new Date().getHours();return <>{hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}</>}
+function HeroMetric({icon,label,value,tone='default',onClick}:{icon:ReactNode;label:string;value:number;tone?:'default'|'positive'|'negative';onClick:()=>void}){return <button onClick={onClick} className="group min-h-[112px] rounded-2xl border border-white/80 bg-white/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-950 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-950/30"><div className="flex items-start justify-between"><span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-white/10 group-hover:text-white">{icon}</span><ChevronRight className="h-4 w-4 text-slate-400 transition-colors group-hover:text-white"/></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-500 transition-colors group-hover:text-slate-300">{label}</p><p className={`mt-1 text-xl font-black transition-colors group-hover:text-white ${tone==='negative'?'text-red-600':tone==='positive'?'text-emerald-700':'text-slate-950'}`}>{money(value)}</p></button>}
+function Kpi({icon,label,value,hint,tone,onClick,featured=false}:{icon:ReactNode;label:string;value:number;hint:string;tone:'green'|'red';onClick:()=>void;featured?:boolean}){return <button onClick={onClick} className={`group rounded-[22px] border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-950 hover:text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-950/20 ${featured?'border-emerald-200 bg-emerald-50/70':'border-slate-200 bg-white'}`}><div className="flex items-start justify-between"><span className={`grid h-9 w-9 place-items-center rounded-xl transition-colors ${tone==='red'?'bg-red-50 text-red-700 group-hover:bg-white/10 group-hover:text-white':'bg-emerald-50 text-emerald-700 group-hover:bg-white/10 group-hover:text-white'}`}>{icon}</span><ChevronRight className="h-4 w-4 text-slate-400 transition-colors group-hover:text-white"/></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-500 transition-colors group-hover:text-slate-300">{label}</p><p className={`mt-1 text-xl font-black transition-colors group-hover:text-white ${tone==='red'&&value>0?'text-red-600':'text-slate-950'}`}>{money(value)}</p><p className="mt-1 text-[11px] text-slate-500 transition-colors group-hover:text-slate-300">{hint}</p></button>}
+function ProgressRow({label,value,max}:{label:string;value:number;max:number}){const width=Math.min(100,Math.max(0,(value/max)*100));return <div><div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-600"><span>{label}</span><span>{money(value)}</span></div><div className="h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full bg-emerald-400 transition-all" style={{width:`${width}%`}}/></div></div>}
 
-function HeroMetric({ icon, label, value, tone = 'neutral', onClick }: { icon: ReactNode; label: string; value: number; tone?: 'neutral' | 'positive' | 'negative'; onClick: () => void }) {
-  return <button onClick={onClick} className="group rounded-2xl border border-white/70 bg-white/65 p-4 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/85"><div className="flex items-center justify-between gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-emerald-700 ring-1 ring-emerald-100">{icon}</span><ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5" /></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.12em] text-slate-500">{label}</p><p className={`mt-1 text-xl font-black tracking-tight ${tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-red-600' : 'text-slate-950'}`}>{money(value)}</p></button>
-}
+function DetailModal({type,detail,loading,selectedInvoice,setSelectedInvoice,partyName,onClose}:{type:string;detail:Detail|null;loading:boolean;selectedInvoice:Invoice|null;setSelectedInvoice:(invoice:Invoice|null)=>void;partyName:(invoice:Invoice)=>string;onClose:()=>void}){const title=type==='grossprofit'?'Gross profit':type==='netprofit'?'Net profit / loss':type==='sales'?'Sales invoices':type==='purchases'?'Purchase invoices':type==='expenses'?'Operating expenses':type==='stock'?'Stock at cost':type==='cashbank'?'Cash & bank activity':type==='receivables'?'Receivables':'Payables';return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-6" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl"><div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-emerald-700">Dashboard details</p><h2 className="mt-1 text-xl font-black text-slate-950">{selectedInvoice?selectedInvoice.invoice_no:title}</h2>{selectedInvoice&&<p className="mt-1 text-xs text-slate-500">{partyName(selectedInvoice)} · {formatDateTime(selectedInvoice.sold_at||selectedInvoice.created_at)}</p>}</div><button onClick={onClose} className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-950 hover:text-white" aria-label="Close"><X className="h-5 w-5"/></button></div>{selectedInvoice?<InvoiceProfit invoice={selectedInvoice} onBack={()=>setSelectedInvoice(null)}/>:<div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">{loading?<div className="grid place-items-center py-24 text-sm font-semibold text-slate-500"><RefreshCw className="mb-3 h-6 w-6 animate-spin text-emerald-600"/>Loading details…</div>:detail?.rows?.[0]?.error?<div className="rounded-2xl bg-red-50 p-5 text-sm font-semibold text-red-700">{detail.rows[0].error}</div>:<DetailRows type={type} rows={detail?.rows||[]} setSelectedInvoice={setSelectedInvoice}/>}</div>}</div></div>}
 
-function Kpi({ icon, label, value, hint, tone, onClick }: { icon: ReactNode; label: string; value: number; hint: string; tone: 'green' | 'red'; onClick: () => void }) {
-  return <button onClick={onClick} className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-5"><div className="flex items-center justify-between"><span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone === 'green' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>{icon}</span><ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:text-slate-600" /></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">{label}</p><p className="mt-1 text-2xl font-black tracking-tight text-slate-950">{money(value)}</p><p className="mt-1 text-[11px] text-slate-500">{hint} · <span className="font-bold text-emerald-700">View details</span></p></button>
-}
+function DetailRows({type,rows,setSelectedInvoice}:{type:string;rows:any[];setSelectedInvoice:(invoice:Invoice|null)=>void}){if(!rows.length)return <div className="grid place-items-center py-20 text-center"><p className="font-black text-slate-800">No records found</p><p className="mt-1 text-sm text-slate-500">There is no data for this period.</p></div>;if(type==='grossprofit'||type==='netprofit')return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="hidden grid-cols-[1.2fr_1fr_.7fr_.7fr] gap-4 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500 sm:grid"><span>Invoice</span><span>Party / date</span><span className="text-right">Sales</span><span className="text-right">Profit / loss</span></div>{rows.map((row,index)=>row.kind==='sale'?<button key={`${row.id}-${index}`} onClick={()=>setSelectedInvoice(row.invoice)} className="group grid w-full gap-2 border-b border-slate-100 px-4 py-4 text-left transition last:border-0 hover:bg-slate-950 hover:text-white sm:grid-cols-[1.2fr_1fr_.7fr_.7fr] sm:items-center sm:gap-4"><div><p className="font-black underline decoration-emerald-400 underline-offset-2">{row.invoice_no}</p><p className="mt-1 text-[11px] text-slate-500 group-hover:text-slate-300">Click to see item-wise weighted cost</p></div><div className="text-xs"><p className="font-semibold">{Array.isArray(row.party)?row.party[0]?.name:row.party?.name||'Walk-in / Other'}</p><p className="mt-1 text-slate-500 group-hover:text-slate-300">{formatDateTime(row.date)}</p></div><div className="text-right font-bold">{money(row.sales)}</div><div className={`text-right font-black ${row.gross_profit>=0?'text-emerald-600':'text-red-600'}`}>{money(row.gross_profit)}</div></button>:<div key={`${row.id}-${index}`} className="grid gap-2 border-b border-slate-100 px-4 py-4 sm:grid-cols-[1.2fr_1fr_.7fr_.7fr] sm:items-center sm:gap-4"><div className="font-black">{row.reference_id||'Expense'}</div><div className="text-xs text-slate-500">{row.account||row.description}</div><div/><div className="text-right font-black text-red-600">{money(-Math.abs(row.amount||0))}</div></div>)}</div>;
+if(type==='sales'||type==='purchases')return <div className="space-y-2">{rows.map(row=><div key={row.id} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 transition hover:bg-slate-950 hover:text-white"><div><p className="font-black">{row.invoice_no}</p><p className="mt-1 text-xs text-slate-500">{row.party?.name||(Array.isArray(row.parties)?row.parties[0]?.name:row.parties?.name)||'Walk-in / Other'} · {formatDateTime(row.sold_at||row.purchased_at||row.created_at)}</p></div><p className="font-black">{money(row.grand_total)}</p></div>)}</div>;
+if(type==='expenses')return <div className="space-y-2">{rows.map(row=><div key={row.id} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 transition hover:bg-slate-950 hover:text-white"><div><p className="font-black">{row.expense_no||row.category}</p><p className="mt-1 text-xs text-slate-500">{row.description||'Operating expense'} · {formatDateTime(row.expense_date||row.created_at)}</p></div><p className="font-black text-red-600">{money(row.amount)}</p></div>)}</div>;
+if(type==='stock')return <div className="overflow-x-auto rounded-2xl border border-slate-200"><table className="w-full min-w-[620px] text-sm"><thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500"><tr><th className="px-4 py-3 text-left">Product</th><th className="px-4 py-3 text-right">Qty</th><th className="px-4 py-3 text-right">Purchase / pc</th><th className="px-4 py-3 text-right">Stock cost</th></tr></thead><tbody>{rows.map(row=><tr key={row.product_id} className="border-t border-slate-100 hover:bg-slate-950 hover:text-white"><td className="px-4 py-3 font-bold">{row.name}<div className="text-xs text-slate-500">{row.sku}</div></td><td className="px-4 py-3 text-right font-bold">{quantity(row.current_stock)}</td><td className="px-4 py-3 text-right">{money(row.purchase_price,2)}</td><td className="px-4 py-3 text-right font-black">{money(row.stock_cost_value)}</td></tr>)}</tbody></table></div>;
+if(type==='receivables'||type==='payables')return <div className="space-y-2">{rows.map(row=><div key={row.party_id} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4"><div><p className="font-black">{row.name}</p><p className="mt-1 text-xs text-slate-500">{type==='receivables'?'Customer money due':'Supplier money due'}</p></div><p className="font-black">{money(row.amount)}</p></div>)}</div>;
+return <div className="space-y-2">{rows.map(row=><div key={row.id} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4"><div><p className="font-black">{row.account||row.description||'Cash / Bank'}</p><p className="mt-1 text-xs text-slate-500">{row.reference_id||row.voucher_no||formatDateTime(row.entry_date)}</p></div><p className="font-black">{money((row.debit||0)-(row.credit||0))}</p></div>)}</div>}
 
-function Progress({ label, value, max, tone }: { label: string; value: number; max: number; tone: 'rose' | 'green' | 'slate' }) {
-  const width = Math.min(100, Math.max(0, (value / max) * 100))
-  const bar = tone === 'rose' ? 'bg-rose-300' : tone === 'green' ? 'bg-emerald-300' : 'bg-slate-300'
-  return <div><div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-700">{label}</span><b className="text-slate-950">{money(value)}</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${bar}`} style={{ width: `${width}%` }} /></div></div>
-}
-
-function Health({ label, value, hint, tone }: { label: string; value: number; hint: string; tone: 'green' | 'red' }) {
-  return <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-700">{label}</span><span className={`h-2.5 w-2.5 rounded-full ${tone === 'green' ? 'bg-emerald-400' : 'bg-rose-400'}`} /></div><p className="mt-2 text-xl font-black text-slate-950">{money(value)}</p><p className="mt-1 text-xs text-slate-500">{hint}</p></div>
-}
-
-function DashboardSkeleton() {
-  return <div className="space-y-5"><section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm"><div className="h-6 w-52 animate-pulse rounded bg-slate-100" /><div className="mt-3 h-4 w-96 max-w-full animate-pulse rounded bg-slate-100" /><div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-100" />)}</div></section><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-100" />)}</div><div className="h-80 animate-pulse rounded-[24px] bg-slate-100" /></div>
-}
-
-function DetailModal({ detailType, detail, loading, selectedInvoice, onClose, onInvoice, onBack, onPrint, partyName }: { detailType: string; detail: Detail | null; loading: boolean; selectedInvoice: Invoice | null; onClose: () => void; onInvoice: (invoice: Invoice) => void; onBack: () => void; onPrint: (invoice: Invoice) => void; partyName: (invoice: Invoice) => string }) {
-  const title = detailType === 'receivables' ? 'Receivables' : detailType === 'payables' ? 'Payables' : detailType === 'cashbank' ? 'Cash & Bank' : detailType === 'stock' ? 'Stock at cost' : detailType === 'grossprofit' ? 'Gross profit' : detailType === 'netprofit' ? 'Net profit / loss' : detailType === 'purchases' ? 'Inventory purchases' : detailType === 'expenses' ? 'Operating expenses' : 'Sales'
-  const rows = detail?.rows || []
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onMouseDown={event => { if (event.target === event.currentTarget) onClose() }}>
-    <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl ring-1 ring-slate-200">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6"><div><p className="text-[10px] font-black uppercase tracking-[.14em] text-emerald-700">Dashboard details</p><h2 className="mt-1 text-xl font-black text-slate-950">{selectedInvoice ? selectedInvoice.invoice_no : title}</h2></div><button onClick={onClose} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950"><X className="h-5 w-5" /></button></div>
-      <div className="min-h-0 flex-1 overflow-auto p-5 sm:p-6">{selectedInvoice ? <InvoiceDetail invoice={selectedInvoice} partyName={partyName} onBack={onBack} onPrint={onPrint} /> : loading ? <div className="space-y-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100" />)}</div> : !rows.length ? <div className="rounded-2xl bg-slate-50 p-10 text-center text-sm text-slate-500">No records found for this period.</div> : rows[0]?.error ? <div className="rounded-2xl bg-red-50 p-5 text-sm text-red-700">{rows[0].error}</div> : <DetailRows type={detailType} rows={rows} onInvoice={onInvoice} />}</div>
-    </div>
-  </div>
-}
-
-function DetailRows({ type, rows, onInvoice }: { type: string; rows: any[]; onInvoice: (invoice: Invoice) => void }) {
-  if (type === 'sales' || type === 'purchases') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="divide-y divide-slate-100">{rows.map((row, index) => { const invoice = row as Invoice; return <button key={invoice.id || index} onClick={() => onInvoice(invoice)} className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-slate-50"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{invoice.invoice_no}</p><p className="mt-1 truncate text-xs text-slate-500">{partyLabel(invoice)} · {formatDateTime(invoice.sold_at || invoice.purchased_at || invoice.created_at)}</p></div><div className="shrink-0 text-right"><p className="text-sm font-black text-slate-950">{money(Number(invoice.grand_total))}</p><span className="text-[10px] font-bold uppercase text-slate-400">{invoice.status}</span></div></button> })}</div></div>
-
-  if (type === 'grossprofit' || type === 'netprofit') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Invoice / entry</span><span>Profit / amount</span></div><div className="divide-y divide-slate-100">{rows.map((row, index) => {
-    const isSale = row.kind === 'sale' && row.invoice
-    const value = Number(row.gross_profit ?? row.netProfit ?? row.amount ?? 0)
-    return isSale ? <button key={row.id || index} onClick={() => onInvoice(row.invoice as Invoice)} className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-emerald-50/60"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{row.invoice_no}</p><p className="mt-1 truncate text-xs text-slate-500">{partyLabel(row.invoice)} · {formatDateTime(row.date)}</p><span className="mt-1 inline-flex text-[10px] font-bold uppercase tracking-wide text-emerald-700">Open invoice &amp; item profit →</span></div><div className="shrink-0 text-right"><p className={`text-sm font-black ${value >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{money(value)}</p><span className="text-[10px] font-bold uppercase text-slate-400">Gross profit</span></div></button> : <div key={row.id || index} className="flex items-center justify-between gap-4 p-4"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{row.account || row.description || 'Other income / expense'}</p><p className="mt-1 truncate text-xs text-slate-500">{row.reference_id || row.reference_type || 'Ledger entry'} · {formatDateTime(row.date)}</p></div><b className={value >= 0 ? 'text-emerald-700' : 'text-red-600'}>{money(value)}</b></div>
-  })}</div></div>
-
-  if (type === 'receivables' || type === 'payables') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Party</span><span>Balance</span></div><div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={row.party_id || index} className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3"><div><p className="text-sm font-bold text-slate-900">{row.name}</p><p className="text-xs text-slate-500">{type === 'receivables' ? 'Customer' : 'Supplier'}</p></div><b className={type === 'receivables' ? 'text-emerald-700' : 'text-rose-600'}>{money(Number(row.amount))}</b></div>)}</div></div>
-  if (type === 'stock') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="grid grid-cols-[1fr_auto_auto] gap-4 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Product</span><span>Stock</span><span>Value</span></div><div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={row.product_id || index} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3"><div><p className="text-sm font-bold text-slate-900">{row.name}</p><p className="text-xs text-slate-500">{row.sku || 'No SKU'}</p></div><span className="text-sm text-slate-600">{quantity(Number(row.current_stock || 0))}</span><b>{money(Number(row.stock_cost_value || 0))}</b></div>)}</div></div>
-  if (type === 'expenses') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={row.id || index} className="flex items-center justify-between gap-4 p-4"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{row.description || row.category || 'Expense'}</p><p className="mt-1 text-xs text-slate-500">{row.expense_no || 'Expense'} · {formatDateTime(row.expense_date)}</p></div><b className="shrink-0 text-rose-600">{money(Number(row.amount))}</b></div>)}</div></div>
-  if (type === 'cashbank') return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={row.id || index} className="flex items-center justify-between gap-4 p-4"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{row.account || 'Cash / Bank'}</p><p className="mt-1 truncate text-xs text-slate-500">{row.voucher_no || row.narration || 'Ledger entry'} · {formatDateTime(row.entry_date)}</p></div><b className="shrink-0">{money(Number(row.debit || 0) - Number(row.credit || 0))}</b></div>)}</div></div>
-  return <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={row.id || index} className="flex items-center justify-between gap-4 p-4"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{row.invoice_no || row.account || row.description || 'Entry'}</p><p className="mt-1 truncate text-xs text-slate-500">{row.party?.name || row.reference_id || row.description || ''} · {formatDateTime(row.date)}</p></div><b className={Number(row.gross_profit ?? row.netProfit ?? row.amount ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-600'}>{money(Number(row.gross_profit ?? row.netProfit ?? row.amount ?? 0))}</b></div>)}</div></div>
-}
-
-function InvoiceDetail({ invoice, partyName, onBack, onPrint }: { invoice: Invoice; partyName: (invoice: Invoice) => string; onBack: () => void; onPrint: (invoice: Invoice) => void }) {
-  const items = invoice.sales_invoice_items || invoice.purchase_invoice_items || []
-  const isSale = Boolean(invoice.sales_invoice_items)
-  const profitRows = items.map(item => {
-    const qty = Number(item.quantity || 0)
-    const sellPerPc = qty ? Number(item.line_total || 0) / qty : 0
-    const purchasePerPc = Number(item.cost_unit_price || 0)
-    const profitPerPc = sellPerPc - purchasePerPc
-    return { item, qty, sellPerPc, purchasePerPc, profitPerPc, totalProfit: profitPerPc * qty }
-  })
-  const totalQty = profitRows.reduce((sum, row) => sum + row.qty, 0)
-  const totalSales = profitRows.reduce((sum, row) => sum + row.sellPerPc * row.qty, 0)
-  const totalCost = profitRows.reduce((sum, row) => sum + row.purchasePerPc * row.qty, 0)
-  const totalProfit = profitRows.reduce((sum, row) => sum + row.totalProfit, 0)
-
-  return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><button onClick={onBack} className="text-xs font-black text-emerald-700 hover:text-emerald-900">← Back to list</button><button onClick={() => onPrint(invoice)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"><Printer className="h-4 w-4" /> Print invoice</button></div>
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Info label="Invoice" value={invoice.invoice_no} /><Info label={isSale ? 'Customer' : 'Supplier'} value={partyName(invoice)} /><Info label="Date" value={formatDateTime(invoice.sold_at || invoice.purchased_at || invoice.created_at)} /><Info label="Status" value={invoice.status} /></div>
-
-    {isSale ? <>
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.14em] text-emerald-700">Invoice profit analysis</p><p className="mt-1 text-sm font-bold text-slate-700">Profit is calculated item-by-item using the purchase cost stored on the sale line.</p></div><div className={`rounded-xl bg-white px-4 py-2 text-right shadow-sm ring-1 ${totalProfit >= 0 ? 'ring-emerald-200' : 'ring-red-200'}`}><p className="text-[10px] font-bold uppercase text-slate-500">Total profit / loss</p><p className={`text-xl font-black ${totalProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{money(totalProfit, 2)}</p></div></div></div>
-      <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="overflow-x-auto"><div className="min-w-[820px]"><div className="grid grid-cols-[1.7fr_90px_110px_110px_120px_120px] gap-3 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Item</span><span className="text-right">Qty</span><span className="text-right">Purchase / pc</span><span className="text-right">Sell / pc</span><span className="text-right">Profit / loss / pc</span><span className="text-right">Total profit / loss</span></div><div className="divide-y divide-slate-100">{profitRows.map(({ item, qty, sellPerPc, purchasePerPc, profitPerPc, totalProfit: lineProfit }) => <div key={item.id} className="grid grid-cols-[1.7fr_90px_110px_110px_120px_120px] items-center gap-3 px-4 py-4"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{item.product_name}</p><p className="mt-1 truncate text-xs text-slate-500">{item.sku || 'No SKU'} · {item.unit_name || 'unit'}</p></div><span className="text-right text-sm font-bold text-slate-700">{quantity(qty)}</span><span className="text-right text-sm font-semibold text-slate-700">{money(purchasePerPc, 2)}</span><span className="text-right text-sm font-semibold text-slate-700">{money(sellPerPc, 2)}</span><span className={`text-right text-sm font-black ${profitPerPc >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{profitPerPc >= 0 ? '+' : ''}{money(profitPerPc, 2)}</span><span className={`text-right text-sm font-black ${lineProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{lineProfit >= 0 ? '+' : ''}{money(lineProfit, 2)}</span></div>)}</div></div></div></div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><SummaryBox label="Total quantity" value={quantity(totalQty)} /><SummaryBox label="Total sell value" value={money(totalSales, 2)} /><SummaryBox label="Total purchase cost" value={money(totalCost, 2)} /><SummaryBox label="Total profit / loss" value={`${totalProfit >= 0 ? '+' : ''}${money(totalProfit, 2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} /></div>
-    </> : <>
-      <div className="overflow-hidden rounded-2xl border border-slate-200"><div className="grid grid-cols-[1fr_auto_auto] gap-4 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Item</span><span>Qty</span><span>Total</span></div><div className="divide-y divide-slate-100">{items.map(item => <div key={item.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3"><div><p className="text-sm font-bold text-slate-900">{item.product_name}</p><p className="text-xs text-slate-500">{item.sku || 'No SKU'} · {money(Number(item.unit_price), 2)} / {item.unit_name || 'unit'}</p></div><span className="text-sm text-slate-600">{quantity(Number(item.quantity))}</span><b>{money(Number(item.line_total), 2)}</b></div>)}</div></div>
-      <div className="grid gap-3 sm:grid-cols-3"><SummaryBox label="Total quantity" value={quantity(items.reduce((sum, item) => sum + Number(item.quantity || 0), 0))} /><SummaryBox label="Grand total" value={money(Number(invoice.grand_total), 2)} /><SummaryBox label="Status" value={invoice.status} /></div>
-    </>}
-  </div>
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 truncate text-sm font-black text-slate-900">{value}</p></div>
-}
-
-function SummaryBox({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'neutral' | 'positive' | 'negative' }) {
-  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p><p className={`mt-1 text-lg font-black ${tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-red-600' : 'text-slate-950'}`}>{value}</p></div>
-}
-
-function partyLabel(invoice: Invoice | any) {
-  const party = invoice?.party || invoice?.parties
-  if (Array.isArray(party)) return party[0]?.name || 'Walk-in / Other'
-  return party?.name || 'Walk-in / Other'
-}
-
-function printInvoice(invoice: Invoice) {
-  const items = invoice.sales_invoice_items || invoice.purchase_invoice_items || []
-  const isSale = Boolean(invoice.sales_invoice_items)
-  const rows = items.map(item => {
-    const qty = Number(item.quantity || 0)
-    const sell = qty ? Number(item.line_total || 0) / qty : 0
-    const cost = Number(item.cost_unit_price || 0)
-    const profit = (sell - cost) * qty
-    return `<tr><td>${escapeHtml(item.product_name)}</td><td>${quantity(qty)}</td><td>₹${cost.toFixed(2)}</td><td>₹${sell.toFixed(2)}</td><td>${isSale ? `₹${profit.toFixed(2)}` : `₹${Number(item.line_total || 0).toFixed(2)}`}</td></tr>`
-  }).join('')
-  const popup = window.open('', '_blank', 'width=900,height=700')
-  if (!popup) return
-  popup.document.write(`<!doctype html><html><head><title>${escapeHtml(invoice.invoice_no)}</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111827}h1{margin:0 0 6px}p{color:#64748b}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{border:1px solid #e2e8f0;padding:10px;text-align:left}th{background:#f1f5f9;font-size:12px;text-transform:uppercase}.right{text-align:right}.total{margin-top:24px;text-align:right;font-size:20px;font-weight:700}</style></head><body><h1>${escapeHtml(invoice.invoice_no)}</h1><p>${isSale ? 'Customer' : 'Supplier'}: ${escapeHtml(partyLabel(invoice))}<br>Date: ${escapeHtml(formatDateTime(invoice.sold_at || invoice.purchased_at || invoice.created_at))}</p><table><thead><tr><th>Item</th><th>Qty</th><th>${isSale ? 'Purchase / pc' : 'Unit price'}</th><th>${isSale ? 'Sell / pc' : '—'}</th><th>${isSale ? 'Profit / loss' : 'Line total'}</th></tr></thead><tbody>${rows}</tbody></table><div class="total">Grand total: ₹${Number(invoice.grand_total || 0).toFixed(2)}</div><script>window.onload=()=>window.print()</script></body></html>`)
-  popup.document.close()
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char] || char)
-}
+function InvoiceProfit({invoice,onBack}:{invoice:Invoice;onBack:()=>void}){const items=invoice.sales_invoice_items||[];const totalQty=items.reduce((sum,item)=>sum+Number(item.quantity||0),0);const totalSales=items.reduce((sum,item)=>sum+Number(item.line_total||0),0);const totalCost=items.reduce((sum,item)=>sum+Number(item.quantity||0)*Number(item.cost_unit_price||0),0);const totalProfit=totalSales-totalCost;return <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6"><button onClick={onBack} className="mb-4 rounded-xl px-3 py-2 text-xs font-black text-slate-600 transition hover:bg-slate-950 hover:text-white">← Back to invoices</button><div className="grid gap-3 sm:grid-cols-4"><SummaryBox label="Total qty" value={quantity(totalQty)}/><SummaryBox label="Sell value" value={money(totalSales)}/><SummaryBox label="Weighted cost" value={money(totalCost)}/><SummaryBox label="Total profit / loss" value={money(totalProfit)} negative={totalProfit<0}/></div><div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200"><table className="w-full min-w-[850px] text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500"><tr><th className="px-4 py-3 text-left">Item</th><th className="px-4 py-3 text-right">Qty</th><th className="px-4 py-3 text-right">Weighted purchase / pc</th><th className="px-4 py-3 text-right">Sell / pc</th><th className="px-4 py-3 text-right">Profit / loss / pc</th><th className="px-4 py-3 text-right">Total profit / loss</th></tr></thead><tbody>{items.map(item=>{const qty=Number(item.quantity||0);const sellPc=qty?Number(item.line_total||0)/qty:0;const costPc=Number(item.cost_unit_price||0);const perPc=sellPc-costPc;const total=perPc*qty;return <tr key={item.id} className="border-t border-slate-100 transition hover:bg-slate-950 hover:text-white"><td className="px-4 py-4"><p className="font-black">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.sku} · {item.unit_name}</p></td><td className="px-4 py-4 text-right font-black">{quantity(qty)}</td><td className="px-4 py-4 text-right">{money(costPc,2)}</td><td className="px-4 py-4 text-right">{money(sellPc,2)}</td><td className={`px-4 py-4 text-right font-black ${perPc>=0?'text-emerald-600':'text-red-600'}`}>{money(perPc,2)}</td><td className={`px-4 py-4 text-right font-black ${total>=0?'text-emerald-600':'text-red-600'}`}>{money(total,2)}</td></tr>})}</tbody></table></div><p className="mt-3 text-xs text-slate-500">Purchase cost is the moving weighted-average cost available at the sale date, based on completed purchase invoices. Sale-line discounts are included in the effective selling price per piece.</p></div>}
+function SummaryBox({label,value,negative=false}:{label:string;value:string;negative?:boolean}){return <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</p><p className={`mt-1 text-lg font-black ${negative?'text-red-600':'text-slate-950'}`}>{value}</p></div>}
+function DashboardSkeleton(){return <div className="space-y-5"><div className="h-[330px] animate-pulse rounded-[30px] bg-slate-100"/><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{[1,2,3,4,5].map(i=><div key={i} className="h-32 animate-pulse rounded-[22px] bg-slate-100"/>)}</div><div className="h-80 animate-pulse rounded-[26px] bg-slate-100"/></div>}
