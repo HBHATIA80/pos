@@ -19,7 +19,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('purchase_invoices')
-    .select('id,invoice_no,status,subtotal,discount_amount,grand_total,notes,purchased_at,created_at,party_id,party:parties!purchase_invoices_party_id_fkey(id,name,phone)')
+    .select('id,invoice_no,status,subtotal,discount_amount,grand_total,notes,purchased_at,completed_at,created_at,party_id,party:parties!purchase_invoices_party_id_fkey(id,name,phone),purchase_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)')
     .eq('business_id', profile.business_id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -35,8 +35,6 @@ export async function POST(request: Request) {
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => null)
 
-  // Purchases owns its date selector. Prefer the date explicitly submitted by
-  // the purchase screen, while retaining the shared cookie as a safe fallback.
   const cookieStore = await cookies()
   const requestedDate = typeof body?.purchased_at === 'string' ? body.purchased_at : null
   const selectedDate = requestedDate || cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
