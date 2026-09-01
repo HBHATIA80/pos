@@ -142,19 +142,20 @@ export async function GET(request: Request) {
   for (const invoice of salesRows ?? []) {
     const saleDate = String(invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '')
     const invoiceSales = n(invoice.grand_total)
-    let invoiceCogs = 0
-    let invoiceName = 'Walk-in / Other'
+    const invoiceCogs = 0
+    const invoiceName = 'Walk-in / Other'
     if (invoice.party_id) partyIds.add(invoice.party_id)
     invoicePartyMap.set(invoice.id, invoice.party_id ?? '')
     const items = (invoice.sales_invoice_items ?? []) as SaleItem[]
 
+    let calculatedInvoiceCogs = invoiceCogs
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
       const avgCost = weightedCostAt(item.product_id, saleDate)
       const lineCogs = qty * avgCost
       const lineProfit = lineSales - lineCogs
-      invoiceCogs += lineCogs
+      calculatedInvoiceCogs += lineCogs
       const meta = productMeta.get(item.product_id)
       const productName = item.product_name || meta?.name || 'Unknown product'
       const sku = item.sku ?? meta?.sku ?? null
@@ -171,12 +172,12 @@ export async function GET(request: Request) {
     }
 
     const partyName = invoice.party_id ? `Party ${invoice.party_id.slice(0, 8)}` : invoiceName
-    const invProfit = invoiceSales - invoiceCogs
-    profitInvoices.push({ invoice_id: invoice.id, invoice_no: invoice.invoice_no, date: saleDate.slice(0, 10), party_id: invoice.party_id ?? null, party_name: partyName, sales: invoiceSales, cogs: invoiceCogs, profit: invProfit, margin: marginOf(invoiceSales, invProfit) })
+    const invProfit = invoiceSales - calculatedInvoiceCogs
+    profitInvoices.push({ invoice_id: invoice.id, invoice_no: invoice.invoice_no, date: saleDate.slice(0, 10), party_id: invoice.party_id ?? null, party_name: partyName, sales: invoiceSales, cogs: calculatedInvoiceCogs, profit: invProfit, margin: marginOf(invoiceSales, invProfit) })
 
     const partyKey = invoice.party_id ?? '__walkin__'
     const party = profitParties.get(partyKey) ?? { party_id: invoice.party_id ?? null, name: partyName, invoices: 0, sales: 0, cogs: 0, profit: 0, margin: 0 }
-    party.invoices += 1; party.sales += invoiceSales; party.cogs += invoiceCogs; party.profit += invProfit; party.margin = marginOf(party.sales, party.profit)
+    party.invoices += 1; party.sales += invoiceSales; party.cogs += calculatedInvoiceCogs; party.profit += invProfit; party.margin = marginOf(party.sales, party.profit)
     profitParties.set(partyKey, party)
   }
 
