@@ -101,6 +101,14 @@ export async function GET(request: Request) {
   ])
   for (const e of [linesError, accountsError, groupsError, productsError, salesError, purchaseRowsError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
 
+  const { data: productRows, error: productRowsError } = await supabase
+    .from('products')
+    .select('id,category_id')
+    .eq('business_id', businessId)
+    .eq('is_active', true)
+  if (productRowsError) return NextResponse.json({ error: productRowsError.message }, { status: 400 })
+
+  const productCategoryMap = new Map((productRows ?? []).map(p => [p.id, p.category_id as string | null]))
   const rows = lines ?? []
   const acc = accounts ?? []
   const groupRows = groups ?? []
@@ -163,7 +171,7 @@ export async function GET(request: Request) {
       old.quantity += qty; old.sales += lineSales; old.cogs += lineCogs; old.profit += lineProfit; old.average_purchase_cost = avgCost; old.margin = marginOf(old.sales, old.profit)
       profitProducts.set(item.product_id, old)
 
-      const categoryId = meta?.category_id ?? null
+      const categoryId = productCategoryMap.get(item.product_id) ?? null
       const categoryName = categoryId ? (categoryMap.get(categoryId) ?? 'Uncategorised') : 'Uncategorised'
       const categoryKey = categoryId ?? '__uncategorised__'
       const cat = profitCategories.get(categoryKey) ?? { category_id: categoryId, name: categoryName, sales: 0, cogs: 0, profit: 0, margin: 0 }
