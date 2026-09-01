@@ -1,0 +1,144 @@
+/* Dashboard visual language for Product Import */
+:root {
+  --dashboard-bg: #f7fbf9;
+  --dashboard-navy: #102a43;
+  --dashboard-text: #29445c;
+  --dashboard-muted: #64798c;
+  --dashboard-mint: #e9f8f1;
+  --dashboard-mint-strong: #c9efdf;
+  --dashboard-green: #0f8f6f;
+  --dashboard-green-dark: #08755a;
+  --dashboard-yellow: #fff3d6;
+  --dashboard-yellow-border: #f3d58a;
+  --dashboard-line: #d9e8e1;
+}
+
+.biz-app-main {
+  background: var(--dashboard-bg) !important;
+}
+
+/* Replace the dark green import hero with the light dashboard treatment. */
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] {
+  background: linear-gradient(135deg, #effbf6 0%, #e5f7ef 100%) !important;
+  background-image: linear-gradient(135deg, #effbf6 0%, #e5f7ef 100%) !important;
+  border: 1px solid var(--dashboard-mint-strong) !important;
+  box-shadow: 0 16px 40px rgba(16, 42, 67, .08) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] h2 {
+  color: var(--dashboard-navy) !important;
+  -webkit-text-fill-color: var(--dashboard-navy) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] p {
+  color: var(--dashboard-text) !important;
+  -webkit-text-fill-color: var(--dashboard-text) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] :where(.bg-white\/15) {
+  background: rgba(255,255,255,.72) !important;
+  border-color: rgba(15,143,111,.12) !important;
+  color: var(--dashboard-green) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > div > div > button {
+  background: var(--dashboard-yellow) !important;
+  color: var(--dashboard-navy) !important;
+  -webkit-text-fill-color: var(--dashboard-navy) !important;
+  border: 1px solid var(--dashboard-yellow-border) !important;
+  box-shadow: 0 8px 20px rgba(16,42,67,.08) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > a {
+  background: rgba(255,255,255,.78) !important;
+  border: 1px solid var(--dashboard-line) !important;
+  color: var(--dashboard-navy) !important;
+  -webkit-text-fill-color: var(--dashboard-navy) !important;
+}
+
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > a:hover,
+.biz-app-main :where(section)[class*="from-indigo-600"][class*="via-violet-600"][class*="to-fuchsia-600"] > div > div > button:hover {
+  background: #fff8e8 !important;
+  border-color: var(--dashboard-yellow-border) !important;
+}
+
+/* Keep supporting cards aligned with the dashboard's white/mint surfaces. */
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white),
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] {
+  background: #fff !important;
+  border-color: var(--dashboard-line) !important;
+  box-shadow: 0 8px 24px rgba(16,42,67,.055) !important;
+}
+
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white) h3,
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] h2 {
+  color: var(--dashboard-navy) !important;
+  -webkit-text-fill-color: var(--dashboard-navy) !important;
+}
+
+.biz-app-main :where(section) + section :where(.border-slate-200.bg-white) svg {
+  color: var(--dashboard-green) !important;
+}
+
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(.border-dashed) {
+  border-color: var(--dashboard-mint-strong) !important;
+  background: var(--dashboard-mint) !important;
+}
+
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(button.bg-slate-950),
+.biz-app-main :where(section.rounded-3xl)[class*="border-slate-200"] :where(button.bg-indigo-600) {
+  background: var(--dashboard-green) !important;
+  border-color: var(--dashboard-green-dark) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 8px 18px rgba(15,143,111,.16) !important;
+}
+
+/* Bulk-entry modal follows the same palette rather than the old dark-green overlay. */
+.biz-app-main :where([class*="z-[100]"]) {
+  background: rgba(16,42,67,.38) !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) > div {
+  border-color: var(--dashboard-line) !important;
+  box-shadow: 0 24px 70px rgba(16,42,67,.18) !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) {
+  background: var(--dashboard-bg) !important;
+  border-color: var(--dashboard-line) !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) > div > :nth-child(2) button[class*="bg-indigo-600"],
+.biz-app-main :where([class*="z-[100]"]) > div > :last-child button[class*="bg-indigo-600"] {
+  background: var(--dashboard-green) !important;
+  border-color: var(--dashboard-green-dark) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) thead th {
+  background: var(--dashboard-mint) !important;
+  color: var(--dashboard-navy) !important;
+  -webkit-text-fill-color: var(--dashboard-navy) !important;
+  border-color: var(--dashboard-line) !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) tbody tr:hover td {
+  background: #f0fbf6 !important;
+}
+
+.biz-app-main :where([class*="z-[100]"]) tbody input:focus,
+.biz-app-main :where([class*="z-[100]"]) tbody select:focus {
+  background: var(--dashboard-mint) !important;
+  box-shadow: inset 0 0 0 2px var(--dashboard-green) !important;
+}
+
+.biz-app-main :where([class*="z-[120]"]) {
+  background: rgba(16,42,67,.38) !important;
+}
+
+.biz-app-main :where([class*="z-[120]"]) input:focus {
+  border-color: var(--dashboard-green) !important;
+  box-shadow: 0 0 0 4px rgba(15,143,111,.12) !important;
+}
