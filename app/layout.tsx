@@ -7,6 +7,7 @@ import './bulk-entry-sizing.css'
 import './super-admin/super-admin-theme.css'
 import './dashboard/voucher-dialog.css'
 import './dashboard/invoice-viewer.css'
+import './dashboard/sales/sales-workspace.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
 import { Toaster } from 'react-hot-toast'
 
