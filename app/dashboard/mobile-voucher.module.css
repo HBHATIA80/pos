@@ -1,7 +1,6 @@
 /* Shared mobile-only responsiveness. Nothing below applies at 768px+. */
 @media (max-width:767px){
 .mobileVoucher{box-sizing:border-box!important;width:100%!important;max-width:100vw!important;min-width:0!important;padding-bottom:132px!important;overflow-x:clip!important}
-:global(html),:global(body){max-width:100%;overflow-x:hidden!important}
 .mobileVoucher :global(main),.mobileVoucher :global(main>section),.mobileVoucher :global(main>section>div){box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
 .mobileVoucher :global(section:first-child .flex.w-full),.mobileVoucher :global(section:first-child .flex.w-full>div){min-width:0!important;max-width:100%!important}
 .mobileVoucher :global(main>section:first-child>div){grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
