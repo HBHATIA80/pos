@@ -12,4 +12,13 @@
 .match :global(.absolute.z-40 button .inline-flex),.match :global(.absolute.z-\[100\] button .inline-flex){border-radius:8px!important;background:#f4f7f5!important;color:#334155!important;border:1px solid #e3ebe6!important;padding:4px 7px!important;-webkit-text-fill-color:#334155!important}
 .match :global(.absolute.z-40 button .inline-flex *),.match :global(.absolute.z-\[100\] button .inline-flex *){color:#334155!important;-webkit-text-fill-color:#334155!important}
 .match :global(input::placeholder){color:#64748b!important;-webkit-text-fill-color:#64748b!important}
+
+/* Search-field stacking: the customer picker must sit above the product picker, never behind it. */
+.match :global(.relative:has(input[placeholder^="Walk-in customer"])){z-index:110!important}
+.match :global(.relative:has(input[placeholder^="Search product, SKU or scan barcode"])){z-index:100!important;background:transparent!important}
+.match :global(.relative:has(input[placeholder^="Search product, SKU or scan barcode"]) > label){position:relative;z-index:1;color:#000!important}
+.match :global(.relative:has(input[placeholder^="Search product, SKU or scan barcode"]) > div:not([class*="absolute"])){background:#fff!important;color:#000!important;box-shadow:0 2px 8px rgba(15,23,42,.06)!important}
+.match :global(input[placeholder^="Walk-in customer"]),.match :global(input[placeholder^="Search product, SKU or scan barcode"]){color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;background:transparent!important;opacity:1!important}
+.match :global(input[placeholder^="Walk-in customer"])::placeholder,.match :global(input[placeholder^="Search product, SKU or scan barcode"])::placeholder{color:#64748b!important;-webkit-text-fill-color:#64748b!important;opacity:1!important}
+
 @media (max-width:767px){.match :global(.absolute.z-50),.match :global(.absolute.z-40),.match :global(.absolute.z-\[100\]){left:0!important;right:0!important;border-radius:14px!important}.match :global(.absolute.z-50 button),.match :global(.absolute.z-40 button),.match :global(.absolute.z-\[100\] button){min-height:64px!important;padding:10px 12px!important}}
