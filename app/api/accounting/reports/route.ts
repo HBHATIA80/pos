@@ -16,7 +16,7 @@ function salesDate(invoice: { sold_at?: string | null; completed_at?: string | n
 
 type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }
 type PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }
-type SaleItem = { product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null; product_name?: string | null; sku?: string | null }
+type SaleItem = { id?: string; product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null; cost_unit_price?: number | null; product_name?: string | null; sku?: string | null }
 
 type ProfitProduct = {
   product_id: string
@@ -95,11 +95,21 @@ export async function GET(request: Request) {
     supabase.from('accounts').select('id,name,account_code,account_nature,account_group_id,party_id,opening_balance,opening_balance_type,is_party_account,is_active').eq('business_id', businessId).eq('is_active', true).order('name'),
     supabase.from('account_groups').select('id,name,code,nature,parent_id').eq('business_id', businessId).eq('is_active', true),
     supabase.from('stock_analysis').select('product_id,name,sku,current_stock,purchase_price,sale_price,stock_cost_value,stock_retail_value').eq('business_id', businessId).eq('is_active', true),
-    supabase.from('sales_invoices').select('id,invoice_no,party_id,grand_total,sold_at,completed_at,created_at,sales_invoice_items(product_id,product_name,sku,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).gte('sold_at', iso(start)).lte('sold_at', iso(end, true)).order('sold_at'),
+    supabase.from('sales_invoices').select('id,invoice_no,party_id,grand_total,sold_at,completed_at,created_at,sales_invoice_items(id,product_id,product_name,sku,quantity,unit_price,discount_amount,line_total,cost_unit_price)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).is('cancelled_at', null).gte('sold_at', iso(start)).lte('sold_at', iso(end, true)).order('sold_at'),
     supabase.from('purchase_invoices').select('purchased_at,completed_at,created_at,purchase_invoice_items(product_id,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).lte('purchased_at', iso(end, true)).order('purchased_at'),
     supabase.from('catalog_categories').select('id,name').eq('business_id', businessId).eq('is_active', true).order('name'),
   ])
   for (const e of [linesError, accountsError, groupsError, productsError, salesError, purchaseRowsError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
+
+  const { data: returns, error: returnsError } = await supabase
+    .from('return_vouchers')
+    .select('id,return_no,return_type,party_id,source_invoice_id,return_date,grand_total,status,return_voucher_items(id,source_invoice_item_id,product_id,quantity,unit_price,discount_amount,line_total)')
+    .eq('business_id', businessId)
+    .eq('status', 'completed')
+    .gte('return_date', start)
+    .lte('return_date', end)
+    .order('return_date')
+  if (returnsError) return NextResponse.json({ error: returnsError.message }, { status: 400 })
 
   const { data: productRows, error: productRowsError } = await supabase
     .from('products')
@@ -113,8 +123,25 @@ export async function GET(request: Request) {
   const acc = accounts ?? []
   const groupRows = groups ?? []
   const productCost = new Map((products ?? []).map(p => [p.product_id, n(p.purchase_price)]))
-  const weightedCostAt = buildWeightedAverageLookup((purchaseRows ?? []) as PurchaseInvoice[], productCost)
   const categoryMap = new Map((categories ?? []).map(c => [c.id, c.name]))
+  const returnRows = returns ?? []
+  const saleReturnRows = returnRows.filter(r => r.return_type === 'sale_return')
+  const purchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')
+  const sourceSaleItemIds = saleReturnRows.flatMap(r => (r.return_voucher_items ?? []).map(i => i.source_invoice_item_id).filter(Boolean)) as string[]
+  const { data: sourceSaleItems, error: sourceSaleItemsError } = sourceSaleItemIds.length
+    ? await supabase.from('sales_invoice_items').select('id,cost_unit_price,unit_price').in('id', [...new Set(sourceSaleItemIds)])
+    : { data: [], error: null }
+  if (sourceSaleItemsError) return NextResponse.json({ error: sourceSaleItemsError.message }, { status: 400 })
+  const sourceSaleCost = new Map((sourceSaleItems ?? []).map(i => [i.id, i.cost_unit_price == null ? null : n(i.cost_unit_price)]))
+  const costForSaleItem = (item: SaleItem) => {
+    if (item.cost_unit_price != null && Number.isFinite(n(item.cost_unit_price))) return Math.max(0, n(item.cost_unit_price))
+    return Math.max(0, productCost.get(item.product_id) ?? 0)
+  }
+  const costForReturnItem = (item: any) => {
+    const source = item.source_invoice_item_id ? sourceSaleCost.get(item.source_invoice_item_id) : null
+    if (source != null && Number.isFinite(source)) return Math.max(0, source)
+    return Math.max(0, productCost.get(item.product_id) ?? 0)
+  }
   const accountMeta = new Map(acc.map(a => [a.id, { ...a, group: groupRows.find(g => g.id === a.account_group_id)?.name || '' }]))
 
   const balance = new Map<string, { debit: number; credit: number; name: string; code: string | null; nature: string; group: string; party_id: string | null }>()
@@ -132,12 +159,13 @@ export async function GET(request: Request) {
   const allPnlAccounts = trialBalance.filter(x => x.nature === 'income' || x.nature === 'expense')
   const purchaseAccounts = allPnlAccounts.filter(x => x.nature === 'expense' && x.group.toLowerCase().includes('purchase'))
   const pnlAccounts = allPnlAccounts.filter(x => !(x.nature === 'expense' && x.group.toLowerCase().includes('purchase')))
-  const income = allPnlAccounts.filter(x => x.nature === 'income').reduce((s, x) => s + x.credit - x.debit, 0)
-  const totalLedgerExpense = allPnlAccounts.filter(x => x.nature === 'expense').reduce((s, x) => s + x.debit - x.credit, 0)
-  const sales = allPnlAccounts.filter(x => x.group.toLowerCase().includes('sales')).reduce((s, x) => s + x.credit - x.debit, 0)
-  const purchases = purchaseAccounts.reduce((s, x) => s + x.debit - x.credit, 0)
-  const operatingExpense = Math.max(totalLedgerExpense - purchases, 0)
-  const otherIncome = Math.max(income - sales, 0)
+  const ledgerOtherIncome = allPnlAccounts.filter(x => x.nature === 'income' && !x.group.toLowerCase().includes('sales')).reduce((sum, x) => sum + x.credit - x.debit, 0)
+  const totalLedgerExpense = allPnlAccounts.filter(x => x.nature === 'expense').reduce((sum, x) => sum + x.debit - x.credit, 0)
+  const purchases = purchaseAccounts.reduce((sum, x) => sum + x.debit - x.credit, 0)
+  const purchaseReturns = purchaseReturnRows.reduce((sum, r) => sum + n(r.grand_total), 0)
+  const netPurchases = purchases - purchaseReturns
+  const operatingExpense = totalLedgerExpense - purchases
+  const otherIncome = ledgerOtherIncome
 
   const profitProducts = new Map<string, ProfitProduct>()
   const profitCategories = new Map<string, ProfitCategory>()
@@ -147,28 +175,36 @@ export async function GET(request: Request) {
   const partyIds = new Set<string>()
   const invoicePartyMap = new Map<string, string>()
 
+  let grossSales = 0
+  let salesReturns = 0
+  let cogsBeforeReturns = 0
+  let saleCostMissing = 0
+
   for (const invoice of salesRows ?? []) {
     const saleDate = String(invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '')
     const invoiceSales = n(invoice.grand_total)
-    const invoiceCogs = 0
+    grossSales += invoiceSales
     const invoiceName = 'Walk-in / Other'
     if (invoice.party_id) partyIds.add(invoice.party_id)
     invoicePartyMap.set(invoice.id, invoice.party_id ?? '')
     const items = (invoice.sales_invoice_items ?? []) as SaleItem[]
 
-    let calculatedInvoiceCogs = invoiceCogs
+    let calculatedInvoiceCogs = 0
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
-      const avgCost = weightedCostAt(item.product_id, saleDate)
-      const lineCogs = qty * avgCost
+      const hasStoredCost = item.cost_unit_price != null
+      const lineCost = costForSaleItem(item)
+      if (!hasStoredCost && lineCost <= 0) saleCostMissing += 1
+      const lineCogs = qty * lineCost
+      cogsBeforeReturns += lineCogs
       const lineProfit = lineSales - lineCogs
       calculatedInvoiceCogs += lineCogs
       const meta = productMeta.get(item.product_id)
       const productName = item.product_name || meta?.name || 'Unknown product'
       const sku = item.sku ?? meta?.sku ?? null
-      const old = profitProducts.get(item.product_id) ?? { product_id: item.product_id, name: productName, sku, quantity: 0, sales: 0, cogs: 0, profit: 0, margin: 0, average_purchase_cost: avgCost }
-      old.quantity += qty; old.sales += lineSales; old.cogs += lineCogs; old.profit += lineProfit; old.average_purchase_cost = avgCost; old.margin = marginOf(old.sales, old.profit)
+      const old = profitProducts.get(item.product_id) ?? { product_id: item.product_id, name: productName, sku, quantity: 0, sales: 0, cogs: 0, profit: 0, margin: 0, average_purchase_cost: lineCost }
+      old.quantity += qty; old.sales += lineSales; old.cogs += lineCogs; old.profit += lineProfit; old.average_purchase_cost = lineCost; old.margin = marginOf(old.sales, old.profit)
       profitProducts.set(item.product_id, old)
 
       const categoryId = productCategoryMap.get(item.product_id) ?? null
@@ -189,7 +225,39 @@ export async function GET(request: Request) {
     profitParties.set(partyKey, party)
   }
 
-  const cogs = [...profitProducts.values()].reduce((sum, row) => sum + row.cogs, 0)
+  const returnCogs = saleReturnRows.reduce((sum, r) => sum + (r.return_voucher_items ?? []).reduce((inner, item) => inner + n(item.quantity) * costForReturnItem(item), 0), 0)
+  for (const ret of saleReturnRows) {
+    const returnSales = n(ret.grand_total)
+    salesReturns += returnSales
+    const returnCogsValue = (ret.return_voucher_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForReturnItem(item), 0)
+    const partyName = ret.party_id ? `Party ${ret.party_id.slice(0, 8)}` : 'Walk-in / Other'
+    profitInvoices.push({ invoice_id: ret.id, invoice_no: ret.return_no, date: String(ret.return_date).slice(0, 10), party_id: ret.party_id ?? null, party_name: partyName, sales: -returnSales, cogs: -returnCogsValue, profit: -returnSales + returnCogsValue, margin: marginOf(-returnSales, -returnSales + returnCogsValue) })
+    const items = (ret.return_voucher_items ?? []) as any[]
+    for (const item of items) {
+      const qty = n(item.quantity)
+      const lineSales = n(item.line_total)
+      const lineCogs = qty * costForReturnItem(item)
+      const product = productMeta.get(item.product_id)
+      const productName = product?.name ?? 'Unknown product'
+      const sku = product?.sku ?? null
+      const old = profitProducts.get(item.product_id) ?? { product_id: item.product_id, name: productName, sku, quantity: 0, sales: 0, cogs: 0, profit: 0, margin: 0, average_purchase_cost: costForReturnItem(item) }
+      old.quantity -= qty; old.sales -= lineSales; old.cogs -= lineCogs; old.profit -= (lineSales - lineCogs); old.margin = marginOf(old.sales, old.profit)
+      profitProducts.set(item.product_id, old)
+      const categoryId = productCategoryMap.get(item.product_id) ?? null
+      const categoryName = categoryId ? (categoryMap.get(categoryId) ?? 'Uncategorised') : 'Uncategorised'
+      const categoryKey = categoryId ?? '__uncategorised__'
+      const cat = profitCategories.get(categoryKey) ?? { category_id: categoryId, name: categoryName, sales: 0, cogs: 0, profit: 0, margin: 0 }
+      cat.sales -= lineSales; cat.cogs -= lineCogs; cat.profit -= (lineSales - lineCogs); cat.margin = marginOf(cat.sales, cat.profit)
+      profitCategories.set(categoryKey, cat)
+    }
+    const partyKey = ret.party_id ?? '__walkin__'
+    const party = profitParties.get(partyKey) ?? { party_id: ret.party_id ?? null, name: partyName, invoices: 0, sales: 0, cogs: 0, profit: 0, margin: 0 }
+    party.sales -= returnSales; party.cogs -= returnCogsValue; party.profit -= (returnSales - returnCogsValue); party.margin = marginOf(party.sales, party.profit); profitParties.set(partyKey, party)
+  }
+
+  const cogs = cogsBeforeReturns - returnCogs
+  const sales = grossSales - salesReturns
+  const income = sales + otherIncome
   const grossProfit = sales - cogs
   const netProfit = grossProfit + otherIncome - operatingExpense
 
@@ -251,40 +319,48 @@ export async function GET(request: Request) {
   }
   const topExpenses = pnlAccounts.filter(x => x.nature === 'expense').sort((a,b) => (b.debit-b.credit)-(a.debit-a.credit)).slice(0, 10).map(x => ({ name: x.name, amount: x.debit-x.credit }))
 
-  const dailyMap = new Map<string, { sales:number; purchases:number; cogs:number; expenses:number; otherIncome:number; entries:number }>()
+  const dailyMap = new Map<string, { sales:number; purchases:number; cogs:number; expenses:number; otherIncome:number; entries:number; salesReturns:number; purchaseReturns:number }>()
   for (const r of rows) {
     const date = String(r.entry_date).slice(0, 10)
-    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0 }
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
     const meta = accountMeta.get(r.account_id)
     const debit = n(r.debit), credit = n(r.credit)
     const group = (meta?.group || '').toLowerCase()
     const nature = meta?.account_nature || ''
     m.entries += 1
-    if (nature === 'income') {
-      const amount = credit - debit
-      if (group.includes('sales')) m.sales += amount
-      else m.otherIncome += amount
-    } else if (nature === 'expense') {
-      const amount = debit - credit
-      if (group.includes('purchase')) m.purchases += amount
-      else m.expenses += amount
-    }
+    if (nature === 'income' && !group.includes('sales')) m.otherIncome += credit - debit
+    else if (nature === 'expense' && !group.includes('purchase')) m.expenses += debit - credit
     dailyMap.set(date, m)
   }
   for (const invoice of salesRows ?? []) {
     const date = String(invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '').slice(0, 10)
-    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0 }
-    m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * weightedCostAt(item.product_id, String(invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '')), 0)
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
+    m.sales += n(invoice.grand_total)
+    m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForSaleItem(item as SaleItem), 0)
     dailyMap.set(date, m)
   }
-  const daily = [...dailyMap.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([date,m]) => ({ ...m, date, grossProfit: m.sales-m.cogs, netProfit: m.sales-m.cogs+m.otherIncome-m.expenses }))
-  const today = dailyMap.get(end) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0 }
+  for (const ret of saleReturnRows) {
+    const date = String(ret.return_date).slice(0, 10)
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
+    m.salesReturns += n(ret.grand_total)
+    m.sales -= n(ret.grand_total)
+    m.cogs -= (ret.return_voucher_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForReturnItem(item), 0)
+    dailyMap.set(date, m)
+  }
+  for (const ret of purchaseReturnRows) {
+    const date = String(ret.return_date).slice(0, 10)
+    const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
+    m.purchaseReturns += n(ret.grand_total)
+    dailyMap.set(date, m)
+  }
+  const daily = [...dailyMap.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([date,m]) => ({ ...m, date, netSales: m.sales, grossProfit: m.sales-m.cogs, netProfit: m.sales-m.cogs+m.otherIncome-m.expenses }))
+  const today = dailyMap.get(end) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
   const todayGrossProfit = today.sales - today.cogs
   const todayNetProfit = todayGrossProfit + today.otherIncome - today.expenses
 
   return NextResponse.json({
     period: { start, end },
-    summary: { income, expense: operatingExpense, totalExpense: totalLedgerExpense, operatingExpense, sales, purchases, costOfGoodsSold: cogs, grossProfit, netProfit, otherIncome, assets, liabilities, equity, debtors, creditors, cash, bank, stock, todaySales: today.sales, todayGrossProfit, todayNetProfit, todayExpenses: today.expenses, todayCogs: today.cogs, todayOtherIncome: today.otherIncome, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) },
+    summary: { income, expense: operatingExpense, totalExpense: totalLedgerExpense, operatingExpense, grossSales, salesReturns, netSales: sales, sales, purchases, purchaseReturns, netPurchases, costOfGoodsSold: cogs, grossProfit, netProfit, otherIncome, assets, liabilities, equity, debtors, creditors, cash, bank, stock, uncostedSalesLines: saleCostMissing, todaySales: today.sales, todayGrossProfit, todayNetProfit, todayExpenses: today.expenses, todayCogs: today.cogs, todayOtherIncome: today.otherIncome, trialDebit: trialBalance.reduce((s,x)=>s+x.debit,0), trialCredit: trialBalance.reduce((s,x)=>s+x.credit,0) },
     trialBalance,
     pnlAccounts,
     balanceSheet: bsAccounts,
