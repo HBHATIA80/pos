@@ -276,6 +276,20 @@
   .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="Search product"])),
   .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="search product"])) { z-index: 500 !important; }
 
+  /* ---------- Line-item numeric fields ---------- */
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) input[inputmode="decimal"]) {
+    width: 144px !important;
+    min-width: 144px !important;
+    max-width: 144px !important;
+    height: 44px !important;
+    padding: 0 10px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
   /* ---------- Cart ---------- */
   .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2)) {
     width: 100% !important;
