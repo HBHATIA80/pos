@@ -9,7 +9,7 @@ type SalePayment = { id: string; receipt_no: string; payment_method: string; amo
 type Voucher = { id: string; voucher_no: string; voucher_type: string; payment_method: string; account_name: string | null; amount: number; paid_at: string; parties?: { name: string } | null }
 type Row = { id: string; no: string; source: string; party: string; method: string; account: string; amount: number; paidAt: string }
 
-const money = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+const money = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const formatLocalDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const today = () => formatLocalDate(new Date())
 const daysAgo = (days: number) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - days); return formatLocalDate(d) }
