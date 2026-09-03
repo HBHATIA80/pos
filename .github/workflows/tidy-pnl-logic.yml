@@ -1,0 +1,38 @@
+name: Tidy P&L logic
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  tidy:
+    if: "!contains(github.event.head_commit.message, '[pnl-tidy]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tidy P&L calculations
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/api/accounting/reports/route.ts')
+          s=p.read_text()
+          # The stored cost_unit_price on each sale line is the transaction-level cost source.
+          a=s.find('/**\n * Moving weighted-average cost.')
+          b=s.find('\nfunction round2', a)
+          if a >= 0 and b >= 0:
+              s=s[:a]+s[b+1:]
+          s=s.replace("type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }\ntype PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }\n", "")
+          s=s.replace(" { data: purchaseRows, error: purchaseRowsError },", "")
+          s=s.replace("purchaseRowsError, ", "")
+          s=s.replace("  const purchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')", "  const purchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')")
+          s=s.replace("  const netPurchases = purchases - purchaseReturns", "  // The purchase account already includes Purchase Return credits, so it is already net.\n  const netPurchases = purchases")
+          s=s.replace("    if (nature === 'income' && !group.includes('sales')) m.otherIncome += credit - debit\n    else if (nature === 'expense' && !group.includes('purchase')) m.expenses += debit - credit", "    if (nature === 'income' && !group.includes('sales')) m.otherIncome += credit - debit\n    else if (nature === 'expense' && group.includes('purchase')) m.purchases += debit - credit\n    else if (nature === 'expense' && !group.includes('purchase')) m.expenses += debit - credit")
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/tidy-pnl-logic.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add app/api/accounting/reports/route.ts .github/workflows/tidy-pnl-logic.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Tidy P&L calculations [pnl-tidy]"
+          git push
