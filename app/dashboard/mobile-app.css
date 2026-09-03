@@ -6,13 +6,16 @@
   *, *::before, *::after { box-sizing: border-box; }
 
   .biz-app { min-width: 0; width: 100%; overflow-x: clip; }
-  .biz-app-main { width: 100%; min-width: 0; padding: 10px 10px 92px !important; }
+  .biz-app-main { width: 100%; min-width: 0; padding: 10px 10px 100px !important; }
   .biz-app-header { height: 58px; }
   .biz-app-header > div { height: 58px !important; padding: 0 10px !important; }
-  .biz-mobile-nav { padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
-  .biz-mobile-nav > div { max-width: 100% !important; }
+  .biz-mobile-nav { display: block !important; padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; z-index: 9999 !important; }
+  .biz-mobile-nav > div { max-width: 100% !important; width: 100% !important; }
+  .biz-mobile-nav a { min-width: 0 !important; min-height: 48px !important; border-radius: 13px !important; }
+  .biz-mobile-nav svg { width: 20px !important; height: 20px !important; }
+  .biz-mobile-nav span { font-size: 10px !important; line-height: 12px !important; white-space: nowrap !important; }
 
-  /* Staff home: compact four-action launchpad. */
+  /* Staff + Admin mobile launchpad: same quick actions and same navigation. */
   .dashboard-quick-actions { width: 100% !important; min-width: 0 !important; }
   .dashboard-quick-actions a { min-width: 0 !important; min-height: 66px !important; padding: 10px !important; border-radius: 16px !important; }
   .dashboard-quick-actions a > span:last-child { min-width: 0 !important; }
@@ -31,49 +34,67 @@
     border-radius: 16px !important; margin: 0 0 8px !important; padding: 10px !important; min-height: auto !important; overflow: visible !important;
   }
   .salesVisual main > section:first-child > div, .purchaseTypography main > section:first-child > div {
-    display: grid !important; grid-template-columns: 1fr !important; gap: 8px !important; min-width: 0 !important;
+    display: grid !important; grid-template-columns: 1fr !important; grid-auto-rows: max-content !important; gap: 8px !important; min-width: 0 !important; align-items: start !important;
   }
-  .salesVisual main > section:first-child > div > div, .purchaseTypography main > section:first-child > div > div { min-width: 0 !important; width: 100% !important; }
+  .salesVisual main > section:first-child > div > div, .purchaseTypography main > section:first-child > div > div { min-width: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; align-self: start !important; }
   .salesVisual main > section:first-child .text-base, .purchaseTypography main > section:first-child .text-base { font-size: 15px !important; }
   .salesVisual main > section:first-child .text-xs, .purchaseTypography main > section:first-child .text-xs { font-size: 11px !important; }
 
   /* Customer/supplier and product/barcode are equal, compact, one-line controls. */
-  .salesVisual main > section:nth-child(1) > div, .purchaseTypography main > section:nth-child(1) > div { align-items: start !important; }
-  .salesVisual main > section:nth-child(1) .relative, .purchaseTypography main > section:nth-child(1) .relative {
-    position: relative !important; height: auto !important; min-height: 0 !important; align-self: start !important; overflow: visible !important;
+  .salesVisual main > section:first-child > div > div.relative, .purchaseTypography main > section:first-child > div > div.relative {
+    position: relative !important; height: auto !important; min-height: 0 !important; max-height: none !important; align-self: start !important; overflow: visible !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.flex, .purchaseTypography main > section:nth-child(1) .relative > div.flex {
+  .salesVisual main > section:first-child > div > div.relative:has(input[placeholder*="Search product"]),
+  .purchaseTypography main > section:first-child > div > div.relative:has(input[placeholder*="Search product"]) {
+    height: auto !important; min-height: 0 !important; max-height: none !important; align-self: start !important; background: transparent !important;
+  }
+  .salesVisual main > section:first-child > div > div.relative > div.flex, .purchaseTypography main > section:first-child > div > div.relative > div.flex {
     width: 100% !important; height: 48px !important; min-height: 48px !important; max-height: 48px !important;
     padding: 0 12px !important; border-radius: 13px !important; gap: 8px !important; overflow: hidden !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.flex input, .purchaseTypography main > section:nth-child(1) .relative > div.flex input {
+  .salesVisual main > section:first-child > div > div.relative > div.flex input, .purchaseTypography main > section:first-child > div > div.relative > div.flex input {
     width: 100% !important; min-width: 0 !important; height: 46px !important; min-height: 46px !important; max-height: 46px !important;
-    padding: 0 !important; font-size: 14px !important; line-height: 46px !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+    padding: 0 !important; font-size: clamp(13px, 3.8vw, 15px) !important; line-height: 46px !important; text-overflow: ellipsis !important; white-space: nowrap !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.flex svg, .purchaseTypography main > section:nth-child(1) .relative > div.flex svg { flex: 0 0 auto !important; }
-  .salesVisual main > section:nth-child(1) label, .purchaseTypography main > section:nth-child(1) label { margin-bottom: 4px !important; font-size: 10px !important; line-height: 14px !important; }
+  .salesVisual main > section:first-child > div > div.relative > div.flex svg, .purchaseTypography main > section:first-child > div > div.relative > div.flex svg { flex: 0 0 auto !important; }
+  .salesVisual main > section:first-child > div > div.relative label, .purchaseTypography main > section:first-child > div > div.relative label { margin-bottom: 4px !important; font-size: 10px !important; line-height: 14px !important; }
 
-  /* Anchored autocomplete: never become a full-screen white box. */
-  .salesVisual main > section:nth-child(1) .relative > div.absolute, .purchaseTypography main > section:nth-child(1) .relative > div.absolute {
-    position: absolute !important; left: 0 !important; right: 0 !important; top: calc(100% + 6px) !important; bottom: auto !important;
-    width: 100% !important; max-width: calc(100vw - 20px) !important; height: auto !important; max-height: min(52vh, 330px) !important;
+  /* Anchored autocomplete: it always stays below its own input, never grows the page into a white screen. */
+  .salesVisual main > section:first-child > div > div.relative > div.absolute,
+  .purchaseTypography main > section:first-child > div > div.relative > div.absolute {
+    position: absolute !important; left: 0 !important; right: auto !important; top: 54px !important; bottom: auto !important;
+    width: 100% !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; max-height: min(52vh, 330px) !important;
     margin: 0 !important; padding: 0 !important; border-radius: 14px !important; overflow: hidden !important;
-    background: #fff !important; color: #000 !important; z-index: 1000 !important; box-shadow: 0 18px 45px rgba(15, 23, 42, .18) !important;
+    background: #fff !important; color: #000 !important; z-index: 2000 !important; box-shadow: 0 18px 45px rgba(15, 23, 42, .18) !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.absolute > div, .purchaseTypography main > section:nth-child(1) .relative > div.absolute > div {
-    width: 100% !important; max-height: min(52vh, 330px) !important; overflow-y: auto !important; overflow-x: hidden !important; -webkit-overflow-scrolling: touch !important;
+  .salesVisual main > section:first-child > div > div.relative > div.absolute > div,
+  .purchaseTypography main > section:first-child > div > div.relative > div.absolute > div {
+    width: 100% !important; max-height: min(52vh, 330px) !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; -webkit-overflow-scrolling: touch !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.absolute button, .purchaseTypography main > section:nth-child(1) .relative > div.absolute button {
-    width: 100% !important; min-width: 0 !important; min-height: 58px !important; height: auto !important; padding: 9px 11px !important; gap: 9px !important;
+  .salesVisual main > section:first-child > div > div.relative > div.absolute button,
+  .purchaseTypography main > section:first-child > div > div.relative > div.absolute button {
+    width: 100% !important; min-width: 0 !important; min-height: 56px !important; height: auto !important; padding: 9px 11px !important; gap: 9px !important;
     background: #fff !important; color: #000 !important; -webkit-text-fill-color: #000 !important; text-align: left !important;
   }
-  .salesVisual main > section:nth-child(1) .relative > div.absolute button *, .purchaseTypography main > section:nth-child(1) .relative > div.absolute button * { color: #000 !important; -webkit-text-fill-color: #000 !important; }
-  .salesVisual main > section:nth-child(1) .relative > div.absolute button img, .purchaseTypography main > section:nth-child(1) .relative > div.absolute button img { width: 36px !important; height: 36px !important; flex: 0 0 36px !important; }
-  .salesVisual main > section:nth-child(1) .relative:nth-child(2) > div.absolute button, .purchaseTypography main > section:nth-child(1) .relative:nth-child(2) > div.absolute button { min-height: 64px !important; padding: 9px 10px !important; }
-  .salesVisual main > section:nth-child(1) .relative:nth-child(2) > div.absolute button span, .purchaseTypography main > section:nth-child(1) .relative:nth-child(2) > div.absolute button span { min-width: 0 !important; }
-  .salesVisual main > section:nth-child(1) .relative:nth-child(2) > div.absolute .inline-flex, .purchaseTypography main > section:nth-child(1) .relative:nth-child(2) > div.absolute .inline-flex {
-    max-width: 100% !important; font-size: 10px !important; padding: 3px 6px !important; white-space: nowrap !important;
+  .salesVisual main > section:first-child > div > div.relative > div.absolute button *,
+  .purchaseTypography main > section:first-child > div > div.relative > div.absolute button * { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+  .salesVisual main > section:first-child > div > div.relative > div.absolute button img,
+  .purchaseTypography main > section:first-child > div > div.relative > div.absolute button img { width: 36px !important; height: 36px !important; flex: 0 0 36px !important; }
+  .salesVisual main > section:first-child > div > div.relative:has(input[placeholder*="Walk-in customer"]),
+  .purchaseTypography main > section:first-child > div > div.relative:has(input[placeholder*="supplier"]),
+  .purchaseTypography main > section:first-child > div > div.relative:has(input[placeholder*="Supplier"]) { z-index: 2100 !important; }
+  .salesVisual main > section:first-child > div > div.relative:has(input[placeholder*="Search product"]),
+  .purchaseTypography main > section:first-child > div > div.relative:has(input[placeholder*="Search product"]) { z-index: 2000 !important; }
+
+  /* All mobile text/search controls remain fluid at 320–430px. */
+  .biz-app-main input[type="text"], .biz-app-main input[type="search"], .biz-app-main input[type="tel"], .biz-app-main input[type="number"],
+  .biz-app-main input[type="date"], .biz-app-main select, .biz-app-main textarea {
+    max-width: 100% !important; min-width: 0 !important; box-sizing: border-box !important;
+    font-size: clamp(13px, 3.8vw, 16px) !important;
   }
+  .biz-app-main textarea { min-height: 96px !important; height: auto !important; }
+  .biz-app-main input[type="text"], .biz-app-main input[type="search"], .biz-app-main input[type="tel"], .biz-app-main input[type="number"], .biz-app-main input[type="date"], .biz-app-main select { min-height: 46px !important; }
+  .biz-app-main form input[type="text"], .biz-app-main form input[type="search"], .biz-app-main form input[type="tel"], .biz-app-main form input[type="number"] { width: 100% !important; }
 
   /* Invoice list stays inside the phone; detailed columns scroll inside their card only. */
   .salesVisual main > section:nth-child(2), .purchaseTypography main > section:nth-child(2) {
@@ -112,9 +133,11 @@
 
 @media (max-width: 374px) {
   .biz-app-main { padding-left: 8px !important; padding-right: 8px !important; }
+  .biz-mobile-nav a { min-height: 46px !important; padding-left: 2px !important; padding-right: 2px !important; }
+  .biz-mobile-nav span { font-size: 9px !important; }
   .dashboard-quick-actions a { padding: 8px !important; gap: 8px !important; }
   .dashboard-quick-actions a > span:first-child { width: 32px !important; height: 32px !important; }
   .salesVisual main > section:first-child, .purchaseTypography main > section:first-child { padding: 8px !important; }
-  .salesVisual main > section:nth-child(1) .relative > div.flex, .purchaseTypography main > section:nth-child(1) .relative > div.flex { height: 46px !important; min-height: 46px !important; }
-  .salesVisual main > section:nth-child(1) .relative > div.flex input, .purchaseTypography main > section:nth-child(1) .relative > div.flex input { font-size: 13px !important; }
+  .salesVisual main > section:first-child > div > div.relative > div.flex, .purchaseTypography main > section:first-child > div > div.relative > div.flex { height: 46px !important; min-height: 46px !important; }
+  .salesVisual main > section:first-child > div > div.relative > div.flex input, .purchaseTypography main > section:first-child > div > div.relative > div.flex input { font-size: 13px !important; }
 }
