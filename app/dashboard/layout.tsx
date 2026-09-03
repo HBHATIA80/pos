@@ -8,6 +8,7 @@ import InvoiceViewer from './invoice-viewer'
 import BulkDeletePanel from './bulk-delete-panel'
 import InvoiceDateSelector from './invoice-date-selector'
 import PosKeyboardShortcuts from './pos-keyboard-shortcuts'
+import { DashboardRoleProvider } from './dashboard-role-context'
 
 type Props = { children: React.ReactNode }
 
@@ -145,7 +146,7 @@ export default async function DashboardLayout({ children }: Props) {
         isSuperAdmin={Boolean(superAdminAccess)}
       >
         <InvoiceDateSelector />
-        {children}
+        <DashboardRoleProvider role={profile.role}>{children}</DashboardRoleProvider>
       </POSShell>
       <InvoiceViewer enabled={canViewInvoices} />
       <BulkDeletePanel />
