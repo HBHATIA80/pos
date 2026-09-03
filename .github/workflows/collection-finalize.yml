@@ -1,0 +1,91 @@
+name: Finalize collection and stock UI
+"on":
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply UI changes
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          shell = Path('app/dashboard/pos-shell.tsx')
+          text = shell.read_text()
+          nav_old = "  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },\n  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },"
+          nav_new = "  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },\n  { label: 'Cash / Bank Collection', href: '/dashboard/cash-bank-collection', icon: WalletCards, adminOnly: true },\n  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },"
+          if nav_old in text and 'Cash / Bank Collection' not in text:
+              shell.write_text(text.replace(nav_old, nav_new, 1))
+
+          sales = Path('app/dashboard/sales/page.tsx')
+          text = sales.read_text()
+          stock_old = '<span className="text-emerald-800">Stock: {product.current_stock}</span>'
+          stock_new = '<span className="text-emerald-800">Available: {Math.max(0, Number(product.current_stock) - cart.filter(item => item.id === product.id).reduce((sum, item) => sum + Number(item.quantity || 0), 0))}</span>'
+          if stock_old in text:
+              sales.write_text(text.replace(stock_old, stock_new, 1))
+
+          dash = Path('app/dashboard/page.tsx')
+          text = dash.read_text()
+          marker = "      </section>\n\n      <section className=\"grid gap-4 sm:grid-cols-2 xl:grid-cols-4\">"
+          if '<CashBankCollectionCard' not in text:
+              if marker not in text:
+                  raise SystemExit('Dashboard insertion marker not found')
+              replacement = "      </section>\n\n      {role === 'admin' && <CashBankCollectionCard start={data.period.start} end={data.period.end} />}\n\n      <section className=\"grid gap-4 sm:grid-cols-2 xl:grid-cols-4\">"
+              text = text.replace(marker, replacement, 1)
+              component = r'''
+
+function CashBankCollectionCard({ start, end }: { start: string; end: string }) {
+  const [total, setTotal] = useState(0)
+  const [cash, setCash] = useState(0)
+  const [bank, setBank] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    void fetch('/api/vouchers?type=receipt&limit=2000', { cache: 'no-store' }).then(r => r.json()).then(json => {
+      if (!active) return
+      const rows = [
+        ...(json.salePayments || []).map((x: { id: string; payment_method: string; amount: number; paid_at: string }) => ({ method: x.payment_method, amount: Number(x.amount), paidAt: x.paid_at })),
+        ...(json.vouchers || []).filter((x: { voucher_type: string }) => x.voucher_type === 'receipt').map((x: { id: string; payment_method: string; amount: number; paid_at: string }) => ({ method: x.payment_method, amount: Number(x.amount), paidAt: x.paid_at })),
+      ].filter((x: { method: string; paidAt: string }) => {
+        if (x.method !== 'cash' && x.method !== 'bank') return false
+        const d = new Date(x.paidAt)
+        const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10)
+        return day >= start && day <= end
+      })
+      const c = rows.filter((x: { method: string }) => x.method === 'cash').reduce((a: number, x: { amount: number }) => a + x.amount, 0)
+      const b = rows.filter((x: { method: string }) => x.method === 'bank').reduce((a: number, x: { amount: number }) => a + x.amount, 0)
+      setCash(c); setBank(b); setTotal(c + b); setLoading(false)
+    }).catch(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [start, end])
+
+  const moneyLocal = (v: number) => `₹${Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+  return <Link href="/dashboard/cash-bank-collection" className="group block rounded-[26px] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:p-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-emerald-700">Admin · Accounts & Finance</p><h2 className="mt-1 text-lg font-black text-slate-950">Cash / Bank Collection</h2><p className="mt-1 text-xs text-slate-500">Money received in the selected dashboard period</p></div><span className="rounded-xl bg-white px-4 py-2 text-xs font-black text-emerald-800 ring-1 ring-emerald-200">Open report →</span></div>
+    {loading ? <div className="mt-5 h-16 animate-pulse rounded-2xl bg-white/80" /> : <div className="mt-5 grid grid-cols-3 gap-2 sm:max-w-2xl sm:gap-3"><div className="rounded-2xl bg-white p-3 ring-1 ring-slate-100"><p className="text-[10px] font-black uppercase text-slate-400">Total</p><p className="mt-1 text-xl font-black text-slate-950">{moneyLocal(total)}</p></div><div className="rounded-2xl bg-white p-3 ring-1 ring-slate-100"><p className="text-[10px] font-black uppercase text-slate-400">Cash</p><p className="mt-1 text-lg font-black text-emerald-700">{moneyLocal(cash)}</p></div><div className="rounded-2xl bg-white p-3 ring-1 ring-slate-100"><p className="text-[10px] font-black uppercase text-slate-400">Bank</p><p className="mt-1 text-lg font-black text-blue-700">{moneyLocal(bank)}</p></div></div>}
+  </Link>
+}
+'''
+              text = text.replace('\nfunction StaffQuickAction', component + '\nfunction StaffQuickAction', 1)
+              dash.write_text(text)
+
+          subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'add', 'app/dashboard/pos-shell.tsx', 'app/dashboard/page.tsx', 'app/dashboard/sales/page.tsx'], check=True)
+          if subprocess.run(['git', 'diff', '--cached', '--quiet']).returncode != 0:
+              subprocess.run(['git', 'commit', '-m', 'Add collection dashboard and available stock'], check=True)
+              subprocess.run(['git', 'push'], check=True)
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          git rm .github/workflows/collection-finalize.yml || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Remove temporary collection finalizer' || true
+          git push || true
