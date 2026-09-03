@@ -14,8 +14,6 @@ function salesDate(invoice: { sold_at?: string | null; completed_at?: string | n
   return invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? ''
 }
 
-type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }
-type PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }
 type SaleItem = { id?: string; product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null; cost_unit_price?: number | null; product_name?: string | null; sku?: string | null }
 type ReturnItem = { id?: string; source_invoice_item_id?: string | null; product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null }
 
@@ -34,47 +32,6 @@ type ProfitCategory = { category_id: string | null; name: string; sales: number;
 type ProfitInvoice = { invoice_id: string; invoice_no: string; date: string; party_id: string | null; party_name: string; sales: number; cogs: number; profit: number; margin: number }
 type ProfitParty = { party_id: string | null; name: string; invoices: number; sales: number; cogs: number; profit: number; margin: number }
 
-/**
- * Moving weighted-average cost. Purchases are accumulated in chronological order.
- * A sale consumes quantity but does not change the average cost per unit.
- */
-function buildWeightedAverageLookup(purchases: PurchaseInvoice[], fallbackCosts: Map<string, number>) {
-  const events = [...purchases].sort((a, b) => {
-    const ad = a.purchased_at ?? a.completed_at ?? a.created_at ?? ''
-    const bd = b.purchased_at ?? b.completed_at ?? b.created_at ?? ''
-    return ad.localeCompare(bd)
-  })
-  const state = new Map<string, { qty: number; value: number }>()
-  const snapshots: Array<{ date: string; costs: Map<string, number> }> = []
-
-  for (const invoice of events) {
-    const date = invoice.purchased_at ?? invoice.completed_at ?? invoice.created_at ?? ''
-    for (const item of invoice.purchase_invoice_items ?? []) {
-      const qty = n(item.quantity)
-      if (qty <= 0) continue
-      const lineTotal = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
-      const value = lineTotal >= 0 ? lineTotal : n(item.unit_price) * qty
-      const old = state.get(item.product_id) ?? { qty: 0, value: 0 }
-      old.qty += qty
-      old.value += value
-      state.set(item.product_id, old)
-    }
-    snapshots.push({
-      date,
-      costs: new Map([...state.entries()].map(([productId, x]) => [productId, x.qty > 0 ? x.value / x.qty : (fallbackCosts.get(productId) ?? 0)])),
-    })
-  }
-
-  return (productId: string, atDate: string) => {
-    let best: Map<string, number> | null = null
-    for (const snapshot of snapshots) {
-      if (snapshot.date <= atDate) best = snapshot.costs
-      else break
-    }
-    return best?.get(productId) ?? fallbackCosts.get(productId) ?? 0
-  }
-}
-
 function round2(value: number) { return Number(value.toFixed(2)) }
 function marginOf(sales: number, profit: number) { return sales ? round2((profit / sales) * 100) : 0 }
 
@@ -91,7 +48,7 @@ export async function GET(request: Request) {
   if (start > end) return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
   const businessId = profile.business_id
 
-  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: purchaseRows, error: purchaseRowsError }, { data: categories, error: categoriesError }] = await Promise.all([
+  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: categories, error: categoriesError }] = await Promise.all([
     supabase.from('accounting_posted_lines').select('*').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date'),
     supabase.from('accounts').select('id,name,account_code,account_nature,account_group_id,party_id,opening_balance,opening_balance_type,is_party_account,is_active').eq('business_id', businessId).eq('is_active', true).order('name'),
     supabase.from('account_groups').select('id,name,code,nature,parent_id').eq('business_id', businessId).eq('is_active', true),
@@ -100,7 +57,7 @@ export async function GET(request: Request) {
     supabase.from('purchase_invoices').select('purchased_at,completed_at,created_at,purchase_invoice_items(product_id,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).lte('purchased_at', iso(end, true)).order('purchased_at'),
     supabase.from('catalog_categories').select('id,name').eq('business_id', businessId).eq('is_active', true).order('name'),
   ])
-  for (const e of [linesError, accountsError, groupsError, productsError, salesError, purchaseRowsError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
+  for (const e of [linesError, accountsError, groupsError, productsError, salesError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
 
   const { data: returns, error: returnsError } = await supabase
     .from('return_vouchers')
@@ -164,7 +121,8 @@ export async function GET(request: Request) {
   const totalLedgerExpense = allPnlAccounts.filter(x => x.nature === 'expense').reduce((sum, x) => sum + x.debit - x.credit, 0)
   const purchases = purchaseAccounts.reduce((sum, x) => sum + x.debit - x.credit, 0)
   const purchaseReturns = purchaseReturnRows.reduce((sum, r) => sum + n(r.grand_total), 0)
-  const netPurchases = purchases - purchaseReturns
+  // The purchase account already includes Purchase Return credits, so it is already net.
+  const netPurchases = purchases
   const operatingExpense = totalLedgerExpense - purchases
   const otherIncome = ledgerOtherIncome
 
@@ -330,6 +288,7 @@ export async function GET(request: Request) {
     const nature = meta?.account_nature || ''
     m.entries += 1
     if (nature === 'income' && !group.includes('sales')) m.otherIncome += credit - debit
+    else if (nature === 'expense' && group.includes('purchase')) m.purchases += debit - credit
     else if (nature === 'expense' && !group.includes('purchase')) m.expenses += debit - credit
     dailyMap.set(date, m)
   }
