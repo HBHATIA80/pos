@@ -17,6 +17,7 @@ function salesDate(invoice: { sold_at?: string | null; completed_at?: string | n
 type PurchaseItem = { product_id: string; quantity: number; unit_price: number; discount_amount?: number | null; line_total?: number | null }
 type PurchaseInvoice = { purchased_at?: string | null; completed_at?: string | null; created_at?: string | null; purchase_invoice_items?: PurchaseItem[] }
 type SaleItem = { id?: string; product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null; cost_unit_price?: number | null; product_name?: string | null; sku?: string | null }
+type ReturnItem = { id?: string; source_invoice_item_id?: string | null; product_id: string; quantity: number; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null }
 
 type ProfitProduct = {
   product_id: string
@@ -137,7 +138,7 @@ export async function GET(request: Request) {
     if (item.cost_unit_price != null && Number.isFinite(n(item.cost_unit_price))) return Math.max(0, n(item.cost_unit_price))
     return Math.max(0, productCost.get(item.product_id) ?? 0)
   }
-  const costForReturnItem = (item: any) => {
+  const costForReturnItem = (item: ReturnItem) => {
     const source = item.source_invoice_item_id ? sourceSaleCost.get(item.source_invoice_item_id) : null
     if (source != null && Number.isFinite(source)) return Math.max(0, source)
     return Math.max(0, productCost.get(item.product_id) ?? 0)
@@ -232,7 +233,7 @@ export async function GET(request: Request) {
     const returnCogsValue = (ret.return_voucher_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForReturnItem(item), 0)
     const partyName = ret.party_id ? `Party ${ret.party_id.slice(0, 8)}` : 'Walk-in / Other'
     profitInvoices.push({ invoice_id: ret.id, invoice_no: ret.return_no, date: String(ret.return_date).slice(0, 10), party_id: ret.party_id ?? null, party_name: partyName, sales: -returnSales, cogs: -returnCogsValue, profit: -returnSales + returnCogsValue, margin: marginOf(-returnSales, -returnSales + returnCogsValue) })
-    const items = (ret.return_voucher_items ?? []) as any[]
+    const items = (ret.return_voucher_items ?? []) as ReturnItem[]
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = n(item.line_total)
