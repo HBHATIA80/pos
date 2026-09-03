@@ -1,0 +1,61 @@
+name: Fix weighted purchase cost
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Patch accounting costing
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/api/accounting/reports/route.ts')
+          s = p.read_text()
+
+          s = s.replace(
+            "const returnRows = returns ?? []\n  const saleReturnRows = returnRows.filter(r => r.return_type === 'sale_return')\n  const purchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')",
+            "const returnRows = returns ?? []\n  const reportReturnRows = returnRows.filter(r => String(r.return_date).slice(0, 10) >= start && String(r.return_date).slice(0, 10) <= end)\n  const saleReturnRows = reportReturnRows.filter(r => r.return_type === 'sale_return')\n  const purchaseReturnRows = reportReturnRows.filter(r => r.return_type === 'purchase_return')\n  const allPurchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')"
+          )
+
+          old = """  const costForSaleItem = (item: SaleItem) => {\n    if (item.cost_unit_price != null && Number.isFinite(n(item.cost_unit_price))) return Math.max(0, n(item.cost_unit_price))\n    return Math.max(0, productCost.get(item.product_id) ?? 0)\n  }\n  const costForReturnItem = (item: ReturnItem) => {\n    const source = item.source_invoice_item_id ? sourceSaleCost.get(item.source_invoice_item_id) : null\n    if (source != null && Number.isFinite(source)) return Math.max(0, source)\n    return Math.max(0, productCost.get(item.product_id) ?? 0)\n  }"""
+
+          new = """  // Inventory costing for P&L uses quantity-weighted average purchase cost.\n  // The product-master purchase_price is intentionally NOT used for COGS because it is\n  // only a default/catalog value and can be different from the actual purchase invoices.\n  // Purchase invoices are replayed up to each sale date, and purchase returns reduce the\n  // purchased quantity/value using their recorded net purchase rate.\n  type PurchaseCostEvent = { at: string; product_id: string; quantity: number; unit_cost: number }\n  const purchaseCostEvents: PurchaseCostEvent[] = []\n  const netPurchaseUnitCost = (item: { quantity?: number | null; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null }) => {\n    const qty = n(item.quantity)\n    if (qty <= 0) return 0\n    const net = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)\n    return Math.max(0, net / qty)\n  }\n  for (const invoice of purchaseRows ?? []) {\n    const at = String(invoice.purchased_at ?? invoice.completed_at ?? invoice.created_at ?? '')\n    if (!at) continue\n    for (const item of (invoice.purchase_invoice_items ?? [])) {\n      const qty = n(item.quantity)\n      if (qty > 0) purchaseCostEvents.push({ at, product_id: item.product_id, quantity: qty, unit_cost: netPurchaseUnitCost(item) })\n    }\n  }\n  for (const ret of allPurchaseReturnRows) {\n    const at = `${String(ret.return_date).slice(0, 10)}T23:59:59.999Z`\n    for (const item of (ret.return_voucher_items ?? [])) {\n      const qty = n(item.quantity)\n      if (qty > 0) purchaseCostEvents.push({ at, product_id: item.product_id, quantity: -qty, unit_cost: netPurchaseUnitCost(item) })\n    }\n  }\n  purchaseCostEvents.sort((a, b) => a.at.localeCompare(b.at))\n\n  const weightedPurchaseState = new Map<string, { quantity: number; value: number }>()\n  const calculatedSaleItemCost = new Map<string, number>()\n  let purchaseCostEventIndex = 0\n  const advancePurchaseCostTo = (at: string) => {\n    while (purchaseCostEventIndex < purchaseCostEvents.length && purchaseCostEvents[purchaseCostEventIndex].at <= at) {\n      const event = purchaseCostEvents[purchaseCostEventIndex++]\n      const state = weightedPurchaseState.get(event.product_id) ?? { quantity: 0, value: 0 }\n      if (event.quantity > 0) {\n        state.quantity += event.quantity\n        state.value += event.quantity * event.unit_cost\n      } else {\n        const returnQty = Math.min(state.quantity, Math.abs(event.quantity))\n        state.quantity -= returnQty\n        state.value = Math.max(0, state.value - returnQty * event.unit_cost)\n      }\n      weightedPurchaseState.set(event.product_id, state)\n    }\n  }\n  const costForSaleItem = (item: SaleItem, saleAt: string) => {\n    advancePurchaseCostTo(saleAt)\n    const state = weightedPurchaseState.get(item.product_id)\n    return state && state.quantity > 0 ? Math.max(0, state.value / state.quantity) : 0\n  }\n  const weightedPurchaseCostAt = (productId: string, at: string) => {\n    // Used only for return lines whose source sale is outside the selected report period.\n    // Replaying from the beginning keeps this independent of the product master price.\n    const state = { quantity: 0, value: 0 }\n    for (const event of purchaseCostEvents) {\n      if (event.at > at) break\n      if (event.product_id !== productId) continue\n      if (event.quantity > 0) {\n        state.quantity += event.quantity\n        state.value += event.quantity * event.unit_cost\n      } else {\n        const returnQty = Math.min(state.quantity, Math.abs(event.quantity))\n        state.quantity -= returnQty\n        state.value = Math.max(0, state.value - returnQty * event.unit_cost)\n      }\n    }\n    return state.quantity > 0 ? Math.max(0, state.value / state.quantity) : 0\n  }\n  const costForReturnItem = (item: ReturnItem) => {\n    const calculatedSource = item.source_invoice_item_id ? calculatedSaleItemCost.get(item.source_invoice_item_id) : null\n    if (calculatedSource != null && Number.isFinite(calculatedSource)) return Math.max(0, calculatedSource)\n    return weightedPurchaseCostAt(item.product_id, `${String(new Date().toISOString()).slice(0, 10)}T23:59:59.999Z`)\n  }"""
+          if old not in s:
+              raise SystemExit('costing block marker not found')
+          s = s.replace(old, new)
+
+          s = s.replace(
+            "      const hasStoredCost = item.cost_unit_price != null\n      const lineCost = costForSaleItem(item)\n      if (!hasStoredCost && lineCost <= 0) saleCostMissing += 1",
+            "      const lineCost = costForSaleItem(item, saleDate)\n      if (lineCost <= 0) saleCostMissing += 1\n      if (item.id) calculatedSaleItemCost.set(item.id, lineCost)"
+          )
+
+          s = s.replace(
+            "m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForSaleItem(item as SaleItem), 0)",
+            "m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * (item.id ? (calculatedSaleItemCost.get(item.id) ?? 0) : 0), 0)"
+          )
+
+          s = s.replace(
+            "    stock: products ?? [],\n    profitAnalysis: {",
+            "    stock: products ?? [],\n    costing: { method: 'weighted_average_purchase_cost', description: 'COGS uses quantity-weighted average of completed purchase invoices available up to each sale date. Product master purchase price is never used for P&L costing.', purchaseReturnsIncluded: true },\n    profitAnalysis: {"
+          )
+
+          p.write_text(s)
+      - name: Commit source change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/accounting/reports/route.ts
+          git diff --cached --quiet || git commit -m "Use weighted average purchase cost for P&L"
+          git push
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-weighted-purchase-cost.yml || true
+          git diff --cached --quiet || git commit -m "Remove temporary weighted cost fixer"
+          git push || true
