@@ -1,0 +1,114 @@
+/* Sales mobile parity layer: keeps Sales visually identical to Purchase at phone widths. */
+@media (max-width: 767px) {
+  /* The Sales page uses a display-only date block while Purchase uses a date label/input. */
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div) {
+    box-sizing: border-box !important;
+    flex: 0 1 auto !important;
+    width: 122px !important;
+    min-width: 122px !important;
+    max-width: 122px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 0 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.05) !important;
+    overflow: hidden !important;
+    color: #0f172a !important;
+  }
+
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div > svg) {
+    width: 16px !important;
+    height: 16px !important;
+    flex: 0 0 16px !important;
+    color: #166534 !important;
+  }
+
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div > div) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div > div > div:first-child) {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 8px !important;
+    line-height: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #64748b !important;
+  }
+
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div > div > div:last-child) {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    color: #0f172a !important;
+  }
+
+  /* Same two compact controls as Purchase: full card width, 50px input rows. */
+  .salesMobileMatch :global(main > div > div > main > section:first-child > div) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .salesMobileMatch :global(main > div > div > main > section:first-child > div > div) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .salesMobileMatch :global(main > div > div > main > section:first-child > div > div > div.flex:has(input)) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    padding: 0 11px !important;
+    border-radius: 13px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .salesMobileMatch :global(main > div > div > main > section:first-child > div > div > div.flex:has(input) input) {
+    flex: 1 1 auto !important;
+    width: 1% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    outline: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .salesMobileMatch :global(main > div > div > main > section:first-child > div > div > div.flex:has(input) > svg) {
+    width: 19px !important;
+    height: 19px !important;
+    flex: 0 0 19px !important;
+  }
+}
+
+@media (max-width: 359px) {
+  .salesMobileMatch :global(main > div > section:first-child > div > div:last-child > div) {
+    width: 112px !important;
+    min-width: 112px !important;
+    max-width: 112px !important;
+  }
+}
