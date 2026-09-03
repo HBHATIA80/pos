@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Download, Edit3, FileText, Loader2, MessageCircle, Plus, Save, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Download, Edit3, FileText, Loader2, MessageCircle, Plus, Save, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { buildInvoicePdf } from './invoice-pdf'
 
@@ -41,6 +41,8 @@ type Invoice = {
 }
 type EditLine = { product_id: string; product_name: string; sku: string | null; unit_name: string | null; quantity: number; unit_price: number; discount_amount: number }
 type Product = { id: string; sku: string; name: string; unit_id: string; purchase_price: number; sale_price: number; catalog_units?: { short_name?: string | null } | null }
+type ProfitLine = { product_id: string; name: string; sku: string | null; quantity: number; cost_per_pc: number; sale_per_pc: number; profit_per_pc: number; total_sales: number; total_cost: number; total_profit: number }
+type InvoiceProfit = { sales: number; cogs: number; profit: number; margin: number; lines: ProfitLine[] }
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const localDateTime = (value: string | null) => { const d = value ? new Date(value) : new Date(); const pad = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}` }
@@ -65,6 +67,7 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
   const [productSearch, setProductSearch] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
+  const [invoiceProfit, setInvoiceProfit] = useState<InvoiceProfit | null>(null)
 
   useEffect(() => {
     if (!enabled) return
@@ -85,18 +88,30 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
       if (!invoiceNo) return
       event.preventDefault(); event.stopPropagation()
       const kind = invoiceNo.startsWith('PI-') ? 'purchase' : 'sale'
-      setLoading(true); setError(''); setInvoice(null); setEditing(false)
+      setLoading(true); setError(''); setInvoice(null); setInvoiceProfit(null); setEditing(false)
       try {
         const response = await fetch(`/api/invoices/${kind}/${encodeURIComponent(invoiceNo)}`, { cache: 'no-store' })
         const body = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(body.error || 'Unable to load invoice')
-        setInvoice(body.invoice as Invoice)
+        const loadedInvoice = body.invoice as Invoice
+        setInvoice(loadedInvoice)
+        if (kind === 'sale' && loadedInvoice.date) {
+          try {
+            const day = new Date(loadedInvoice.date).toISOString().slice(0, 10)
+            const reportResponse = await fetch(`/api/accounting/reports?start=${day}&end=${day}`, { cache: 'no-store' })
+            const reportBody = await reportResponse.json().catch(() => ({}))
+            const matched = reportBody?.profitAnalysis?.invoiceWise?.find((item: { invoice_no?: string }) => item.invoice_no === loadedInvoice.invoice_no)
+            if (matched) setInvoiceProfit({ sales: Number(matched.sales || 0), cogs: Number(matched.cogs || 0), profit: Number(matched.profit || 0), margin: Number(matched.margin || 0), lines: Array.isArray(matched.lines) ? matched.lines : [] })
+          } catch {
+            // Invoice remains fully usable if profit analysis is temporarily unavailable.
+          }
+        }
       } catch (err) { setError(err instanceof Error ? err.message : 'Unable to load invoice') } finally { setLoading(false) }
     }
     document.addEventListener('click', onClick, true); return () => document.removeEventListener('click', onClick, true)
   }, [enabled])
 
-  const close = () => { if (!saving && !pdfBusy) { setInvoice(null); setError(''); setEditing(false) } }
+  const close = () => { if (!saving && !pdfBusy) { setInvoice(null); setInvoiceProfit(null); setError(''); setEditing(false) } }
   const beginEdit = () => {
     if (!invoice) return
     setEditLines(invoice.items.map((item) => ({ product_id: item.product_id, product_name: item.product_name, sku: item.sku, unit_name: item.unit_name, quantity: Number(item.quantity), unit_price: Number(item.unit_price), discount_amount: Number(item.discount_amount) })))
@@ -182,11 +197,12 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
 
   if (!enabled || (!invoice && !loading && !error)) return null
 
-  return <div className="biz-invoice-viewer fixed inset-0 z-[100] flex min-w-0 items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}>
+  return <div className="biz-invoice-viewer fixed inset-0 z-[10000] flex min-w-0 items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}>
     <div className="flex max-h-[calc(100vh-32px)] w-[min(1280px,calc(100vw-32px))] max-w-[calc(100vw-32px)] min-w-0 flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]">
       <div className="flex shrink-0 min-w-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700"><FileText className="h-5 w-5" /></span><div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.16em] text-green-700">{invoice?.kind === 'purchase' ? 'Purchase Invoice' : 'Sales Invoice'}</p><h2 className="truncate text-lg font-black text-slate-950">{invoice?.invoice_no || 'Invoice'}</h2></div></div>
         <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
+          {invoice && invoiceProfit && <button type="button" onClick={close} className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100"><ArrowLeft className="h-4 w-4" /> Back to Profit Analysis</button>}
           {invoice && !editing && <button type="button" onClick={beginEdit} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"> <Edit3 className="h-4 w-4" /> Edit</button>}
           {invoice && !editing && <button type="button" onClick={() => void downloadPdf()} disabled={pdfBusy} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Download className="h-4 w-4" /> Download PDF</button>}
           {invoice && !editing && <button type="button" onClick={() => void sharePdfToWhatsApp()} disabled={pdfBusy} className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-3 py-2 text-sm font-black text-white hover:bg-green-800 disabled:opacity-50"><MessageCircle className="h-4 w-4" /> Share PDF to WhatsApp</button>}
@@ -199,6 +215,16 @@ export default function InvoiceViewer({ enabled }: { enabled: boolean }) {
       {error && !loading && <div className="p-10 text-center text-sm font-semibold text-red-600">{error}</div>}
 
       {invoice && !loading && <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white p-4 sm:p-5 md:p-6">
+        {invoiceProfit && invoice.kind === 'sale' && (
+          <section className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 sm:p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div><p className="text-[10px] font-black uppercase tracking-[.14em] text-indigo-600">Profit Analysis</p><h3 className="mt-1 text-lg font-black text-slate-950">Product-wise Profit / Loss</h3><p className="mt-1 text-xs text-slate-500">Cost per PC, sale price per PC and realized profit for every product in this invoice.</p></div>
+              <div className="grid grid-cols-3 gap-2 text-right"><div className="rounded-xl bg-white px-3 py-2 border"><p className="text-[9px] font-black uppercase text-slate-400">Sales</p><b>{money(invoiceProfit.sales)}</b></div><div className="rounded-xl bg-white px-3 py-2 border"><p className="text-[9px] font-black uppercase text-slate-400">Cost</p><b>{money(invoiceProfit.cogs)}</b></div><div className="rounded-xl bg-white px-3 py-2 border"><p className="text-[9px] font-black uppercase text-slate-400">Profit</p><b className={invoiceProfit.profit < 0 ? 'text-red-600' : 'text-emerald-700'}>{money(invoiceProfit.profit)}</b></div></div>
+            </div>
+            <div className="mt-4 overflow-x-auto rounded-xl border bg-white"><table className="w-full min-w-[980px] text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400"><tr><th className="p-3 text-left">Product / Model</th><th className="p-3 text-right">Qty</th><th className="p-3 text-right">Cost / PC</th><th className="p-3 text-right">Sale / PC</th><th className="p-3 text-right">Profit / PC</th><th className="p-3 text-right">Total Profit</th></tr></thead><tbody className="divide-y">{invoiceProfit.lines.map((line, index) => <tr key={`${line.product_id}-${index}`}><td className="p-3 font-black text-slate-900">{line.name}<span className="ml-2 text-xs font-medium text-slate-400">{line.sku || ''}</span></td><td className="p-3 text-right font-bold tabular-nums">{line.quantity}</td><td className="p-3 text-right tabular-nums">{money(line.cost_per_pc)}</td><td className="p-3 text-right font-bold tabular-nums">{money(line.sale_per_pc)}</td><td className={`p-3 text-right font-black tabular-nums ${line.profit_per_pc < 0 ? 'text-red-600' : 'text-emerald-700'}`}>{money(line.profit_per_pc)}</td><td className={`p-3 text-right font-black tabular-nums ${line.total_profit < 0 ? 'text-red-600' : 'text-emerald-700'}`}>{money(line.total_profit)}</td></tr>)}</tbody></table></div>
+          </section>
+        )}
+
         {invoice.kind === 'purchase' && (
   <div
     className={`mt-0 rounded-2xl border p-4 ${
