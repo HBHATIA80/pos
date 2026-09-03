@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { ArrowDownRight, ArrowUpRight, BarChart3, CircleDollarSign, CreditCard, Package, ReceiptText, RefreshCw, ShoppingBag, ShoppingCart, WalletCards, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, BarChart3, ChevronRight, CircleDollarSign, CreditCard, Package, ReceiptText, RefreshCw, ShoppingBag, ShoppingCart, WalletCards, X } from 'lucide-react'
 import ProfitAnalysisModal from './profit-analysis-modal'
 import { useDashboardRole } from './dashboard-role-context'
 
@@ -77,12 +77,16 @@ export default function DashboardPage() {
         {range === 'custom' && <div className="relative mt-5 grid gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"><label className="text-xs font-black uppercase tracking-wide text-slate-600">From<input type="date" value={startDate} max={endDate} onChange={e => setStartDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><label className="text-xs font-black uppercase tracking-wide text-slate-600">To<input type="date" value={endDate} min={startDate} max={todayISO()} onChange={e => setEndDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><button onClick={applyCustom} className="h-10 rounded-xl bg-yellow-400 px-5 text-sm font-black text-slate-950 hover:bg-yellow-300">Apply dates</button></div>}
       </section>
 
-      <section className="dashboard-quick-actions grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+      {isStaff ? <section className="dashboard-quick-actions grid gap-3 sm:grid-cols-3 sm:gap-4">
+        <StaffQuickAction href="/dashboard/sales" icon={<ShoppingCart />} title="Sales" subtitle="Create & manage sales" />
+        <StaffQuickAction href="/dashboard/purchases" icon={<ShoppingBag />} title="Purchase" subtitle="Record stock inward" />
+        <StaffQuickAction href="/dashboard/ledger" icon={<WalletCards />} title="Payment Ledger" subtitle="View payment ledger" />
+      </section> : <section className="dashboard-quick-actions grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         <QuickAction href="/dashboard/sales" icon={<ShoppingCart />} title="Sales" subtitle="New sale" />
         <QuickAction href="/dashboard/purchases" icon={<ShoppingBag />} title="Purchase" subtitle="Stock inward" />
         <QuickAction href="/dashboard/receipts" icon={<ReceiptText />} title="Payment Received" subtitle="Receive money" />
         <QuickAction href="/dashboard/payments" icon={<CreditCard />} title="Payment Made" subtitle="Pay supplier / expense" />
-      </section>
+      </section>}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={<ShoppingCart />} label="Today’s Sales" value={todaySales} subtitle="Click to review sales performance" tone="amber" onClick={() => setActiveCard('todaySales')} />
@@ -106,6 +110,14 @@ export default function DashboardPage() {
     {!isStaff && activeCard === 'todayProfit' && <ProfitAnalysisModal start={data.period.start} end={data.period.end} onClose={() => setActiveCard(null)} />}
     {activeCard && activeCard !== 'todayProfit' && <SimpleDetail card={activeCard} data={data} todaySales={todaySales} todayNet={todayNet} todayExpenses={todayExpenses} margin={netMargin} onClose={() => setActiveCard(null)} />}
   </>
+}
+
+function StaffQuickAction({ href, icon, title, subtitle }: { href: string; icon: ReactNode; title: string; subtitle: string }) {
+  return <Link href={href} className="group flex min-h-[76px] items-center gap-4 rounded-[22px] border border-emerald-200 bg-white p-4 shadow-sm ring-1 ring-emerald-50 transition duration-200 hover:-translate-y-0.5 hover:border-yellow-300 hover:bg-yellow-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-300 active:scale-[.99] sm:min-h-[92px] sm:p-5">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-700 text-white shadow-sm transition group-hover:bg-yellow-400 group-hover:text-slate-950 sm:h-14 sm:w-14"><span className="h-6 w-6 sm:h-7 sm:w-7">{icon}</span></span>
+    <span className="min-w-0 flex-1"><span className="block text-base font-black text-slate-950 sm:text-lg">{title}</span><span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500 sm:text-xs">{subtitle}</span></span>
+    <ChevronRight className="h-5 w-5 shrink-0 text-emerald-700 transition group-hover:translate-x-0.5" />
+  </Link>
 }
 
 function QuickAction({ href, icon, title, subtitle }: { href: string; icon: ReactNode; title: string; subtitle: string }) {
