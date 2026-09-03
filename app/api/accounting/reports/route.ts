@@ -163,10 +163,10 @@ export async function GET(request: Request) {
       const salePerPc = qty ? lineSales / qty : 0
       const profitPerPc = salePerPc - lineCost
       calculatedInvoiceCogs += lineCogs
-      invoiceLines.push({ product_id: item.product_id, name: productName, sku, quantity: qty, cost_per_pc: round2(lineCost), sale_per_pc: round2(salePerPc), profit_per_pc: round2(profitPerPc), total_sales: round2(lineSales), total_cost: round2(lineCogs), total_profit: round2(lineProfit) })
       const meta = productMeta.get(item.product_id)
       const productName = item.product_name || meta?.name || 'Unknown product'
       const sku = item.sku ?? meta?.sku ?? null
+      invoiceLines.push({ product_id: item.product_id, name: productName, sku, quantity: qty, cost_per_pc: round2(lineCost), sale_per_pc: round2(salePerPc), profit_per_pc: round2(profitPerPc), total_sales: round2(lineSales), total_cost: round2(lineCogs), total_profit: round2(lineProfit) })
       const old = profitProducts.get(item.product_id) ?? { product_id: item.product_id, name: productName, sku, quantity: 0, sales: 0, cogs: 0, profit: 0, margin: 0, average_purchase_cost: lineCost }
       old.quantity += qty; old.sales += lineSales; old.cogs += lineCogs; old.profit += lineProfit; old.average_purchase_cost = lineCost; old.margin = marginOf(old.sales, old.profit)
       profitProducts.set(item.product_id, old)
