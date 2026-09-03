@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   if (start > end) return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
   const businessId = profile.business_id
 
-  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: categories, error: categoriesError }] = await Promise.all([
+  const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: purchaseRows, error: purchaseError }, { data: categories, error: categoriesError }] = await Promise.all([
     supabase.from('accounting_posted_lines').select('*').eq('business_id', businessId).gte('entry_date', iso(start)).lte('entry_date', iso(end, true)).order('entry_date'),
     supabase.from('accounts').select('id,name,account_code,account_nature,account_group_id,party_id,opening_balance,opening_balance_type,is_party_account,is_active').eq('business_id', businessId).eq('is_active', true).order('name'),
     supabase.from('account_groups').select('id,name,code,nature,parent_id').eq('business_id', businessId).eq('is_active', true),
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
     supabase.from('purchase_invoices').select('purchased_at,completed_at,created_at,purchase_invoice_items(product_id,quantity,unit_price,discount_amount,line_total)').eq('business_id', businessId).eq('status', 'completed').is('deleted_at', null).lte('purchased_at', iso(end, true)).order('purchased_at'),
     supabase.from('catalog_categories').select('id,name').eq('business_id', businessId).eq('is_active', true).order('name'),
   ])
-  for (const e of [linesError, accountsError, groupsError, productsError, salesError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
+  for (const e of [linesError, accountsError, groupsError, productsError, salesError, purchaseError, categoriesError]) if (e) return NextResponse.json({ error: e.message }, { status: 400 })
 
   const { data: returns, error: returnsError } = await supabase
     .from('return_vouchers')
