@@ -10,290 +10,72 @@
     background: #f8fafc !important;
   }
 
-  /* App shell */
   .mobileVoucher :global(.biz-app-sidebar) { display: none !important; }
-  .mobileVoucher :global(.biz-app-main) {
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  .mobileVoucher :global(main) {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    overflow-x: clip !important;
-    padding: 8px !important;
-  }
+  .mobileVoucher :global(.biz-app-main) { width: 100% !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; }
+  .mobileVoucher :global(main) { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: clip !important; padding: 8px !important; }
 
-  /* Compact voucher header: feels like a native app toolbar. */
-  .mobileVoucher :global(main > section:first-child) {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    margin: 0 0 10px !important;
-    border-radius: 16px !important;
-    overflow: visible !important;
-  }
-  .mobileVoucher :global(main > section:first-child > div) {
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 9px !important;
-    min-height: 0 !important;
-    padding: 11px !important;
-  }
-  .mobileVoucher :global(main > section:first-child > div > div) {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-  }
-  .mobileVoucher :global(main > section:first-child > div > div:first-child) {
-    min-height: 42px !important;
-  }
-  .mobileVoucher :global(main > section:first-child > div > div:last-child) {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto auto !important;
-    gap: 7px !important;
-    align-items: center !important;
-  }
+  /* Native-app style voucher toolbar. */
+  .mobileVoucher :global(main > div > section:first-child) { width: 100% !important; max-width: 100% !important; min-width: 0 !important; margin: 0 0 10px !important; border-radius: 16px !important; overflow: visible !important; }
+  .mobileVoucher :global(main > div > section:first-child > div) { box-sizing: border-box !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 9px !important; min-height: 0 !important; padding: 11px !important; }
+  .mobileVoucher :global(main > div > section:first-child > div > div) { width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  .mobileVoucher :global(main > div > section:first-child > div > div:first-child) { min-height: 42px !important; }
+  .mobileVoucher :global(main > div > section:first-child > div > div:last-child) { display: grid !important; grid-template-columns: minmax(0, 1fr) auto auto !important; gap: 7px !important; align-items: center !important; }
 
-  /* Date / history / refresh controls stay thumb-friendly. */
-  .mobileVoucher :global(main > section:first-child label[aria-label="Invoice date"]),
-  .mobileVoucher :global(main > section:first-child label:has(input[type="date"])) {
-    position: relative !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    justify-content: flex-start !important;
-    padding: 0 12px !important;
-    border-radius: 13px !important;
-    overflow: hidden !important;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mobileVoucher :global(main > section:first-child label:has(input[type="date"]) input[type="date"]) {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    opacity: 0.001 !important;
-    cursor: pointer !important;
-  }
-  .mobileVoucher :global(main > section:first-child button) {
-    box-sizing: border-box !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    max-height: 48px !important;
-    border-radius: 12px !important;
-    -webkit-tap-highlight-color: transparent;
-  }
+  /* Purchase date picker: full-width, easy-to-tap mobile control. */
+  .mobileVoucher :global(main > div > section:first-child label:has(input[type="date"])) { position: relative !important; box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; height: 48px !important; min-height: 48px !important; justify-content: flex-start !important; padding: 0 12px !important; border-radius: 13px !important; overflow: hidden !important; -webkit-tap-highlight-color: transparent; }
+  .mobileVoucher :global(main > div > section:first-child label:has(input[type="date"]) input[type="date"]) { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; opacity: 0.001 !important; cursor: pointer !important; }
+  /* Sales has a display-only date; keep it compact and legible. */
+  .mobileVoucher :global(main > div > section:first-child div:has(> div.text-\[9px\])) { min-width: 0 !important; }
+  .mobileVoucher :global(main > div > section:first-child button) { box-sizing: border-box !important; min-width: 44px !important; min-height: 44px !important; max-height: 48px !important; border-radius: 12px !important; -webkit-tap-highlight-color: transparent; }
 
-  /* Form area: one clean field per row, never stretched by dropdown content. */
-  .mobileVoucher :global(main > div) { min-width: 0 !important; max-width: 100% !important; }
-  .mobileVoucher :global(main > div > main) { min-width: 0 !important; max-width: 100% !important; }
-  .mobileVoucher :global(main > div > main > section:first-child),
-  .mobileVoucher :global(main > section:nth-child(2)) {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-  }
+  /* The page content is root > grid > main > sections. */
+  .mobileVoucher :global(main > div > div) { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+  .mobileVoucher :global(main > div > div > main) { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+  .mobileVoucher :global(main > div > div > main > section:first-child) { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow: visible !important; }
+  .mobileVoucher :global(main > div > div > main > section:first-child > div) { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-auto-rows: max-content !important; align-items: start !important; gap: 11px !important; }
+  .mobileVoucher :global(main > div > div > main > section:first-child > div > div) { box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; align-self: start !important; }
 
-  /* Sales/purchase pages currently use a two-column form on desktop. Collapse only on phones. */
-  .mobileVoucher :global(main > div > main > section:first-child > div),
-  .mobileVoucher :global(main > section:nth-child(2) > div) {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-auto-rows: max-content !important;
-    align-items: start !important;
-    gap: 11px !important;
-  }
-  .mobileVoucher :global(main > div > main > section:first-child > div > div),
-  .mobileVoucher :global(main > section:nth-child(2) > div > div) {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    align-self: start !important;
-  }
-
-  /* Strong selector for the actual Customer/Supplier and Product/Barcode wrappers. */
+  /* Explicitly lock both search wrappers to their input height. */
   .mobileVoucher :global(main div.relative:has(input[placeholder*="customer"])),
   .mobileVoucher :global(main div.relative:has(input[placeholder*="supplier"])),
   .mobileVoucher :global(main div.relative:has(input[placeholder*="Search product"])),
-  .mobileVoucher :global(main div.relative:has(input[placeholder*="search product"])) {
-    position: relative !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    align-self: start !important;
-  }
+  .mobileVoucher :global(main div.relative:has(input[placeholder*="search product"])) { position: relative !important; box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; align-self: start !important; }
+  .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input)) { box-sizing: border-box !important; display: flex !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; height: 52px !important; min-height: 52px !important; max-height: 52px !important; padding-left: 12px !important; padding-right: 9px !important; overflow: hidden !important; border-radius: 13px !important; }
+  .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input) input) { box-sizing: border-box !important; flex: 1 1 auto !important; width: 1% !important; min-width: 0 !important; max-width: 100% !important; height: 50px !important; min-height: 50px !important; max-height: 50px !important; font-size: 15px !important; line-height: 20px !important; }
+  .mobileVoucher :global(input::placeholder) { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
-  /* The actual input shell is always a compact, flexible row. */
-  .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input)) {
-    box-sizing: border-box !important;
-    display: flex !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
-    padding-left: 12px !important;
-    padding-right: 9px !important;
-    overflow: hidden !important;
-    border-radius: 13px !important;
-  }
-  .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input) input) {
-    box-sizing: border-box !important;
-    flex: 1 1 auto !important;
-    width: 1% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    font-size: 15px !important;
-    line-height: 20px !important;
-  }
-  .mobileVoucher :global(input::placeholder) {
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  /* Dropdowns are anchored to the field, not the page. */
-  .mobileVoucher :global(main div.relative:has(input) > .absolute) {
-    position: absolute !important;
-    top: 60px !important;
-    left: 0 !important;
-    right: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: min(52vh, 340px) !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    z-index: 200 !important;
-    border-radius: 14px !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
-    box-shadow: 0 18px 42px rgba(15, 23, 42, .18) !important;
-  }
-  .mobileVoucher :global(main div.relative:has(input) > .absolute > div) {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: min(52vh, 340px) !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-  .mobileVoucher :global(main div.relative:has(input) > .absolute button) {
-    box-sizing: border-box !important;
-    display: flex !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    min-height: 58px !important;
-    height: auto !important;
-    padding: 9px 11px !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
-    text-align: left !important;
-    white-space: normal !important;
-  }
+  /* Dropdown is an anchored sheet below its own field. */
+  .mobileVoucher :global(main div.relative:has(input) > .absolute) { position: absolute !important; top: 60px !important; left: 0 !important; right: auto !important; width: 100% !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; max-height: min(52vh, 340px) !important; box-sizing: border-box !important; overflow: hidden !important; z-index: 200 !important; border-radius: 14px !important; background: #fff !important; color: #0f172a !important; box-shadow: 0 18px 42px rgba(15,23,42,.18) !important; }
+  .mobileVoucher :global(main div.relative:has(input) > .absolute > div) { width: 100% !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; max-height: min(52vh, 340px) !important; overflow-x: hidden !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .mobileVoucher :global(main div.relative:has(input) > .absolute button) { box-sizing: border-box !important; display: flex !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 58px !important; height: auto !important; padding: 9px 11px !important; background: #fff !important; color: #0f172a !important; text-align: left !important; white-space: normal !important; }
   .mobileVoucher :global(main div.relative:has(input) > .absolute button:hover) { background: #ecfdf5 !important; }
   .mobileVoucher :global(main div.relative:has(input) > .absolute button span),
   .mobileVoucher :global(main div.relative:has(input) > .absolute button b),
-  .mobileVoucher :global(main div.relative:has(input) > .absolute button div) {
-    min-width: 0 !important;
-    max-width: 100% !important;
-    color: #0f172a !important;
-  }
-  .mobileVoucher :global(main div.relative:has(input) > .absolute button img) {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    flex: 0 0 38px !important;
-    object-fit: cover !important;
-    border-radius: 9px !important;
-  }
+  .mobileVoucher :global(main div.relative:has(input) > .absolute button div) { min-width: 0 !important; max-width: 100% !important; color: #0f172a !important; }
+  .mobileVoucher :global(main div.relative:has(input) > .absolute button img) { width: 38px !important; height: 38px !important; min-width: 38px !important; flex: 0 0 38px !important; object-fit: cover !important; border-radius: 9px !important; }
 
-  /* Customer/Supplier dropdown gets priority over the product list. */
   .mobileVoucher :global(main div.relative:has(input[placeholder*="customer"])),
   .mobileVoucher :global(main div.relative:has(input[placeholder*="supplier"])) { z-index: 230 !important; }
   .mobileVoucher :global(main div.relative:has(input[placeholder*="Search product"])),
   .mobileVoucher :global(main div.relative:has(input[placeholder*="search product"])) { z-index: 220 !important; }
 
-  /* Invoice item area: page itself never scrolls sideways; table does. */
-  .mobileVoucher :global(main > div > main > section:nth-child(2)),
-  .mobileVoucher :global(main > section:nth-child(3)) {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    min-height: 260px !important;
-    height: auto !important;
-    flex: 0 0 auto !important;
-    overflow: hidden !important;
-    border-radius: 16px !important;
-  }
-  .mobileVoucher :global(main > div > main > section:nth-child(2) > div.overflow-auto),
-  .mobileVoucher :global(main > section:nth-child(3) > div.overflow-auto) {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-  .mobileVoucher :global(main > div > main > section:nth-child(2) table),
-  .mobileVoucher :global(main > section:nth-child(3) table) {
-    width: max-content !important;
-    max-width: none !important;
-    min-width: 680px !important;
-  }
+  /* Invoice item card and internal table scrolling. */
+  .mobileVoucher :global(main > div > div > main > section:nth-child(2)) { width: 100% !important; max-width: 100% !important; min-width: 0 !important; min-height: 260px !important; height: auto !important; flex: 0 0 auto !important; overflow: hidden !important; border-radius: 16px !important; }
+  .mobileVoucher :global(main > div > div > main > section:nth-child(2) > div.overflow-auto) { width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .mobileVoucher :global(main > div > div > main > section:nth-child(2) table) { width: max-content !important; max-width: none !important; min-width: 680px !important; }
 
-  /* Sticky mobile checkout/action bar stays above the app navigation. */
-  .mobileVoucher :global(.fixed.inset-x-0.bottom-0.z-40) {
-    left: 0 !important;
-    right: 0 !important;
-    bottom: calc(56px + env(safe-area-inset-bottom)) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    z-index: 80 !important;
-    box-sizing: border-box !important;
-  }
+  /* Mobile checkout bar stays above bottom navigation. */
+  .mobileVoucher :global(.fixed.inset-x-0.bottom-0.z-40) { left: 0 !important; right: 0 !important; bottom: calc(56px + env(safe-area-inset-bottom)) !important; width: 100% !important; max-width: 100% !important; z-index: 80 !important; box-sizing: border-box !important; }
   .mobileVoucher :global(.fixed.inset-x-0.bottom-0.z-40 > div) { min-width: 0 !important; max-width: 100% !important; }
-  .mobileVoucher :global(.fixed.inset-x-0.bottom-0.z-40 button) {
-    min-height: 48px !important;
-    max-width: 46vw !important;
-    padding: 0 12px !important;
-    white-space: nowrap !important;
-  }
-
+  .mobileVoucher :global(.fixed.inset-x-0.bottom-0.z-40 button) { min-height: 48px !important; max-width: 46vw !important; padding: 0 12px !important; white-space: nowrap !important; }
   .mobileVoucher :global(img), .mobileVoucher :global(video) { max-width: 100%; }
 }
 
-/* Extra-tight phones: 320–359px. */
 @media (max-width: 359px) {
   .mobileVoucher { padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important; }
   .mobileVoucher :global(main) { padding: 6px !important; }
-  .mobileVoucher :global(main > section:first-child > div) { padding: 9px !important; gap: 7px !important; }
-  .mobileVoucher :global(main > section:first-child > div > div:last-child) { grid-template-columns: minmax(0, 1fr) 44px 44px !important; }
+  .mobileVoucher :global(main > div > section:first-child > div) { padding: 9px !important; gap: 7px !important; }
+  .mobileVoucher :global(main > div > section:first-child > div > div:last-child) { grid-template-columns: minmax(0, 1fr) 44px 44px !important; }
   .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input)) { height: 50px !important; min-height: 50px !important; max-height: 50px !important; }
   .mobileVoucher :global(main div.relative:has(input) > div.flex:has(input) input) { height: 48px !important; font-size: 14px !important; }
   .mobileVoucher :global(main div.relative:has(input) > .absolute) { top: 58px !important; max-height: 290px !important; }
