@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
   if (type === 'receipt' || type === 'payment') voucherQuery = voucherQuery.eq('voucher_type', type)
   if (start) voucherQuery = voucherQuery.gte('paid_at', `${start}T00:00:00.000Z`)
-  if (end) voucherQuery = voucherQuery.lt('paid_at', `${end}T00:00:00.000Z`)
+  if (end) voucherQuery = voucherQuery.lt('paid_at', `${end}T23:59:59.999Z`)
 
   const { data: vouchers, error } = await voucherQuery
   if (error) return NextResponse.json({ error: error.message || 'Unable to load vouchers' }, { status: 400 })
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     .select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,parties(id,name,party_type),sales_invoices!inner(invoice_no,grand_total)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
   if (start) salePaymentQuery = salePaymentQuery.gte('paid_at', `${start}T00:00:00.000Z`)
-  if (end) salePaymentQuery = salePaymentQuery.lt('paid_at', `${end}T00:00:00.000Z`)
+  if (end) salePaymentQuery = salePaymentQuery.lt('paid_at', `${end}T23:59:59.999Z`)
 
   const { data: salePayments, error: paymentError } = await salePaymentQuery
   if (paymentError) return NextResponse.json({ error: paymentError.message || 'Unable to load invoice payments' }, { status: 400 })
