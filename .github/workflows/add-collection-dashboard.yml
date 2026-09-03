@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Patch dashboard and navigation
+      - name: Patch dashboard, navigation and stock display
         shell: python
         run: |
           from pathlib import Path
@@ -23,6 +23,14 @@ jobs:
           new = "  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },\n  { label: 'Cash / Bank Collection', href: '/dashboard/cash-bank-collection', icon: WalletCards, adminOnly: true },\n  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },"
           if old in text and "Cash / Bank Collection" not in text:
               shell.write_text(text.replace(old, new, 1))
+
+          sales = Path('app/dashboard/sales/page.tsx')
+          text = sales.read_text()
+          old = '<span className="text-emerald-800">Stock: {product.current_stock}</span>'
+          new = '<span className="text-emerald-800">Available: {Math.max(0, Number(product.current_stock) - cart.filter(item => item.id === product.id).reduce((sum, item) => sum + Number(item.quantity || 0), 0))}</span>'
+          if old in text:
+              text = text.replace(old, new, 1)
+          sales.write_text(text)
 
           dash = Path('app/dashboard/page.tsx')
           text = dash.read_text()
@@ -72,10 +80,10 @@ function CashBankCollectionCard({ start, end }: { start: string; end: string }) 
 
           subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
-          subprocess.run(['git', 'add', 'app/dashboard/pos-shell.tsx', 'app/dashboard/page.tsx'], check=True)
+          subprocess.run(['git', 'add', 'app/dashboard/pos-shell.tsx', 'app/dashboard/page.tsx', 'app/dashboard/sales/page.tsx'], check=True)
           changed = subprocess.run(['git', 'diff', '--cached', '--quiet']).returncode != 0
           if changed:
-              subprocess.run(['git', 'commit', '-m', 'Add admin cash bank collection dashboard access'], check=True)
+              subprocess.run(['git', 'commit', '-m', 'Add available stock and collection dashboard'], check=True)
               subprocess.run(['git', 'push'], check=True)
           else:
               print('No dashboard changes needed')
