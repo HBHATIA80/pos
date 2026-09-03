@@ -1,0 +1,413 @@
+/* Final mobile POS redesign. Desktop/tablet are intentionally untouched. */
+@media (max-width: 767px) {
+  .mobileVoucherFinal {
+    --mobile-nav: 68px;
+    --mobile-checkout: 64px;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+    background: #f6f8f7 !important;
+  }
+
+  .mobileVoucherFinal :global(.biz-app-sidebar) { display: none !important; }
+  .mobileVoucherFinal :global(aside) { display: none !important; }
+  .mobileVoucherFinal :global(.biz-app-main),
+  .mobileVoucherFinal :global(main) {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    overflow-x: clip !important;
+  }
+  .mobileVoucherFinal :global(main) {
+    padding: 8px 8px calc(var(--mobile-checkout) + var(--mobile-nav) + 18px) !important;
+  }
+
+  /* ---------- App header ---------- */
+  .mobileVoucherFinal :global(main > div > section:first-child) {
+    width: 100% !important;
+    margin: 0 0 8px !important;
+    border: 1px solid #dce7df !important;
+    border-radius: 16px !important;
+    background: #edf8f0 !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04) !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div) {
+    min-height: 62px !important;
+    padding: 8px 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 7px !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:first-child) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:first-child > span:first-child) {
+    width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
+    border-radius: 11px !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:first-child > div) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:first-child > div > div:first-child) {
+    font-size: 14px !important;
+    line-height: 17px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:first-child > div > div:last-child) {
+    font-size: 10px !important;
+    line-height: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:last-child) {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:last-child > *) {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    flex: 0 0 40px !important;
+    border-radius: 11px !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:last-child > :first-child) {
+    font-size: 0 !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:last-child > :first-child svg),
+  .mobileVoucherFinal :global(main > div > section:first-child > div > div:last-child > :last-child svg) {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child label:has(input[type="date"])) {
+    position: relative !important;
+    width: 100% !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 9px !important;
+    border-radius: 11px !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main > div > section:first-child label:has(input[type="date"]) span) { display: none !important; }
+  .mobileVoucherFinal :global(main > div > section:first-child label:has(input[type="date"]) input[type="date"]) {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: .001 !important;
+  }
+
+  /* ---------- Main column ---------- */
+  .mobileVoucherFinal :global(main > div > div) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: block !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* ---------- Customer / supplier + product search ---------- */
+  .mobileVoucherFinal :global(main > div > div > main > section:first-child) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 13px !important;
+    border: 1px solid #dfe7e2 !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 3px rgba(15,23,42,.05) !important;
+    overflow: visible !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:first-child > div) {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:first-child > div > div) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: start !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:first-child label) {
+    display: block !important;
+    margin: 0 0 6px !important;
+    font-size: 10px !important;
+    line-height: 13px !important;
+    letter-spacing: .08em !important;
+    font-weight: 900 !important;
+    color: #334155 !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input)) {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input)) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    padding: 0 11px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: inset 0 1px 1px rgba(15,23,42,.02) !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input) input) {
+    flex: 1 1 auto !important;
+    width: 1% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    outline: none !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input) > svg) {
+    width: 19px !important;
+    height: 19px !important;
+    flex: 0 0 19px !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input) > button) {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    flex: 0 0 30px !important;
+    padding: 5px !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > .absolute) {
+    position: absolute !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    max-height: min(42vh, 290px) !important;
+    z-index: 500 !important;
+    border: 1px solid #d7e0da !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    color: #0f172a !important;
+    box-shadow: 0 18px 40px rgba(15,23,42,.18) !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > .absolute > div) {
+    width: 100% !important;
+    max-height: min(42vh, 290px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > .absolute button) {
+    width: 100% !important;
+    min-height: 52px !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input) > .absolute button *) { color: #0f172a !important; }
+  .mobileVoucherFinal :global(main div.relative:has(input) > .absolute button img) {
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+    border-radius: 8px !important;
+    object-fit: cover !important;
+  }
+  .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="customer"])),
+  .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="supplier"])) { z-index: 510 !important; }
+  .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="Search product"])),
+  .mobileVoucherFinal :global(main div.relative:has(input[placeholder*="search product"])) { z-index: 500 !important; }
+
+  /* ---------- Cart ---------- */
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2)) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    flex: 0 0 auto !important;
+    border: 1px solid #dfe7e2 !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 3px rgba(15,23,42,.05) !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) > div.overflow-auto) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    max-height: 48vh !important;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) table) {
+    min-width: 680px !important;
+    width: max-content !important;
+    max-width: none !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) > div:last-child) {
+    min-height: 44px !important;
+    padding: 8px 11px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) .min-h-\[500px\]) {
+    min-height: 145px !important;
+    height: 145px !important;
+    padding: 14px !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) .min-h-\[500px\] h-16) {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) .min-h-\[500px\] h-16 svg) {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) .min-h-\[500px\] h3) {
+    margin-top: 8px !important;
+    font-size: 15px !important;
+  }
+  .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) .min-h-\[500px\] p) {
+    margin-top: 3px !important;
+    font-size: 11px !important;
+    line-height: 16px !important;
+  }
+
+  /* ---------- Persistent one-line mobile bill summary ---------- */
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1)) {
+    bottom: var(--mobile-nav) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: var(--mobile-checkout) !important;
+    min-height: var(--mobile-checkout) !important;
+    max-height: var(--mobile-checkout) !important;
+    z-index: 900 !important;
+    padding: 7px 9px !important;
+    padding-bottom: max(7px, env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid #d9e1dc !important;
+    background: rgba(255,255,255,.97) !important;
+    box-shadow: 0 -8px 24px rgba(15,23,42,.10) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) > div) {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) .min-w-0.flex-1) {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 7px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) .min-w-0.flex-1 p:first-child) {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    font-size: 9px !important;
+    line-height: 12px !important;
+    letter-spacing: .05em !important;
+  }
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) .min-w-0.flex-1 p:last-child) {
+    min-width: 0 !important;
+    margin: 0 !important;
+    font-size: 17px !important;
+    line-height: 22px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) button) {
+    flex: 0 0 auto !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 12px !important;
+    border-radius: 13px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+
+  /* Prevent any hidden desktop summary from painting behind the form. */
+  .mobileVoucherFinal :global(aside *) { visibility: hidden !important; }
+  .mobileVoucherFinal :global(body) { overflow-x: hidden !important; }
+
+  @media (max-width: 359px) {
+    .mobileVoucherFinal :global(main) { padding-left: 6px !important; padding-right: 6px !important; }
+    .mobileVoucherFinal :global(main > div > div > main > section:first-child) { padding: 11px !important; }
+    .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input)) { height: 48px !important; min-height: 48px !important; max-height: 48px !important; }
+    .mobileVoucherFinal :global(main div.relative:has(input) > div.flex:has(input) input) { height: 46px !important; min-height: 46px !important; }
+    .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) button) { width: 100px !important; min-width: 100px !important; }
+    .mobileVoucherFinal :global(.fixed.inset-x-0.bottom-0.z-40:has(.min-w-0.flex-1) .min-w-0.flex-1 p:last-child) { font-size: 16px !important; }
+  }
+}
