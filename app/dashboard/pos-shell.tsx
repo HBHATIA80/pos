@@ -31,6 +31,7 @@ const financeNav: NavItem[] = [
   { label: 'Receipts', href: '/dashboard/receipts', icon: ReceiptText },
   { label: 'Expenses', href: '/dashboard/expenses', icon: WalletCards },
   { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },
+  { label: 'Cash / Bank Collection', href: '/dashboard/cash-bank-collection', icon: WalletCards, adminOnly: true },
   { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },
 ]
 const userNav: NavItem[] = [{ label: 'Shop & Orders', href: '/dashboard/orders', icon: ShoppingCart }, { label: 'My Ledger', href: '/dashboard/my-ledger', icon: WalletCards }]
