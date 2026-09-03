@@ -84,22 +84,91 @@ export async function GET(request: Request) {
   const productCost = new Map((products ?? []).map(p => [p.product_id, n(p.purchase_price)]))
   const categoryMap = new Map((categories ?? []).map(c => [c.id, c.name]))
   const returnRows = returns ?? []
-  const saleReturnRows = returnRows.filter(r => r.return_type === 'sale_return')
-  const purchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')
+  const reportReturnRows = returnRows.filter(r => String(r.return_date).slice(0, 10) >= start && String(r.return_date).slice(0, 10) <= end)
+  const saleReturnRows = reportReturnRows.filter(r => r.return_type === 'sale_return')
+  const purchaseReturnRows = reportReturnRows.filter(r => r.return_type === 'purchase_return')
+  const allPurchaseReturnRows = returnRows.filter(r => r.return_type === 'purchase_return')
   const sourceSaleItemIds = saleReturnRows.flatMap(r => (r.return_voucher_items ?? []).map(i => i.source_invoice_item_id).filter(Boolean)) as string[]
   const { data: sourceSaleItems, error: sourceSaleItemsError } = sourceSaleItemIds.length
     ? await supabase.from('sales_invoice_items').select('id,cost_unit_price,unit_price').in('id', [...new Set(sourceSaleItemIds)])
     : { data: [], error: null }
   if (sourceSaleItemsError) return NextResponse.json({ error: sourceSaleItemsError.message }, { status: 400 })
   const sourceSaleCost = new Map((sourceSaleItems ?? []).map(i => [i.id, i.cost_unit_price == null ? null : n(i.cost_unit_price)]))
-  const costForSaleItem = (item: SaleItem) => {
-    if (item.cost_unit_price != null && Number.isFinite(n(item.cost_unit_price))) return Math.max(0, n(item.cost_unit_price))
-    return Math.max(0, productCost.get(item.product_id) ?? 0)
+  // Inventory costing for P&L uses quantity-weighted average purchase cost.
+  // The product-master purchase_price is intentionally NOT used for COGS because it is
+  // only a default/catalog value and can be different from the actual purchase invoices.
+  // Purchase invoices are replayed up to each sale date, and purchase returns reduce the
+  // purchased quantity/value using their recorded net purchase rate.
+  type PurchaseCostEvent = { at: string; product_id: string; quantity: number; unit_cost: number }
+  const purchaseCostEvents: PurchaseCostEvent[] = []
+  const netPurchaseUnitCost = (item: { quantity?: number | null; unit_price?: number | null; discount_amount?: number | null; line_total?: number | null }) => {
+    const qty = n(item.quantity)
+    if (qty <= 0) return 0
+    const net = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
+    return Math.max(0, net / qty)
+  }
+  for (const invoice of purchaseRows ?? []) {
+    const at = String(invoice.purchased_at ?? invoice.completed_at ?? invoice.created_at ?? '')
+    if (!at) continue
+    for (const item of (invoice.purchase_invoice_items ?? [])) {
+      const qty = n(item.quantity)
+      if (qty > 0) purchaseCostEvents.push({ at, product_id: item.product_id, quantity: qty, unit_cost: netPurchaseUnitCost(item) })
+    }
+  }
+  for (const ret of allPurchaseReturnRows) {
+    const at = `${String(ret.return_date).slice(0, 10)}T23:59:59.999Z`
+    for (const item of (ret.return_voucher_items ?? [])) {
+      const qty = n(item.quantity)
+      if (qty > 0) purchaseCostEvents.push({ at, product_id: item.product_id, quantity: -qty, unit_cost: netPurchaseUnitCost(item) })
+    }
+  }
+  purchaseCostEvents.sort((a, b) => a.at.localeCompare(b.at))
+
+  const weightedPurchaseState = new Map<string, { quantity: number; value: number }>()
+  const calculatedSaleItemCost = new Map<string, number>()
+  let purchaseCostEventIndex = 0
+  const advancePurchaseCostTo = (at: string) => {
+    while (purchaseCostEventIndex < purchaseCostEvents.length && purchaseCostEvents[purchaseCostEventIndex].at <= at) {
+      const event = purchaseCostEvents[purchaseCostEventIndex++]
+      const state = weightedPurchaseState.get(event.product_id) ?? { quantity: 0, value: 0 }
+      if (event.quantity > 0) {
+        state.quantity += event.quantity
+        state.value += event.quantity * event.unit_cost
+      } else {
+        const returnQty = Math.min(state.quantity, Math.abs(event.quantity))
+        state.quantity -= returnQty
+        state.value = Math.max(0, state.value - returnQty * event.unit_cost)
+      }
+      weightedPurchaseState.set(event.product_id, state)
+    }
+  }
+  const costForSaleItem = (item: SaleItem, saleAt: string) => {
+    advancePurchaseCostTo(saleAt)
+    const state = weightedPurchaseState.get(item.product_id)
+    return state && state.quantity > 0 ? Math.max(0, state.value / state.quantity) : 0
+  }
+  const weightedPurchaseCostAt = (productId: string, at: string) => {
+    // Used only for return lines whose source sale is outside the selected report period.
+    // Replaying from the beginning keeps this independent of the product master price.
+    const state = { quantity: 0, value: 0 }
+    for (const event of purchaseCostEvents) {
+      if (event.at > at) break
+      if (event.product_id !== productId) continue
+      if (event.quantity > 0) {
+        state.quantity += event.quantity
+        state.value += event.quantity * event.unit_cost
+      } else {
+        const returnQty = Math.min(state.quantity, Math.abs(event.quantity))
+        state.quantity -= returnQty
+        state.value = Math.max(0, state.value - returnQty * event.unit_cost)
+      }
+    }
+    return state.quantity > 0 ? Math.max(0, state.value / state.quantity) : 0
   }
   const costForReturnItem = (item: ReturnItem) => {
-    const source = item.source_invoice_item_id ? sourceSaleCost.get(item.source_invoice_item_id) : null
-    if (source != null && Number.isFinite(source)) return Math.max(0, source)
-    return Math.max(0, productCost.get(item.product_id) ?? 0)
+    const calculatedSource = item.source_invoice_item_id ? calculatedSaleItemCost.get(item.source_invoice_item_id) : null
+    if (calculatedSource != null && Number.isFinite(calculatedSource)) return Math.max(0, calculatedSource)
+    return weightedPurchaseCostAt(item.product_id, `${String(new Date().toISOString()).slice(0, 10)}T23:59:59.999Z`)
   }
   const accountMeta = new Map(acc.map(a => [a.id, { ...a, group: groupRows.find(g => g.id === a.account_group_id)?.name || '' }]))
 
@@ -154,9 +223,9 @@ export async function GET(request: Request) {
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
-      const hasStoredCost = item.cost_unit_price != null
-      const lineCost = costForSaleItem(item)
-      if (!hasStoredCost && lineCost <= 0) saleCostMissing += 1
+      const lineCost = costForSaleItem(item, saleDate)
+      if (lineCost <= 0) saleCostMissing += 1
+      if (item.id) calculatedSaleItemCost.set(item.id, lineCost)
       const lineCogs = qty * lineCost
       cogsBeforeReturns += lineCogs
       const lineProfit = lineSales - lineCogs
@@ -306,7 +375,7 @@ export async function GET(request: Request) {
     const date = String(invoice.sold_at ?? invoice.completed_at ?? invoice.created_at ?? '').slice(0, 10)
     const m = dailyMap.get(date) || { sales:0, purchases:0, cogs:0, expenses:0, otherIncome:0, entries:0, salesReturns:0, purchaseReturns:0 }
     m.sales += n(invoice.grand_total)
-    m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForSaleItem(item as SaleItem), 0)
+    m.cogs += (invoice.sales_invoice_items ?? []).reduce((sum, item) => sum + n(item.quantity) * (item.id ? (calculatedSaleItemCost.get(item.id) ?? 0) : 0), 0)
     dailyMap.set(date, m)
   }
   for (const ret of saleReturnRows) {
@@ -339,6 +408,7 @@ export async function GET(request: Request) {
     topExpenses,
     daily,
     stock: products ?? [],
+    costing: { method: 'weighted_average_purchase_cost', description: 'COGS uses quantity-weighted average of completed purchase invoices available up to each sale date. Product master purchase price is never used for P&L costing.', purchaseReturnsIncluded: true },
     profitAnalysis: {
       productWise: [...profitProducts.values()].sort((a,b) => b.profit - a.profit),
       categoryWise: [...profitCategories.values()].sort((a,b) => b.profit - a.profit),
