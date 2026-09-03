@@ -73,12 +73,12 @@ function CashBankCollectionCard({ start, end }: { start: string; end: string }) 
           subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
           subprocess.run(['git', 'add', 'app/dashboard/pos-shell.tsx', 'app/dashboard/page.tsx'], check=True)
-          subprocess.run(['git', 'diff', '--cached', '--quiet'])
-          if subprocess.call(['git', 'diff', '--cached', '--quiet']) == 0:
-              print('No dashboard changes needed')
-          else:
+          changed = subprocess.run(['git', 'diff', '--cached', '--quiet']).returncode != 0
+          if changed:
               subprocess.run(['git', 'commit', '-m', 'Add admin cash bank collection dashboard access'], check=True)
               subprocess.run(['git', 'push'], check=True)
+          else:
+              print('No dashboard changes needed')
       - name: Remove temporary workflow
         if: always()
         run: |
