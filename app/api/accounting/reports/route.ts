@@ -29,7 +29,8 @@ type ProfitProduct = {
   average_purchase_cost: number
 }
 type ProfitCategory = { category_id: string | null; name: string; sales: number; cogs: number; profit: number; margin: number }
-type ProfitInvoice = { invoice_id: string; invoice_no: string; date: string; party_id: string | null; party_name: string; sales: number; cogs: number; profit: number; margin: number }
+type ProfitInvoiceLine = { product_id: string; name: string; sku: string | null; quantity: number; cost_per_pc: number; sale_per_pc: number; profit_per_pc: number; total_sales: number; total_cost: number; total_profit: number }
+type ProfitInvoice = { invoice_id: string; invoice_no: string; date: string; party_id: string | null; party_name: string; sales: number; cogs: number; profit: number; margin: number; lines: ProfitInvoiceLine[] }
 type ProfitParty = { party_id: string | null; name: string; invoices: number; sales: number; cogs: number; profit: number; margin: number }
 
 function round2(value: number) { return Number(value.toFixed(2)) }
@@ -149,6 +150,7 @@ export async function GET(request: Request) {
     const items = (invoice.sales_invoice_items ?? []) as SaleItem[]
 
     let calculatedInvoiceCogs = 0
+    const invoiceLines: ProfitInvoiceLine[] = []
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = item.line_total == null ? n(item.unit_price) * qty - n(item.discount_amount) : n(item.line_total)
@@ -158,7 +160,10 @@ export async function GET(request: Request) {
       const lineCogs = qty * lineCost
       cogsBeforeReturns += lineCogs
       const lineProfit = lineSales - lineCogs
+      const salePerPc = qty ? lineSales / qty : 0
+      const profitPerPc = salePerPc - lineCost
       calculatedInvoiceCogs += lineCogs
+      invoiceLines.push({ product_id: item.product_id, name: productName, sku, quantity: qty, cost_per_pc: round2(lineCost), sale_per_pc: round2(salePerPc), profit_per_pc: round2(profitPerPc), total_sales: round2(lineSales), total_cost: round2(lineCogs), total_profit: round2(lineProfit) })
       const meta = productMeta.get(item.product_id)
       const productName = item.product_name || meta?.name || 'Unknown product'
       const sku = item.sku ?? meta?.sku ?? null
@@ -176,7 +181,7 @@ export async function GET(request: Request) {
 
     const partyName = invoice.party_id ? `Party ${invoice.party_id.slice(0, 8)}` : invoiceName
     const invProfit = invoiceSales - calculatedInvoiceCogs
-    profitInvoices.push({ invoice_id: invoice.id, invoice_no: invoice.invoice_no, date: saleDate.slice(0, 10), party_id: invoice.party_id ?? null, party_name: partyName, sales: invoiceSales, cogs: calculatedInvoiceCogs, profit: invProfit, margin: marginOf(invoiceSales, invProfit) })
+    profitInvoices.push({ invoice_id: invoice.id, invoice_no: invoice.invoice_no, date: saleDate.slice(0, 10), party_id: invoice.party_id ?? null, party_name: partyName, sales: invoiceSales, cogs: calculatedInvoiceCogs, profit: invProfit, margin: marginOf(invoiceSales, invProfit), lines: invoiceLines })
 
     const partyKey = invoice.party_id ?? '__walkin__'
     const party = profitParties.get(partyKey) ?? { party_id: invoice.party_id ?? null, name: partyName, invoices: 0, sales: 0, cogs: 0, profit: 0, margin: 0 }
@@ -187,18 +192,23 @@ export async function GET(request: Request) {
   const returnCogs = saleReturnRows.reduce((sum, r) => sum + (r.return_voucher_items ?? []).reduce((inner, item) => inner + n(item.quantity) * costForReturnItem(item), 0), 0)
   for (const ret of saleReturnRows) {
     const returnSales = n(ret.grand_total)
+    const returnLines: ProfitInvoiceLine[] = []
     salesReturns += returnSales
     const returnCogsValue = (ret.return_voucher_items ?? []).reduce((sum, item) => sum + n(item.quantity) * costForReturnItem(item), 0)
     const partyName = ret.party_id ? `Party ${ret.party_id.slice(0, 8)}` : 'Walk-in / Other'
-    profitInvoices.push({ invoice_id: ret.id, invoice_no: ret.return_no, date: String(ret.return_date).slice(0, 10), party_id: ret.party_id ?? null, party_name: partyName, sales: -returnSales, cogs: -returnCogsValue, profit: -returnSales + returnCogsValue, margin: marginOf(-returnSales, -returnSales + returnCogsValue) })
+    profitInvoices.push({ invoice_id: ret.id, invoice_no: ret.return_no, date: String(ret.return_date).slice(0, 10), party_id: ret.party_id ?? null, party_name: partyName, sales: -returnSales, cogs: -returnCogsValue, profit: -returnSales + returnCogsValue, margin: marginOf(-returnSales, -returnSales + returnCogsValue), lines: returnLines })
     const items = (ret.return_voucher_items ?? []) as ReturnItem[]
     for (const item of items) {
       const qty = n(item.quantity)
       const lineSales = n(item.line_total)
       const lineCogs = qty * costForReturnItem(item)
+      const returnCostPerPc = costForReturnItem(item)
+      const returnSalePerPc = qty ? lineSales / qty : 0
+      const returnProfitPerPc = returnSalePerPc - returnCostPerPc
       const product = productMeta.get(item.product_id)
       const productName = product?.name ?? 'Unknown product'
       const sku = product?.sku ?? null
+      returnLines.push({ product_id: item.product_id, name: productName, sku, quantity: qty, cost_per_pc: round2(returnCostPerPc), sale_per_pc: round2(returnSalePerPc), profit_per_pc: round2(returnProfitPerPc), total_sales: round2(-lineSales), total_cost: round2(-lineCogs), total_profit: round2(-(lineSales - lineCogs)) })
       const old = profitProducts.get(item.product_id) ?? { product_id: item.product_id, name: productName, sku, quantity: 0, sales: 0, cogs: 0, profit: 0, margin: 0, average_purchase_cost: costForReturnItem(item) }
       old.quantity -= qty; old.sales -= lineSales; old.cogs -= lineCogs; old.profit -= (lineSales - lineCogs); old.margin = marginOf(old.sales, old.profit)
       profitProducts.set(item.product_id, old)
