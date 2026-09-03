@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { ArrowDownRight, ArrowUpRight, BarChart3, CircleDollarSign, Package, RefreshCw, ShoppingCart, WalletCards, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, BarChart3, CircleDollarSign, CreditCard, Package, ReceiptText, RefreshCw, ShoppingBag, ShoppingCart, WalletCards, X } from 'lucide-react'
 import ProfitAnalysisModal from './profit-analysis-modal'
 
 type Day = { date: string; sales: number; purchases: number; expenses: number; grossProfit: number; netProfit: number }
@@ -73,6 +74,13 @@ export default function DashboardPage() {
         {range === 'custom' && <div className="relative mt-5 grid gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"><label className="text-xs font-black uppercase tracking-wide text-slate-600">From<input type="date" value={startDate} max={endDate} onChange={e => setStartDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><label className="text-xs font-black uppercase tracking-wide text-slate-600">To<input type="date" value={endDate} min={startDate} max={todayISO()} onChange={e => setEndDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><button onClick={applyCustom} className="h-10 rounded-xl bg-yellow-400 px-5 text-sm font-black text-slate-950 hover:bg-yellow-300">Apply dates</button></div>}
       </section>
 
+      <section className="dashboard-quick-actions grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <QuickAction href="/dashboard/sales" icon={<ShoppingCart />} title="Sales" subtitle="New sale" />
+        <QuickAction href="/dashboard/purchases" icon={<ShoppingBag />} title="Purchase" subtitle="Stock inward" />
+        <QuickAction href="/dashboard/receipts" icon={<ReceiptText />} title="Payment Received" subtitle="Receive money" />
+        <QuickAction href="/dashboard/payments" icon={<CreditCard />} title="Payment Made" subtitle="Pay supplier / expense" />
+      </section>
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={<ShoppingCart />} label="Today’s Sales" value={todaySales} subtitle="Click to review sales performance" tone="amber" onClick={() => setActiveCard('todaySales')} />
         <Metric icon={<CircleDollarSign />} label="Today’s Net Profit" value={todayNet} subtitle="Click for product, category, invoice & party profit" tone={todayNet >= 0 ? 'green' : 'red'} onClick={() => setActiveCard('todayProfit')} />
@@ -95,6 +103,10 @@ export default function DashboardPage() {
     {activeCard === 'todayProfit' && <ProfitAnalysisModal start={data.period.start} end={data.period.end} onClose={() => setActiveCard(null)} />}
     {activeCard && activeCard !== 'todayProfit' && <SimpleDetail card={activeCard} data={data} todaySales={todaySales} todayNet={todayNet} todayExpenses={todayExpenses} margin={netMargin} onClose={() => setActiveCard(null)} />}
   </>
+}
+
+function QuickAction({ href, icon, title, subtitle }: { href: string; icon: ReactNode; title: string; subtitle: string }) {
+  return <Link href={href} className="group flex min-w-0 items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:bg-yellow-50 hover:shadow-md sm:p-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 transition group-hover:bg-yellow-100"><span className="h-5 w-5">{icon}</span></span><span className="min-w-0"><span className="block truncate text-sm font-black text-slate-950">{title}</span><span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">{subtitle}</span></span></Link>
 }
 
 function Metric({ icon, label, value, subtitle, tone, percent, onClick }: { icon: ReactNode; label: string; value: number; subtitle: string; tone: 'amber'|'green'|'red'|'blue'|'orange'; percent?: boolean; onClick: () => void }) {
