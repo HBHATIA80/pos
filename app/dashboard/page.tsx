@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ArrowDownRight, ArrowUpRight, BarChart3, CircleDollarSign, CreditCard, Package, ReceiptText, RefreshCw, ShoppingBag, ShoppingCart, WalletCards, X } from 'lucide-react'
 import ProfitAnalysisModal from './profit-analysis-modal'
+import { useDashboardRole } from './dashboard-role-context'
 
 type Day = { date: string; sales: number; purchases: number; expenses: number; grossProfit: number; netProfit: number }
 type Report = {
@@ -23,6 +24,8 @@ const fullDate = (v: string) => new Date(`${v}T12:00:00`).toLocaleDateString('en
 function defaultStart(days: number) { const d = new Date(); d.setDate(d.getDate() - (days - 1)); return d.toISOString().slice(0, 10) }
 
 export default function DashboardPage() {
+  const role = useDashboardRole()
+  const isStaff = role === 'staff'
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -60,7 +63,7 @@ export default function DashboardPage() {
   function preset(days: 7 | 14 | 30) { const start = defaultStart(days); const end = todayISO(); setRange(String(days) as typeof range); setStartDate(start); setEndDate(end); void load(start, end, true) }
   function applyCustom() { setRange('custom'); void load(startDate, endDate, true) }
 
-  if (loading) return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-36 animate-pulse rounded-3xl bg-slate-100" />)}</div>
+  if (loading) return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: isStaff ? 7 : 8 }).map((_, i) => <div key={i} className="h-36 animate-pulse rounded-3xl bg-slate-100" />)}</div>
   if (!data || !s || error) return <section className="rounded-3xl border border-red-200 bg-red-50 p-6"><h2 className="font-black text-red-900">Dashboard data unavailable</h2><p className="mt-1 text-sm text-red-700">{error || 'Unable to load business data.'}</p><button onClick={() => void load()} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold ring-1 ring-red-200">Try again</button></section>
 
   return <>
@@ -68,7 +71,7 @@ export default function DashboardPage() {
       <section className="relative overflow-hidden rounded-[30px] border border-emerald-200 bg-gradient-to-br from-[#f4fbf6] via-white to-[#e5f5e9] p-5 shadow-sm sm:p-7">
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-emerald-100/70 blur-3xl" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div><span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-emerald-700">Admin business dashboard</span><h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Business at a glance</h1><p className="mt-1 max-w-2xl text-sm text-slate-600">Monitor sales, profitability, cash position, working capital and inventory for better decisions.</p><p className="mt-3 text-xs font-bold text-slate-500">{fullDate(data.period.start)} – {fullDate(data.period.end)} · Live data</p></div>
+          <div><span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-emerald-700">{isStaff ? 'Staff business dashboard' : 'Admin business dashboard'}</span><h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950">Business at a glance</h1><p className="mt-1 max-w-2xl text-sm text-slate-600">Monitor sales, cash position, working capital and inventory for better decisions.</p><p className="mt-3 text-xs font-bold text-slate-500">{fullDate(data.period.start)} – {fullDate(data.period.end)} · Live data</p></div>
           <div className="flex flex-wrap items-center gap-2"><div className="flex rounded-xl bg-white p-1 shadow-sm ring-1 ring-slate-200">{[7,14,30].map(v => <button key={v} onClick={() => preset(v as 7|14|30)} className={`rounded-lg px-3 py-2 text-xs font-black transition ${range === String(v) ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-yellow-100 hover:text-emerald-700'}`}>{v}D</button>)}<button onClick={() => setRange('custom')} className={`rounded-lg px-3 py-2 text-xs font-black transition ${range === 'custom' ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-yellow-100 hover:text-emerald-700'}`}>Custom</button></div><button onClick={() => void load(startDate, endDate, true)} disabled={refreshing} className="rounded-xl bg-white p-2.5 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-yellow-100 hover:text-emerald-700 disabled:opacity-50"><RefreshCw className={refreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /></button></div>
         </div>
         {range === 'custom' && <div className="relative mt-5 grid gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"><label className="text-xs font-black uppercase tracking-wide text-slate-600">From<input type="date" value={startDate} max={endDate} onChange={e => setStartDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><label className="text-xs font-black uppercase tracking-wide text-slate-600">To<input type="date" value={endDate} min={startDate} max={todayISO()} onChange={e => setEndDate(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-yellow-400" /></label><button onClick={applyCustom} className="h-10 rounded-xl bg-yellow-400 px-5 text-sm font-black text-slate-950 hover:bg-yellow-300">Apply dates</button></div>}
@@ -83,7 +86,7 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={<ShoppingCart />} label="Today’s Sales" value={todaySales} subtitle="Click to review sales performance" tone="amber" onClick={() => setActiveCard('todaySales')} />
-        <Metric icon={<CircleDollarSign />} label="Today’s Net Profit" value={todayNet} subtitle="Click for product, category, invoice & party profit" tone={todayNet >= 0 ? 'green' : 'red'} onClick={() => setActiveCard('todayProfit')} />
+        {!isStaff && <Metric icon={<CircleDollarSign />} label="Today’s Net Profit" value={todayNet} subtitle="Click for product, category, invoice & party profit" tone={todayNet >= 0 ? 'green' : 'red'} onClick={() => setActiveCard('todayProfit')} />}
         <Metric icon={<WalletCards />} label="Today’s Expenses" value={todayExpenses} subtitle="Click to review expense drivers" tone="red" onClick={() => setActiveCard('todayExpenses')} />
         <Metric icon={<BarChart3 />} label="Net Margin" value={netMargin} percent subtitle={`${selectedDays}-day business margin`} tone={netMargin >= 0 ? 'blue' : 'red'} onClick={() => setActiveCard('margin')} />
       </section>
@@ -100,7 +103,7 @@ export default function DashboardPage() {
       </section>
     </main>
 
-    {activeCard === 'todayProfit' && <ProfitAnalysisModal start={data.period.start} end={data.period.end} onClose={() => setActiveCard(null)} />}
+    {!isStaff && activeCard === 'todayProfit' && <ProfitAnalysisModal start={data.period.start} end={data.period.end} onClose={() => setActiveCard(null)} />}
     {activeCard && activeCard !== 'todayProfit' && <SimpleDetail card={activeCard} data={data} todaySales={todaySales} todayNet={todayNet} todayExpenses={todayExpenses} margin={netMargin} onClose={() => setActiveCard(null)} />}
   </>
 }
