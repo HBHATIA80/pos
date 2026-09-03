@@ -65,7 +65,6 @@ export async function GET(request: Request) {
     .select('id,return_no,return_type,party_id,source_invoice_id,return_date,grand_total,status,return_voucher_items(id,source_invoice_item_id,product_id,quantity,unit_price,discount_amount,line_total)')
     .eq('business_id', businessId)
     .eq('status', 'completed')
-    .gte('return_date', start)
     .lte('return_date', end)
     .order('return_date')
   if (returnsError) return NextResponse.json({ error: returnsError.message }, { status: 400 })
