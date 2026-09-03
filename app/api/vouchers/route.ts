@@ -27,18 +27,26 @@ export async function GET(request: NextRequest) {
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const type = request.nextUrl.searchParams.get('type')
-  const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get('limit') ?? 100), 1), 200)
+  const start = request.nextUrl.searchParams.get('start')
+  const end = request.nextUrl.searchParams.get('end')
+  const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get('limit') ?? 100), 1), 2000)
   let voucherQuery = supabase.from('account_vouchers')
     .select('id,voucher_no,voucher_type,party_id,payment_method,account_name,amount,reference_no,notes,paid_at,status,parties(id,name,party_type)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
   if (type === 'receipt' || type === 'payment') voucherQuery = voucherQuery.eq('voucher_type', type)
+  if (start) voucherQuery = voucherQuery.gte('paid_at', `${start}T00:00:00.000Z`)
+  if (end) voucherQuery = voucherQuery.lt('paid_at', `${end}T00:00:00.000Z`)
 
   const { data: vouchers, error } = await voucherQuery
   if (error) return NextResponse.json({ error: error.message || 'Unable to load vouchers' }, { status: 400 })
 
-  const { data: salePayments, error: paymentError } = await supabase.from('sale_payments')
+  let salePaymentQuery = supabase.from('sale_payments')
     .select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,parties(id,name,party_type),sales_invoices!inner(invoice_no,grand_total)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
+  if (start) salePaymentQuery = salePaymentQuery.gte('paid_at', `${start}T00:00:00.000Z`)
+  if (end) salePaymentQuery = salePaymentQuery.lt('paid_at', `${end}T00:00:00.000Z`)
+
+  const { data: salePayments, error: paymentError } = await salePaymentQuery
   if (paymentError) return NextResponse.json({ error: paymentError.message || 'Unable to load invoice payments' }, { status: 400 })
 
   return NextResponse.json({ vouchers: vouchers ?? [], salePayments: salePayments ?? [] })
