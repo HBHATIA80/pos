@@ -1,0 +1,29 @@
+name: Fix P&L line order
+on:
+  push:
+    paths:
+      - '.pnl-line-order-trigger'
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix source order
+        run: python .github/pnl-line-order-fix.py
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/api/accounting/reports/route.ts
+          git commit -m 'Fix invoice profit line calculation order' || exit 0
+          git push
+      - name: Cleanup
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-pnl-line-order.yml .github/pnl-line-order-fix.py .pnl-line-order-trigger || true
+          git commit -m 'Remove temporary P&L line-order fixer' || exit 0
+          git push
