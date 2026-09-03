@@ -1,0 +1,38 @@
+name: Include historical purchase returns in costing
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Patch return history query
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/api/accounting/reports/route.ts')
+          s = p.read_text()
+          old = ".eq('status', 'completed')\n    .gte('return_date', start)\n    .lte('return_date', end)"
+          new = ".eq('status', 'completed')\n    .lte('return_date', end)"
+          if old not in s:
+              raise SystemExit('return query marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+      - name: Commit source change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/accounting/reports/route.ts
+          git diff --cached --quiet || git commit -m "Include historical purchase returns in weighted cost"
+          git push
+      - name: Remove temporary workflows
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-weighted-cost-history.yml .github/workflows/fix-weighted-purchase-cost.yml || true
+          git diff --cached --quiet || git commit -m "Remove temporary weighted cost workflows"
+          git push || true
