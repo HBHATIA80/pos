@@ -1,0 +1,143 @@
+name: Apply POS line input fixes
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[pos-line-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch POS source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          sales = Path('app/dashboard/sales/page.tsx')
+          s = sales.read_text()
+          s = s.replace("type CartItem = Product & { quantity: number | ''; unit_price: number; pricing_source: 'base' | 'price_list'; price_overridden: boolean }", "type CartItem = Product & { line_id: string; quantity: number | ''; unit_price: number; pricing_source: 'base' | 'price_list'; price_overridden: boolean }")
+          s = s.replace("  const today = useMemo(() => { const now = new Date(); return `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}` }, [])", "  const [invoiceDate, setInvoiceDate] = useState(() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` })\n  const displayDate = useMemo(() => { const [year, month, day] = invoiceDate.split('-'); return `${day}-${month}-${year}` }, [invoiceDate])")
+          old_add = '''  async function addProduct(product: Product) {
+            try {
+              if (Number(product.current_stock) <= 0) return toast.error(`${product.name} is out of stock`)
+              const existing = cart.find(item => item.id === product.id); const nextQuantity = Number(existing?.quantity || 0) + 1
+              if (existing?.price_overridden) setCart(current => current.map(item => item.id === product.id ? { ...item, quantity: nextQuantity } : item))
+              else { const resolved = await resolvePrice(product.id, nextQuantity); setCart(current => { const found = current.find(item => item.id === product.id); return found ? current.map(item => item.id === product.id ? { ...item, quantity: nextQuantity, unit_price: resolved.unit_price, pricing_source: resolved.pricing_source } : item) : [...current, { ...product, quantity: 1, unit_price: resolved.unit_price, pricing_source: resolved.pricing_source, price_overridden: false }] }) }
+              setProductSearch(''); setShowProducts(false); requestAnimationFrame(() => productInput.current?.focus())
+            } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to add product') }
+          }'''
+          new_add = '''  async function addProduct(product: Product) {
+            try {
+              if (Number(product.current_stock) <= 0) return toast.error(`${product.name} is out of stock`)
+              const existingQuantity = cart.filter(item => item.id === product.id).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+              if (existingQuantity >= Number(product.current_stock)) return toast.error(`Only ${product.current_stock} units are available`)
+              const resolved = await resolvePrice(product.id, 1)
+              const line_id = `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+              setCart(current => [...current, { ...product, line_id, quantity: 1, unit_price: resolved.unit_price, pricing_source: resolved.pricing_source, price_overridden: false }])
+              setProductSearch(''); setShowProducts(false); requestAnimationFrame(() => productInput.current?.focus())
+            } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to add product') }
+          }'''
+          if old_add not in s: raise SystemExit('Sales addProduct block not found')
+          s = s.replace(old_add, new_add, 1)
+          old_handlers = '''  function setQuantityDraft(id: string, value: string) {
+            if (value === '') { setCart(current => current.map(item => item.id === id ? { ...item, quantity: '' } : item)); return }
+            const parsed = Number(value)
+            if (!Number.isFinite(parsed)) return
+            setCart(current => current.map(item => item.id === id ? { ...item, quantity: parsed } : item))
+          }
+          async function commitQuantity(id: string) {
+            const existing = cart.find(item => item.id === id); if (!existing) return
+            const quantity = Math.max(1, Number(existing.quantity || 0))
+            if (quantity > Number(existing.current_stock)) { toast.error(`Only ${existing.current_stock} units are available`); setCart(current => current.map(item => item.id === id ? { ...item, quantity: existing.current_stock } : item)); return }
+            if (existing.price_overridden) { setCart(current => current.map(item => item.id === id ? { ...item, quantity } : item)); return }
+            try { const resolved = await resolvePrice(id, quantity); setCart(current => current.map(item => item.id === id ? { ...item, quantity, unit_price: resolved.unit_price, pricing_source: resolved.pricing_source } : item)) }
+            catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to update quantity') }
+          }
+          function setPrice(id: string, value: string) { const numeric = Number(value); if (!Number.isFinite(numeric) || numeric < 0) return; setCart(current => current.map(item => item.id === id ? { ...item, unit_price: numeric, price_overridden: true } : item)) }'''
+          new_handlers = '''  function setQuantityDraft(lineId: string, value: string) {
+            if (value === '') { setCart(current => current.map(item => item.line_id === lineId ? { ...item, quantity: '' } : item)); return }
+            const parsed = Number(value)
+            if (!Number.isFinite(parsed)) return
+            setCart(current => current.map(item => item.line_id === lineId ? { ...item, quantity: parsed } : item))
+          }
+          async function commitQuantity(lineId: string) {
+            const existing = cart.find(item => item.line_id === lineId); if (!existing) return
+            const quantity = Math.max(1, Number(existing.quantity || 0))
+            const otherQuantity = cart.filter(item => item.id === existing.id && item.line_id !== lineId).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+            if (otherQuantity + quantity > Number(existing.current_stock)) { const allowed = Math.max(1, Number(existing.current_stock) - otherQuantity); toast.error(`Only ${existing.current_stock} units are available`); setCart(current => current.map(item => item.line_id === lineId ? { ...item, quantity: allowed } : item)); return }
+            if (existing.price_overridden) { setCart(current => current.map(item => item.line_id === lineId ? { ...item, quantity } : item)); return }
+            try { const resolved = await resolvePrice(existing.id, quantity); setCart(current => current.map(item => item.line_id === lineId ? { ...item, quantity, unit_price: resolved.unit_price, pricing_source: resolved.pricing_source } : item)) }
+            catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to update quantity') }
+          }
+          function setPrice(lineId: string, value: string) { const numeric = Number(value); if (!Number.isFinite(numeric) || numeric < 0) return; setCart(current => current.map(item => item.line_id === lineId ? { ...item, unit_price: numeric, price_overridden: true } : item)) }'''
+          if old_handlers not in s: raise SystemExit('Sales handlers block not found')
+          s = s.replace(old_handlers, new_handlers, 1)
+          s = s.replace("body: JSON.stringify({ data: { party_id: customer || null, status, items } })", "body: JSON.stringify({ data: { party_id: customer || null, status, items, invoice_date: invoiceDate } })", 1)
+          s = s.replace("<div className=\"flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 shadow-sm\"><CalendarDays className=\"h-4 w-4 text-emerald-800\" /><div><div className=\"text-[9px] font-black uppercase tracking-wider text-slate-500\">Invoice date</div><div className=\"text-xs font-black text-black\">{today}</div></div></div>", "<label className=\"relative flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 shadow-sm\"><CalendarDays className=\"h-4 w-4 text-emerald-800\" /><span className=\"text-xs font-black text-black\">{displayDate}</span><input type=\"date\" value={invoiceDate} onChange={event => setInvoiceDate(event.target.value)} aria-label=\"Invoice date\" className=\"absolute inset-0 cursor-pointer opacity-0\" /></label>", 1)
+          s = s.replace("key={item.id} className=\"hover:bg-emerald-50/40\"", "key={item.line_id} className=\"hover:bg-emerald-50/40\"", 1)
+          s = s.replace("setQuantityDraft(item.id, String(Math.max(1, Number(item.quantity || 1) - 1)))", "setQuantityDraft(item.line_id, String(Math.max(1, Number(item.quantity || 1) - 1)))", 1)
+          s = s.replace("setQuantityDraft(item.id, event.target.value.replace(/\\D/g, ''))", "setQuantityDraft(item.line_id, event.target.value.replace(/\\D/g, ''))", 1)
+          s = s.replace("commitQuantity(item.id)", "commitQuantity(item.line_id)", 1)
+          s = s.replace("setQuantityDraft(item.id, String(Math.min(Number(item.current_stock), Number(item.quantity || 0) + 1)))", "setQuantityDraft(item.line_id, String(Math.min(Number(item.current_stock), Number(item.quantity || 0) + 1)))", 1)
+          s = s.replace("setPrice(item.id, event.target.value.replace(/[^0-9.]/g, ''))", "setPrice(item.line_id, event.target.value.replace(/[^0-9.]/g, ''))", 1)
+          s = s.replace("className=\"h-11 w-28 rounded-xl border border-slate-300 bg-white px-3 text-right text-sm font-black text-black outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100\"", "className=\"h-11 w-36 rounded-xl border border-slate-300 bg-white px-3 text-right text-base font-black text-black outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 tabular-nums\"", 1)
+          s = s.replace("setCart(current => current.filter(value => value.id !== item.id))", "setCart(current => current.filter(value => value.line_id !== item.line_id))", 1)
+          sales.write_text(s)
+
+          purchase = Path('app/dashboard/purchases/page.tsx')
+          p = purchase.read_text()
+          p = p.replace("type Line = { product_id: string; name: string; sku: string; quantity: number | ''; unit_price: number }", "type Line = { line_id: string; product_id: string; name: string; sku: string; quantity: number | ''; unit_price: number }")
+          old_purchase = "function addProduct(product: Product) { setLines(current => { const found = current.find(line => line.product_id === product.id); if (found) return current.map(line => line.product_id === product.id ? { ...line, quantity: Number(line.quantity || 0) + 1 } : line); return [...current, { product_id: product.id, name: product.name, sku: product.sku, quantity: 1, unit_price: Number(product.purchase_price || 0) }] }); setProductSearch(''); setShowProductResults(false); requestAnimationFrame(() => productInput.current?.focus()) }"
+          new_purchase = "function addProduct(product: Product) { const line_id = `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`; setLines(current => [...current, { line_id, product_id: product.id, name: product.name, sku: product.sku, quantity: 1, unit_price: Number(product.purchase_price || 0) }]); setProductSearch(''); setShowProductResults(false); requestAnimationFrame(() => productInput.current?.focus()) }"
+          if old_purchase not in p: raise SystemExit('Purchase addProduct not found')
+          p = p.replace(old_purchase, new_purchase, 1)
+          p = p.replace("line.product_id === id", "line.line_id === id")
+          p = p.replace("updateQty(line.product_id", "updateQty(line.line_id")
+          p = p.replace("commitQty(line.product_id)", "commitQty(line.line_id)")
+          p = p.replace("updatePrice(line.product_id", "updatePrice(line.line_id")
+          p = p.replace("key={line.product_id}", "key={line.line_id}")
+          p = p.replace("className=\"h-11 w-28 rounded-xl border border-slate-300 bg-white px-3 text-right text-sm font-black text-black outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100\"", "className=\"h-11 w-36 rounded-xl border border-slate-300 bg-white px-3 text-right text-base font-black text-black outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 tabular-nums\"")
+          purchase.write_text(p)
+
+          css = Path('app/dashboard/mobile-voucher-final.module.css')
+          c = css.read_text()
+          marker = "  /* ---------- Cart ---------- */"
+          addition = '''  /* ---------- Line-item numeric fields ---------- */
+          .mobileVoucherFinal :global(main > div > div > main > section:nth-child(2) input[inputmode="decimal"]) {
+            width: 144px !important;
+            min-width: 144px !important;
+            max-width: 144px !important;
+            height: 44px !important;
+            padding: 0 10px !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+            color: #0f172a !important;
+            text-align: right !important;
+            font-variant-numeric: tabular-nums !important;
+          }
+
+'''
+          if addition not in c: c = c.replace(marker, addition + marker, 1)
+          css.write_text(c)
+          PY
+      - name: Validate
+        run: |
+          grep -q 'line_id' app/dashboard/sales/page.tsx
+          grep -q 'line_id' app/dashboard/purchases/page.tsx
+          grep -q 'invoiceDate' app/dashboard/sales/page.tsx
+      - name: Commit final source and remove this workflow
+        run: |
+          rm -f .github/workflows/fix-pos-line-inputs.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/dashboard/sales/page.tsx app/dashboard/purchases/page.tsx app/dashboard/mobile-voucher-final.module.css .github/workflows/fix-pos-line-inputs.yml
+          git commit -m 'Fix POS line inputs and duplicate products [pos-line-fix]'
+          git push
