@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import '@/app/dashboard/transaction-pages-reference.css'
+import '@/app/dashboard/mobile-app.css'
 import { createClient } from '@/lib/supabase/server'
 import POSShell from './pos-shell'
 import CustomerCatalogGuard from './customer-catalog-guard'
@@ -51,7 +52,6 @@ export default async function DashboardLayout({ children }: Props) {
           overflow: hidden !important;
         }
 
-        /* Yellow summary header — keep every label/value readable in black. */
         aside section > div:first-child {
           background: #fff8dc !important;
           color: #000000 !important;
@@ -72,8 +72,6 @@ export default async function DashboardLayout({ children }: Props) {
           letter-spacing: -0.02em !important;
           margin-top: 2px !important;
         }
-
-        /* Summary detail area stays clean white, with black typography. */
         aside section > div:nth-child(2) {
           display: block !important;
           background: #ffffff !important;
@@ -85,8 +83,6 @@ export default async function DashboardLayout({ children }: Props) {
           color: #000000 !important;
           -webkit-text-fill-color: #000000 !important;
         }
-
-        /* Final total uses the same soft yellow family as the reference image. */
         aside section > div:nth-child(2) > div:last-child {
           border: 1px solid #ead9a6 !important;
           border-radius: 12px !important;
@@ -105,8 +101,6 @@ export default async function DashboardLayout({ children }: Props) {
           font-size: 1.25rem !important;
           line-height: 1.5rem !important;
         }
-
-        /* Footer/action area: light surface with black button typography. */
         aside section > div:last-child {
           background: #ffffff !important;
           border-top: 1px solid #f3e8bf !important;
@@ -133,20 +127,14 @@ export default async function DashboardLayout({ children }: Props) {
           color: #000000 !important;
           -webkit-text-fill-color: #000000 !important;
         }
-
-        /* Prevent Tailwind text-white utilities inside the Bill Summary from
-           making the yellow header/value text disappear on Sales/Purchases. */
         aside section [class*="text-white"],
         aside section [class*="text-slate"],
         aside section [class*="text-emerald"] {
           color: #000000 !important;
           -webkit-text-fill-color: #000000 !important;
         }
-
         @media (max-width: 1279px) {
-          aside section > div:first-child {
-            min-height: 70px !important;
-          }
+          aside section > div:first-child { min-height: 70px !important; }
         }
       ` }} />
       <CustomerCatalogGuard role={profile.role} />
