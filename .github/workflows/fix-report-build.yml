@@ -1,0 +1,36 @@
+name: Fix report build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Fix accounting report query destructuring
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/api/accounting/reports/route.ts')
+          s = p.read_text()
+          old = "const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: categories, error: categoriesError }] = await Promise.all(["
+          new = "const [{ data: lines, error: linesError }, { data: accounts, error: accountsError }, { data: groups, error: groupsError }, { data: products, error: productsError }, { data: salesRows, error: salesError }, { data: purchaseRows, error: purchaseError }, { data: categories, error: categoriesError }] = await Promise.all(["
+          if old not in s: raise SystemExit('marker not found')
+          s = s.replace(old, new, 1)
+          old2 = "for (const e of [linesError, accountsError, groupsError, productsError, salesError, categoriesError])"
+          new2 = "for (const e of [linesError, accountsError, groupsError, productsError, salesError, purchaseError, categoriesError])"
+          if old2 not in s: raise SystemExit('error marker not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s)
+          PY
+      - name: Commit and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-report-build.yml
+          git add app/api/accounting/reports/route.ts
+          git commit -m "Fix accounting report purchase query typing"
+          git push
