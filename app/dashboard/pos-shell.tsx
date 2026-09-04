@@ -10,29 +10,10 @@ type Props = { children: React.ReactNode; profile: { fullName: string; role: 'ad
 type NavItem = { label: string; href: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean }
 
 const mainNav: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Products', href: '/dashboard/products', icon: Package },
-  { label: 'Item Pricing', href: '/dashboard/item-pricing', icon: Tags },
-  { label: 'Inventory', href: '/dashboard/inventory', icon: Package },
-  { label: 'Categories', href: '/dashboard/categories', icon: Tags },
-  { label: 'Parties', href: '/dashboard/parties', icon: Users },
-  { label: 'Order Management', href: '/dashboard/order-management', icon: FileText },
-  { label: 'Sales', href: '/dashboard/sales', icon: ShoppingCart },
-  { label: 'Purchases', href: '/dashboard/purchases', icon: ShoppingBag },
-  { label: 'Returns', href: '/dashboard/returns', icon: ArrowLeftRight },
-  { label: 'Physical Receiving', href: '/dashboard/purchase-receiving', icon: CheckSquare },
-  { label: 'Records', href: '/dashboard/records', icon: ClipboardList },
-  { label: 'List on Marketplace', href: '/dashboard/marketplace/manage', icon: ShoppingBag },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, { label: 'Products', href: '/dashboard/products', icon: Package }, { label: 'Item Pricing', href: '/dashboard/item-pricing', icon: Tags }, { label: 'Inventory', href: '/dashboard/inventory', icon: Package }, { label: 'Categories', href: '/dashboard/categories', icon: Tags }, { label: 'Parties', href: '/dashboard/parties', icon: Users }, { label: 'Order Management', href: '/dashboard/order-management', icon: FileText }, { label: 'Sales', href: '/dashboard/sales', icon: ShoppingCart }, { label: 'Purchases', href: '/dashboard/purchases', icon: ShoppingBag }, { label: 'Returns', href: '/dashboard/returns', icon: ArrowLeftRight }, { label: 'Physical Receiving', href: '/dashboard/purchase-receiving', icon: CheckSquare }, { label: 'Records', href: '/dashboard/records', icon: ClipboardList }, { label: 'List on Marketplace', href: '/dashboard/marketplace/manage', icon: ShoppingBag },
 ]
 const financeNav: NavItem[] = [
-  { label: 'Accounts', href: '/dashboard/accounts', icon: BookOpen },
-  { label: 'Journal Vouchers', href: '/dashboard/journal-vouchers', icon: FileText },
-  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { label: 'Receipts', href: '/dashboard/receipts', icon: ReceiptText },
-  { label: 'Expenses', href: '/dashboard/expenses', icon: WalletCards },
-  { label: 'Ledger', href: '/dashboard/ledger', icon: FileText },
-  { label: 'Cash / Bank Collection', href: '/dashboard/cash-bank-collection', icon: WalletCards, adminOnly: true },
-  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },
+  { label: 'Accounts', href: '/dashboard/accounts', icon: BookOpen }, { label: 'Journal Vouchers', href: '/dashboard/journal-vouchers', icon: FileText }, { label: 'Payments', href: '/dashboard/payments', icon: CreditCard }, { label: 'Salary Payment', href: '/dashboard/salary', icon: WalletCards, adminOnly: true }, { label: 'Receipts', href: '/dashboard/receipts', icon: ReceiptText }, { label: 'Expenses', href: '/dashboard/expenses', icon: WalletCards }, { label: 'Ledger', href: '/dashboard/ledger', icon: FileText }, { label: 'Cash / Bank Collection', href: '/dashboard/cash-bank-collection', icon: WalletCards, adminOnly: true }, { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3, adminOnly: true },
 ]
 const userNav: NavItem[] = [{ label: 'Shop & Orders', href: '/dashboard/orders', icon: ShoppingCart }, { label: 'My Ledger', href: '/dashboard/my-ledger', icon: WalletCards }]
 
