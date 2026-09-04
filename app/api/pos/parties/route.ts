@@ -9,14 +9,16 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams
   const q = (params.get('q') || '').trim()
   const limit = Math.min(Math.max(Number(params.get('limit') || 30), 1), 50)
+  const includeStaff = params.get('include_staff') === 'true'
 
   let query = supabase
     .from('parties')
-    .select('id, party_code, name, phone, alternate_phone, party_type, opening_balance, opening_balance_type, credit_limit')
+    .select('id, party_code, name, phone, alternate_phone, party_type, is_staff, opening_balance, opening_balance_type, credit_limit')
     .eq('is_active', true)
     .order('name', { ascending: true })
     .limit(limit)
 
+  if (!includeStaff) query = query.eq('is_staff', false)
   if (q) {
     const escaped = q.replace(/[%_]/g, '\\$&')
     query = query.or(`name.ilike.%${escaped}%,phone.ilike.%${escaped}%,party_code.ilike.%${escaped}%`)
