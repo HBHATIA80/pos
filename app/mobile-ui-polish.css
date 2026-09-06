@@ -184,6 +184,22 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* The navigation drawer must always sit above page popovers and checkout bars. */
+  .biz-mobile-drawer {
+    isolation: isolate;
+    overscroll-behavior: contain;
+  }
+  .biz-mobile-drawer > aside {
+    width: min(88vw, 330px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+  .biz-mobile-drawer > aside > div:last-child {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .biz-mobile-nav {
     padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
     min-height: calc(70px + env(safe-area-inset-bottom));
@@ -207,11 +223,6 @@
   .biz-mobile-nav span {
     line-height: 1;
     white-space: nowrap;
-  }
-
-  .biz-app aside[class*="w-[min(88vw,330px)"] {
-    width: min(88vw, 320px) !important;
-    max-width: calc(100vw - 24px) !important;
   }
 
   [data-rht-toaster] {
