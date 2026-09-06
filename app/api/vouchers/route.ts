@@ -40,16 +40,29 @@ export async function GET(request: NextRequest) {
   const { data: vouchers, error } = await voucherQuery
   if (error) return NextResponse.json({ error: error.message || 'Unable to load vouchers' }, { status: 400 })
 
+  // sale_payments has two foreign keys to parties (payer and transfer destination).
+  // Do not ask PostgREST to infer the parties relationship: it is ambiguous.
+  // Fetch payer parties separately and attach them by party_id.
   let salePaymentQuery = supabase.from('sale_payments')
-    .select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,parties(id,name,party_type),sales_invoices!inner(invoice_no,grand_total)')
+    .select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,party_id,sales_invoices!inner(invoice_no,grand_total)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
   if (start) salePaymentQuery = salePaymentQuery.gte('paid_at', `${start}T00:00:00.000Z`)
   if (end) salePaymentQuery = salePaymentQuery.lt('paid_at', `${end}T23:59:59.999Z`)
 
-  const { data: salePayments, error: paymentError } = await salePaymentQuery
+  const { data: rawSalePayments, error: paymentError } = await salePaymentQuery
   if (paymentError) return NextResponse.json({ error: paymentError.message || 'Unable to load invoice payments' }, { status: 400 })
 
-  return NextResponse.json({ vouchers: vouchers ?? [], salePayments: salePayments ?? [] })
+  const salePartyIds = Array.from(new Set((rawSalePayments ?? []).map(x => x.party_id).filter((id): id is string => Boolean(id))))
+  let saleParties: Array<{ id: string; name: string; party_type: 'customer' | 'supplier' | 'both' }> = []
+  if (salePartyIds.length) {
+    const { data: partyData, error: partyError } = await supabase.from('parties').select('id,name,party_type').eq('business_id', profile.business_id).in('id', salePartyIds)
+    if (partyError) return NextResponse.json({ error: partyError.message || 'Unable to load payment parties' }, { status: 400 })
+    saleParties = partyData ?? []
+  }
+  const salePartyMap = new Map(saleParties.map(p => [p.id, p]))
+  const salePayments = (rawSalePayments ?? []).map(payment => ({ ...payment, parties: payment.party_id ? (salePartyMap.get(payment.party_id) ?? null) : null }))
+
+  return NextResponse.json({ vouchers: vouchers ?? [], salePayments })
 }
 
 export async function POST(request: NextRequest) {
