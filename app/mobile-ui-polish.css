@@ -1,0 +1,233 @@
+/* BIZYBUK — mobile UI hardening layer.
+   Presentation only. Desktop styles are intentionally untouched. */
+@media (max-width: 767px) {
+  :root {
+    --biz-mobile-gutter: 10px;
+    --biz-mobile-radius: 16px;
+    --biz-mobile-control: 48px;
+    --biz-mobile-bottom: 78px;
+  }
+
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #__next,
+  .biz-app,
+  .biz-app-main {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .biz-app-main {
+    overflow-x: clip;
+    padding: 10px var(--biz-mobile-gutter) calc(var(--biz-mobile-bottom) + env(safe-area-inset-bottom) + 14px) !important;
+  }
+
+  .biz-app-main > *,
+  .biz-app-main section,
+  .biz-app-main article,
+  .biz-app-main form,
+  .biz-app-main fieldset {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .biz-app-header {
+    min-height: 56px;
+  }
+  .biz-app-header > div {
+    height: 56px !important;
+    min-height: 56px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    gap: 8px !important;
+  }
+  .biz-app-header button {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .biz-app-header .brand-wordmark {
+    font-size: 17px;
+  }
+
+  .biz-app-main .flex,
+  .biz-app-main .grid {
+    min-width: 0;
+  }
+  .biz-app-main .flex > *,
+  .biz-app-main .grid > * {
+    min-width: 0;
+  }
+  .biz-app-main img,
+  .biz-app-main svg,
+  .biz-app-main video {
+    max-width: 100%;
+  }
+  .biz-app-main img {
+    height: auto;
+  }
+
+  .biz-app-main h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.15 !important; }
+  .biz-app-main h2 { font-size: clamp(19px, 5vw, 25px) !important; line-height: 1.2 !important; }
+  .biz-app-main h3 { font-size: clamp(16px, 4.3vw, 20px) !important; line-height: 1.25 !important; }
+  .biz-app-main p,
+  .biz-app-main label,
+  .biz-app-main td,
+  .biz-app-main th {
+    overflow-wrap: anywhere;
+  }
+
+  .biz-app-main button,
+  .biz-app-main a[role="button"],
+  .biz-app-main [type="button"],
+  .biz-app-main [type="submit"],
+  .biz-app-main [type="reset"] {
+    min-height: 44px;
+  }
+
+  .biz-app-main input:not([type="checkbox"]):not([type="radio"]),
+  .biz-app-main select,
+  .biz-app-main textarea,
+  .biz-app-main .input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px !important;
+  }
+
+  .biz-app-main input:not([type="checkbox"]):not([type="radio"]),
+  .biz-app-main select {
+    min-height: var(--biz-mobile-control);
+  }
+
+  .biz-app-main textarea {
+    min-height: 96px;
+  }
+
+  .biz-app-main button:has(> svg:only-child),
+  .biz-app-main a:has(> svg:only-child) {
+    width: auto;
+    min-width: 44px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .biz-app-main .biz-dashboard-card,
+  .biz-app-main .biz-light-modal-surface,
+  .biz-app-main .biz-payment-dialog {
+    border-radius: var(--biz-mobile-radius) !important;
+  }
+
+  .biz-mobile-stack,
+  [data-mobile-stack="true"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .biz-app-main .overflow-x-auto,
+  .biz-app-main [class*="overflow-x-auto"],
+  .biz-app-main [data-mobile-scroll="true"] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .biz-app-main table {
+    max-width: none;
+  }
+  .biz-app-main .overflow-x-auto > table,
+  .biz-app-main [class*="overflow-x-auto"] > table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .biz-app-main .absolute,
+  .biz-app-main [role="listbox"] {
+    max-width: calc(100vw - 20px);
+  }
+
+  .biz-app-main [role="listbox"],
+  .biz-app-main [data-radix-popper-content-wrapper] {
+    max-height: min(52dvh, 360px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .biz-light-modal-surface,
+  .biz-payment-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .biz-mobile-nav {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(70px + env(safe-area-inset-bottom));
+  }
+  .biz-mobile-nav > div {
+    width: 100%;
+    max-width: 520px;
+  }
+  .biz-mobile-nav a,
+  .biz-mobile-nav button {
+    min-height: 50px !important;
+    min-width: 0;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .biz-mobile-nav svg {
+    width: 20px;
+    height: 20px;
+  }
+  .biz-mobile-nav span {
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .biz-app aside[class*="w-[min(88vw,330px)"] {
+    width: min(88vw, 320px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  [data-rht-toaster] {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  @media (max-width: 359px) {
+    :root { --biz-mobile-gutter: 8px; }
+    .biz-app-main { padding-left: 8px !important; padding-right: 8px !important; }
+    .biz-app-header > div { padding-left: 8px !important; padding-right: 8px !important; }
+    .biz-mobile-nav { padding-left: 4px !important; padding-right: 4px !important; }
+    .biz-mobile-nav span { font-size: 9px !important; }
+    .biz-mobile-nav svg { width: 19px; height: 19px; }
+  }
+
+  @media (min-width: 390px) {
+    :root { --biz-mobile-gutter: 12px; }
+  }
+}
