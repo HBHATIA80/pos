@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, Banknote, CreditCard, Loader2, Plus, ReceiptText, RefreshCw, Search, WalletCards, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-type Party = { id: string; party_code?: string | null; name: string; phone?: string | null; alternate_phone?: string | null; party_type: 'customer' | 'supplier' | 'both' }
+type Party = { id: string; party_code?: string | null; name: string; phone?: string | null; alternate_phone?: string | null; party_type: 'customer' | 'supplier' | 'both'; is_active?: boolean }
 type Invoice = { id: string; invoice_no: string; grand_total: number; status: string; party_id: string | null; parties?: Party | null }
 type Voucher = { id: string; voucher_no: string; voucher_type: 'receipt' | 'payment'; party_id: string | null; payment_method: string; account_name: string | null; amount: number; reference_no: string | null; notes: string | null; paid_at: string; parties?: Party | null }
 type SalePayment = { id: string; receipt_no: string; payment_method: string; amount: number; reference_no: string | null; notes: string | null; paid_at: string; invoice_id: string; parties?: Party | null; sales_invoices?: { invoice_no: string; grand_total: number } | null }
@@ -50,7 +50,10 @@ export default function PaymentsPage() {
   const receivedTotal = receiptRows.reduce((n, x) => n + x.amount, 0)
   const paidTotal = paymentRows.reduce((n, x) => n + Number(x.amount), 0)
 
-  const partyOptions = useMemo(() => parties.filter(p => tab === 'receipt' ? p.party_type === 'customer' || p.party_type === 'both' : p.party_type === 'supplier' || p.party_type === 'both'), [parties, tab])
+  // Receipts are normally for customers, while payments can legitimately go to
+  // suppliers, customers, staff or any other party. Keep all active parties
+  // searchable on the payment tab so direct transfers never disappear from the list.
+  const partyOptions = useMemo(() => parties.filter(p => p.is_active !== false && (tab === 'receipt' ? p.party_type === 'customer' || p.party_type === 'both' : true)), [parties, tab])
   const selectedParty = partyOptions.find(p => p.id === form.party_id) ?? null
 
   function change(key: string, value: string) { setForm(current => ({ ...current, [key]: value })) }
@@ -91,8 +94,8 @@ export default function PaymentsPage() {
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex border-b border-slate-200"><button onClick={() => chooseTab('receipt')} className={`flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-bold ${tab === 'receipt' ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500'}`}><ArrowDownLeft className="h-4 w-4" /> Receipt (Money In)</button><button onClick={() => chooseTab('payment')} className={`flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-bold ${tab === 'payment' ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500'}`}><ArrowUpRight className="h-4 w-4" /> Payment (Money Out)</button></div>
       <form onSubmit={submit} className="space-y-5 p-5 sm:p-7">
-        <div className="rounded-2xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">{tab === 'receipt' ? <WalletCards className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}</span><div><h2 className="font-semibold">{tab === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'}</h2><p className="text-xs text-slate-500">{tab === 'receipt' ? 'Customer/party pays us.' : 'We pay supplier/party or another account.'}</p></div></div></div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">{tab === 'receipt' ? <WalletCards className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}</span><div><h2 className="font-semibold">{tab === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'}</h2><p className="text-xs text-slate-500">{tab === 'receipt' ? 'Customer/party pays us.' : 'We pay supplier/party, staff or another account.'}</p></div></div></div>
+        <div className="grid gap-4 lg:grid-cols-[1.65fr_1fr_1fr]">
           <PartySearch label="Party / Account" value={partySearch} selectedParty={selectedParty} parties={partyOptions} onSelect={selectParty} onSearch={setPartySearch} />
           <SelectField label="Payment mode" value={form.payment_method} onChange={v => { change('payment_method', v); change('account_name', v === 'cash' ? 'Cash' : v === 'bank' ? 'Bank' : v.toUpperCase()) }} options={ [['cash','Cash'],['bank','Bank / Cheque'],['upi','UPI'],['card','Card'],['cheque','Cheque'],['other','Other']] } />
           <NumberField label="Amount" value={form.amount} onChange={v => change('amount', v)} required />
@@ -116,8 +119,8 @@ function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch 
   const wrapperRef = useRef<HTMLDivElement>(null)
   const query = value.trim().toLowerCase()
   const matches = useMemo(() => {
-    if (!query) return parties.slice(0, 8)
-    return parties.filter(p => [p.name, p.party_code || '', p.phone || '', p.alternate_phone || ''].some(v => v.toLowerCase().includes(query))).slice(0, 10)
+    if (!query) return parties.slice(0, 12)
+    return parties.filter(p => [p.name, p.party_code || '', p.phone || '', p.alternate_phone || ''].some(v => v.toLowerCase().includes(query))).slice(0, 15)
   }, [parties, query])
 
   useEffect(() => {
@@ -135,7 +138,7 @@ function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch 
     if (event.key === 'Escape') setOpen(false)
   }
 
-  return <div ref={wrapperRef} className="relative block"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-11 items-center rounded-xl border bg-white px-3 outline-none ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-2 h-4 w-4 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null) }} onFocus={() => setOpen(true)} onKeyDown={keyDown} placeholder="Search name, code or mobile…" className="min-w-0 flex-1 bg-transparent text-sm outline-none" autoComplete="off" />{value && <button type="button" onClick={clear} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Clear party"><X className="h-4 w-4" /></button>}</div>{open && <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">{matches.length ? matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-800">{p.name}</span><span className="block truncate text-xs text-slate-500">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || 'No mobile'} · {p.party_type}</span></span>{query && <span className="ml-3 shrink-0 text-xs font-semibold text-blue-600">Select</span>}</button>) : <div className="px-3 py-6 text-center text-sm text-slate-500">No party found. Try name, party code or mobile number.</div>}{parties.length > 10 && <div className="border-t px-3 py-2 text-[11px] text-slate-400">Showing up to 10 matches — keep typing to narrow the list.</div>}</div>}</div>
+  return <div ref={wrapperRef} className="relative block min-w-0"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-14 w-full items-center rounded-xl border bg-white px-3.5 outline-none ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-2.5 h-5 w-5 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null) }} onFocus={() => setOpen(true)} onKeyDown={keyDown} placeholder="Search name, code or mobile…" className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-400" autoComplete="off" />{value && <button type="button" onClick={clear} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Clear party"><X className="h-4 w-4" /></button>}</div>{open && <div className="absolute left-0 right-0 z-50 mt-1 max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xl">{matches.length ? matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex w-full items-center justify-between rounded-lg px-3.5 py-3 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-800">{p.name}</span><span className="block truncate text-xs text-slate-500">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || 'No mobile'} · {p.party_type}</span></span>{query && <span className="ml-3 shrink-0 text-xs font-semibold text-blue-600">Select</span>}</button>) : <div className="px-3 py-7 text-center text-sm text-slate-500">No party found. Try name, party code or mobile number.</div>}{parties.length > 15 && <div className="border-t px-3 py-2 text-[11px] text-slate-400">Showing up to 15 matches — keep typing to narrow the list.</div>}</div>}</div>
 }
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">{icon}</span><div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-0.5 text-xl font-bold text-slate-900">{value}</p></div></div> }
