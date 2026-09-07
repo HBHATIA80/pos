@@ -12,6 +12,10 @@ type Details = {
   phone: string
 }
 
+type VoucherBody = Record<string, unknown> & {
+  data?: Record<string, unknown>
+}
+
 function getMode(pathname: string): Mode {
   if (pathname === '/dashboard/sales' || pathname.startsWith('/dashboard/sales/')) return 'sale'
   if (pathname === '/dashboard/purchases' || pathname.startsWith('/dashboard/purchases/')) return 'purchase'
@@ -26,6 +30,7 @@ export default function WalkInDetailsBridge() {
   const [saving, setSaving] = useState(false)
   const detailsRef = useRef(details)
   const modeRef = useRef<Mode>(mode)
+  const savingRef = useRef(false)
 
   useEffect(() => {
     detailsRef.current = details
@@ -78,7 +83,7 @@ export default function WalkInDetailsBridge() {
       const isTarget = method === 'POST' && ((modeRef.current === 'sale' && requestUrl.includes('/api/sales')) || (modeRef.current === 'purchase' && requestUrl.includes('/api/purchases')))
       const current = detailsRef.current
 
-      if (!isTarget || (!current.name.trim() && !current.phone.trim()) || saving) {
+      if (!isTarget || (!current.name.trim() && !current.phone.trim()) || savingRef.current) {
         return originalFetch(input, init)
       }
 
@@ -86,12 +91,13 @@ export default function WalkInDetailsBridge() {
       if (!bodyText && input instanceof Request) bodyText = await input.clone().text()
       if (!bodyText) return originalFetch(input, init)
 
-      let body: any
-      try { body = JSON.parse(bodyText) } catch { return originalFetch(input, init) }
+      let body: VoucherBody
+      try { body = JSON.parse(bodyText) as VoucherBody } catch { return originalFetch(input, init) }
 
-      const hasParty = modeRef.current === 'sale' ? body?.data?.party_id : body?.party_id
+      const hasParty = modeRef.current === 'sale' ? Boolean(body.data?.party_id) : Boolean(body.party_id)
       if (hasParty) return originalFetch(input, init)
 
+      savingRef.current = true
       setSaving(true)
       try {
         const partyResponse = await originalFetch('/api/parties', {
@@ -128,13 +134,14 @@ export default function WalkInDetailsBridge() {
         toast.error(error instanceof Error ? error.message : 'Unable to save walk-in details')
         throw error
       } finally {
+        savingRef.current = false
         setSaving(false)
       }
     }
 
     window.fetch = wrappedFetch
     return () => { window.fetch = originalFetch }
-  }, [mode, saving])
+  }, [mode])
 
   if (!mode || !open) return null
 
