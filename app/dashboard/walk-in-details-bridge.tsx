@@ -143,24 +143,57 @@ export default function WalkInDetailsBridge() {
     return () => { window.fetch = originalFetch }
   }, [mode])
 
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [open])
+
   if (!mode || !open) return null
 
   const label = mode === 'sale' ? 'Walk-in Customer' : 'Walk-in Supplier'
+  const noun = mode === 'sale' ? 'customer' : 'supplier'
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/45 p-3 sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label={`${label} details`}>
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+    <div
+      className="biz-walk-in-details-overlay fixed inset-0 z-[1000] flex items-end justify-center bg-slate-950/50 p-2.5 sm:items-center sm:p-5"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${label} details`}
+      onMouseDown={event => { if (event.target === event.currentTarget) setOpen(false) }}
+    >
+      <div className="biz-walk-in-details-dialog overflow-hidden bg-white shadow-2xl ring-1 ring-slate-200">
+        <div className="biz-walk-in-details-header flex items-center justify-between border-b border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800"><UserRound className="h-5 w-5" /></span>
-            <div><div className="text-base font-black text-slate-950">{label} details</div><div className="text-xs font-medium text-slate-600">Save name and phone with this voucher</div></div>
+            <div className="min-w-0">
+              <div className="biz-walk-in-details-title truncate text-base font-black text-slate-950 sm:text-lg">Add {label.toLowerCase()} details</div>
+              <div className="biz-walk-in-details-subtitle text-xs font-medium text-slate-600">Keep {noun} name and phone attached to this voucher.</div>
+            </div>
           </div>
-          <button type="button" onClick={() => setOpen(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl hover:bg-slate-100" aria-label="Close"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={() => setOpen(false)} className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
-        <div className="space-y-3 p-4 sm:p-5">
-          <label className="block"><span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-700">Name</span><input autoFocus value={details.name} onChange={event => setDetails(current => ({ ...current, name: event.target.value }))} placeholder={mode === 'sale' ? 'Customer name' : 'Supplier name'} className="input w-full" /></label>
-          <label className="block"><span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-700">Phone</span><input value={details.phone} onChange={event => setDetails(current => ({ ...current, phone: event.target.value }))} placeholder="Mobile / phone number" inputMode="tel" className="input w-full" /></label>
-          <div className="rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-900">This creates a normal party record, so future vouchers can be linked to the same person.</div>
-          <button type="button" disabled={saving || !details.name.trim()} onClick={() => { if (!details.name.trim()) return; setOpen(false); toast.success('Details ready — save the voucher to create the record') }} className="flex h-12 w-full items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50">Use these details</button>
+
+        <div className="space-y-4 p-4 sm:space-y-4 sm:p-5">
+          <label className="biz-walk-in-details-field">
+            <span className="biz-walk-in-details-field-label">Name <span aria-hidden="true">*</span></span>
+            <input autoFocus value={details.name} onChange={event => setDetails(current => ({ ...current, name: event.target.value }))} placeholder={mode === 'sale' ? 'Enter customer name' : 'Enter supplier name'} autoComplete="name" className="biz-walk-in-details-input" />
+          </label>
+
+          <label className="biz-walk-in-details-field">
+            <span className="biz-walk-in-details-field-label">Phone <span className="font-semibold normal-case tracking-normal text-slate-400">(optional)</span></span>
+            <input value={details.phone} onChange={event => setDetails(current => ({ ...current, phone: event.target.value }))} placeholder="Enter mobile / phone number" inputMode="tel" autoComplete="tel" className="biz-walk-in-details-input" />
+          </label>
+
+          <div className="biz-walk-in-details-note rounded-xl px-3 py-3 text-xs font-semibold text-emerald-900">
+            <span className="font-black">Why add details?</span> The {noun} becomes a normal party record, making future vouchers and account history easier to find by name or phone.
+          </div>
+
+          <div className="flex flex-col gap-2 pt-0.5 sm:flex-row-reverse">
+            <button type="button" disabled={saving || !details.name.trim()} onClick={() => { if (!details.name.trim()) return; setOpen(false); toast.success('Details ready — save the voucher to create the record') }} className="biz-walk-in-details-submit flex h-12 w-full items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50">Use these details</button>
+            <button type="button" onClick={() => setOpen(false)} className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:w-28">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
