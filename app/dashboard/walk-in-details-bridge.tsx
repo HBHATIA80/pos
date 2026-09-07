@@ -1,0 +1,161 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { UserRound, X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import toast from 'react-hot-toast'
+
+type Mode = 'sale' | 'purchase' | null
+
+type Details = {
+  name: string
+  phone: string
+}
+
+function getMode(pathname: string): Mode {
+  if (pathname === '/dashboard/sales' || pathname.startsWith('/dashboard/sales/')) return 'sale'
+  if (pathname === '/dashboard/purchases' || pathname.startsWith('/dashboard/purchases/')) return 'purchase'
+  return null
+}
+
+export default function WalkInDetailsBridge() {
+  const pathname = usePathname()
+  const mode = getMode(pathname)
+  const [open, setOpen] = useState(false)
+  const [details, setDetails] = useState<Details>({ name: '', phone: '' })
+  const [saving, setSaving] = useState(false)
+  const detailsRef = useRef(details)
+  const modeRef = useRef<Mode>(mode)
+
+  useEffect(() => {
+    detailsRef.current = details
+  }, [details])
+
+  useEffect(() => {
+    modeRef.current = mode
+    setOpen(false)
+  }, [mode])
+
+  useEffect(() => {
+    if (!mode) return
+
+    const placeholder = mode === 'sale' ? 'Walk-in customer, name or mobile' : 'Walk-in supplier, name or mobile'
+    const buttonId = 'biz-walk-in-details-button'
+
+    const attach = () => {
+      const input = Array.from(document.querySelectorAll<HTMLInputElement>('input')).find(item => item.placeholder === placeholder)
+      if (!input || document.getElementById(buttonId)) return
+      const button = document.createElement('button')
+      button.id = buttonId
+      button.type = 'button'
+      button.textContent = 'Add details'
+      button.setAttribute('aria-label', mode === 'sale' ? 'Add walk-in customer name and phone' : 'Add walk-in supplier name and phone')
+      button.className = 'biz-walk-in-details-trigger'
+      button.addEventListener('click', () => window.dispatchEvent(new CustomEvent('biz-open-walk-in-details')))
+      input.parentElement?.appendChild(button)
+    }
+
+    const openHandler = () => setOpen(true)
+    window.addEventListener('biz-open-walk-in-details', openHandler)
+    attach()
+    const observer = new MutationObserver(attach)
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => {
+      window.removeEventListener('biz-open-walk-in-details', openHandler)
+      observer.disconnect()
+      document.getElementById(buttonId)?.remove()
+    }
+  }, [mode])
+
+  useEffect(() => {
+    if (!mode) return
+
+    const originalFetch = window.fetch.bind(window)
+    const wrappedFetch: typeof window.fetch = async (input, init) => {
+      const requestUrl = typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString()
+      const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase()
+      const isTarget = method === 'POST' && ((modeRef.current === 'sale' && requestUrl.includes('/api/sales')) || (modeRef.current === 'purchase' && requestUrl.includes('/api/purchases')))
+      const current = detailsRef.current
+
+      if (!isTarget || (!current.name.trim() && !current.phone.trim()) || saving) {
+        return originalFetch(input, init)
+      }
+
+      let bodyText = typeof init?.body === 'string' ? init.body : null
+      if (!bodyText && input instanceof Request) bodyText = await input.clone().text()
+      if (!bodyText) return originalFetch(input, init)
+
+      let body: any
+      try { body = JSON.parse(bodyText) } catch { return originalFetch(input, init) }
+
+      const hasParty = modeRef.current === 'sale' ? body?.data?.party_id : body?.party_id
+      if (hasParty) return originalFetch(input, init)
+
+      setSaving(true)
+      try {
+        const partyResponse = await originalFetch('/api/parties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: {
+              party_type: modeRef.current === 'sale' ? 'customer' : 'supplier',
+              name: current.name.trim() || (modeRef.current === 'sale' ? 'Walk-in Customer' : 'Walk-in Supplier'),
+              phone: current.phone.trim(),
+              opening_balance: 0,
+              opening_balance_type: 'none',
+              credit_limit: 0,
+              notes: modeRef.current === 'sale' ? 'Walk-in customer captured at POS' : 'Walk-in supplier captured at purchase voucher',
+              is_active: true,
+            },
+          }),
+        })
+        const partyBody = await partyResponse.json().catch(() => ({}))
+        if (!partyResponse.ok || !partyBody.party?.id) throw new Error(partyBody.error || 'Unable to create the walk-in record')
+
+        if (modeRef.current === 'sale') body.data = { ...(body.data || {}), party_id: partyBody.party.id }
+        else body.party_id = partyBody.party.id
+
+        const nextInit: RequestInit = { ...(init || {}), body: JSON.stringify(body) }
+        const response = await originalFetch(input, nextInit)
+        if (response.ok) {
+          setOpen(false)
+          setDetails({ name: '', phone: '' })
+          toast.success(`${modeRef.current === 'sale' ? 'Customer' : 'Supplier'} details saved with voucher`)
+        }
+        return response
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Unable to save walk-in details')
+        throw error
+      } finally {
+        setSaving(false)
+      }
+    }
+
+    window.fetch = wrappedFetch
+    return () => { window.fetch = originalFetch }
+  }, [mode, saving])
+
+  if (!mode || !open) return null
+
+  const label = mode === 'sale' ? 'Walk-in Customer' : 'Walk-in Supplier'
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/45 p-3 sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label={`${label} details`}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800"><UserRound className="h-5 w-5" /></span>
+            <div><div className="text-base font-black text-slate-950">{label} details</div><div className="text-xs font-medium text-slate-600">Save name and phone with this voucher</div></div>
+          </div>
+          <button type="button" onClick={() => setOpen(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl hover:bg-slate-100" aria-label="Close"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="space-y-3 p-4 sm:p-5">
+          <label className="block"><span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-700">Name</span><input autoFocus value={details.name} onChange={event => setDetails(current => ({ ...current, name: event.target.value }))} placeholder={mode === 'sale' ? 'Customer name' : 'Supplier name'} className="input w-full" /></label>
+          <label className="block"><span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-700">Phone</span><input value={details.phone} onChange={event => setDetails(current => ({ ...current, phone: event.target.value }))} placeholder="Mobile / phone number" inputMode="tel" className="input w-full" /></label>
+          <div className="rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-900">This creates a normal party record, so future vouchers can be linked to the same person.</div>
+          <button type="button" disabled={saving || !details.name.trim()} onClick={() => { if (!details.name.trim()) return; setOpen(false); toast.success('Details ready — save the voucher to create the record') }} className="flex h-12 w-full items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50">Use these details</button>
+        </div>
+      </div>
+    </div>
+  )
+}
