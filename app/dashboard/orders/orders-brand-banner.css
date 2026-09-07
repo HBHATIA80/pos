@@ -17,26 +17,27 @@ section[class*="bg-slate-950"][class*="rounded-[26px]"] > div:nth-child(2) {
   background: radial-gradient(circle, rgba(134,239,172,.22), transparent 68%) !important;
 }
 
+/* Customer-shopping copy is intentionally black for stronger contrast. */
 section[class*="bg-slate-950"][class*="rounded-[26px]"] .inline-flex.rounded-full {
   border-color: rgba(22,101,52,.12) !important;
   background: rgba(255,255,255,.72) !important;
-  color: #166534 !important;
+  color: #111827 !important;
   backdrop-filter: blur(8px);
 }
 
 section[class*="bg-slate-950"][class*="rounded-[26px]"] h1 {
-  color: #14532d !important;
+  color: #000000 !important;
   letter-spacing: -.035em;
   text-wrap: balance;
 }
 
 section[class*="bg-slate-950"][class*="rounded-[26px]"] p {
-  color: #3f6f50 !important;
+  color: #111827 !important;
 }
 
 section[class*="bg-slate-950"][class*="rounded-[26px]"] a:first-child {
   background: #ffffff !important;
-  color: #166534 !important;
+  color: #000000 !important;
   border: 1px solid rgba(34,197,94,.14);
   box-shadow: 0 8px 18px rgba(22,101,52,.10) !important;
 }
@@ -52,7 +53,7 @@ section[class*="bg-slate-950"][class*="rounded-[26px]"] a:first-child:hover {
 section[class*="bg-slate-950"][class*="rounded-[26px]"] a:last-child {
   border-color: rgba(22,101,52,.16) !important;
   background: rgba(255,255,255,.48) !important;
-  color: #166534 !important;
+  color: #000000 !important;
   backdrop-filter: blur(8px);
 }
 
