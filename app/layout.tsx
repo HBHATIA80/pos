@@ -10,6 +10,7 @@ import './dashboard/voucher-dialog.css'
 import './dashboard/invoice-viewer.css'
 import './dashboard/sales/sales-workspace.css'
 import ClickAwayCloser from './dashboard/click-away-closer'
+import WalkInDetailsBridge from './dashboard/walk-in-details-bridge'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="min-h-screen bg-slate-50 text-slate-950 antialiased">
         <ClickAwayCloser />
+        <WalkInDetailsBridge />
         {children}
         <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
       </body>
