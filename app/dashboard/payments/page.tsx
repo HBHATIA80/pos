@@ -31,11 +31,11 @@ export default function PaymentsPage() {
       const [voucherJson, partyJson, salesJson] = await Promise.all([voucherResponse.json(), partyResponse.json(), salesResponse.json()])
       if (!voucherResponse.ok) throw new Error(voucherJson.error || 'Unable to load vouchers')
       if (!partyResponse.ok) throw new Error(partyJson.error || 'Unable to load parties')
-      if (!salesResponse.ok) throw new Error(salesJson.error || 'Unable to load invoices')
       setVouchers(voucherJson.vouchers || [])
       setSalePayments(voucherJson.salePayments || [])
       setParties(partyJson.parties || [])
-      setInvoices((salesJson.invoices || []).filter((x: Invoice) => x.status === 'completed'))
+      if (salesResponse.ok) setInvoices((salesJson.invoices || []).filter((x: Invoice) => x.status === 'completed'))
+      else setInvoices([])
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to load accounts') }
     finally { setLoading(false) }
   }
@@ -132,15 +132,29 @@ export default function PaymentsPage() {
 function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch, excludeId }: { label: string; value: string; selectedParty: Party | null; parties: Party[]; onSelect: (party: Party | null) => void; onSearch: (value: string) => void; excludeId?: string }) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
+  const [remoteParties, setRemoteParties] = useState<Party[] | null>(null)
+  const [searching, setSearching] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const query = value.trim().toLowerCase()
+  const sourceParties = remoteParties ?? parties
   const normalize = (text: string) => text.toLowerCase().replace(/[\s()+\-./]/g, '')
   const matches = useMemo(() => {
-    const sorted = [...parties].filter(p => p.id !== excludeId).sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = [...sourceParties].filter(p => p.is_active !== false && p.id !== excludeId).sort((a, b) => a.name.localeCompare(b.name))
     if (!query) return sorted.slice(0, 20)
     const normalizedQuery = normalize(query)
     return sorted.filter(p => [p.name, p.party_code || '', p.phone || '', p.alternate_phone || ''].some(v => v.toLowerCase().includes(query) || normalize(v).includes(normalizedQuery))).slice(0, 20)
-  }, [parties, query, excludeId])
+  }, [sourceParties, query, excludeId])
+
+  async function ensurePartiesLoaded() {
+    if (parties.length || remoteParties) return
+    setSearching(true)
+    try {
+      const response = await fetch('/api/parties', { cache: 'no-store' })
+      const result = await response.json().catch(() => ({}))
+      if (response.ok) setRemoteParties(result.parties || [])
+    } catch { /* keep the local empty state */ }
+    finally { setSearching(false) }
+  }
 
   useEffect(() => {
     function close(event: MouseEvent) { if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) setOpen(false) }
@@ -149,7 +163,7 @@ function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch,
   }, [])
 
   function select(party: Party) { onSelect(party); setOpen(false); setActive(0) }
-  function clear() { onSelect(null); onSearch(''); setOpen(true); setActive(0) }
+  function clear() { onSelect(null); onSearch(''); setOpen(true); setActive(0); void ensurePartiesLoaded() }
   function keyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowDown') { event.preventDefault(); setOpen(true); setActive(i => Math.min(i + 1, Math.max(matches.length - 1, 0))) }
     if (event.key === 'ArrowUp') { event.preventDefault(); setActive(i => Math.max(i - 1, 0)) }
@@ -157,7 +171,7 @@ function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch,
     if (event.key === 'Escape') setOpen(false)
   }
 
-  return <div ref={wrapperRef} className="relative block min-w-0"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-[68px] w-full items-center rounded-xl border bg-white px-4 outline-none transition ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-3 h-6 w-6 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null) }} onFocus={() => setOpen(true)} onKeyDown={keyDown} placeholder={label === 'To Party' ? 'Search destination party…' : 'Search party name, code or mobile number…'} className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-lg font-semibold leading-tight text-slate-900 !shadow-none outline-none ring-0 placeholder:text-slate-400 focus:!border-0 focus:!shadow-none focus:outline-none focus:ring-0" autoComplete="off" />{value && <button type="button" onClick={clear} className="ml-2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={`Clear ${label}`}><X className="h-5 w-5" /></button>}</div>{open && <div className="absolute left-0 right-0 z-[60] mt-2 max-h-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">{matches.length ? <>{matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex min-h-[62px] w-full items-center justify-between rounded-lg px-4 py-3 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-base font-bold text-slate-900">{p.name}</span><span className="mt-0.5 block truncate text-sm text-slate-600">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || p.alternate_phone || 'No mobile'} · {p.party_type}{p.is_active === false ? ' · Inactive' : ''}</span></span><span className="ml-3 shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Select</span></button>)}</> : <div className="px-4 py-8 text-center"><p className="text-sm font-semibold text-slate-700">No exact party match</p><p className="mt-1 text-xs text-slate-500">Clear the search to browse all available parties.</p></div>}{parties.length > 20 && <div className="border-t px-3 py-2 text-[11px] text-slate-400">Showing up to 20 parties. Keep typing to narrow the list.</div>}</div>}</div>
+  return <div ref={wrapperRef} className="relative block min-w-0"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-[68px] w-full items-center rounded-xl border bg-white px-4 outline-none transition ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-3 h-6 w-6 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null); if (!parties.length) void ensurePartiesLoaded() }} onFocus={() => { setOpen(true); void ensurePartiesLoaded() }} onKeyDown={keyDown} placeholder={label === 'To Party' ? 'Search destination party…' : 'Search party name, code or mobile number…'} className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-lg font-semibold leading-tight text-slate-900 !shadow-none outline-none ring-0 placeholder:text-slate-400 focus:!border-0 focus:!shadow-none focus:outline-none focus:ring-0" autoComplete="off" />{value && <button type="button" onClick={clear} className="ml-2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={`Clear ${label}`}><X className="h-5 w-5" /></button>}</div>{open && <div className="absolute left-0 right-0 z-[60] mt-2 max-h-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">{searching ? <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading parties…</div> : matches.length ? <>{matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex min-h-[62px] w-full items-center justify-between rounded-lg px-4 py-3 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-base font-bold text-slate-900">{p.name}</span><span className="mt-0.5 block truncate text-sm text-slate-600">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || p.alternate_phone || 'No mobile'} · {p.party_type}</span></span><span className="ml-3 shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Select</span></button>)}</> : <div className="px-4 py-8 text-center"><p className="text-sm font-semibold text-slate-700">{query ? 'No party found' : 'No parties available'}</p><p className="mt-1 text-xs text-slate-500">{query ? 'Try party name, code or mobile number.' : 'Create a party first, then search it here.'}</p></div>}</div>}</div>
 }
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">{icon}</span><div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-0.5 text-xl font-bold text-slate-900">{value}</p></div></div> }
