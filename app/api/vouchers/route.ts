@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 const schema = z.object({
   voucher_type: z.enum(['receipt', 'payment']),
   party_id: z.string().uuid().nullable().optional(),
+  destination_party_id: z.string().uuid().nullable().optional(),
   invoice_id: z.string().uuid().nullable().optional(),
-  payment_method: z.enum(['cash', 'bank', 'upi', 'card', 'cheque', 'other']),
+  payment_method: z.enum(['cash', 'bank', 'upi', 'card', 'cheque', 'other', 'party_transfer']),
   account_name: z.string().trim().max(120).optional().or(z.literal('')),
   amount: z.coerce.number().positive(),
   reference_no: z.string().trim().max(200).optional().or(z.literal('')),
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   const end = request.nextUrl.searchParams.get('end')
   const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get('limit') ?? 100), 1), 2000)
   let voucherQuery = supabase.from('account_vouchers')
-    .select('id,voucher_no,voucher_type,party_id,payment_method,account_name,amount,reference_no,notes,paid_at,status,parties(id,name,party_type)')
+    .select('id,voucher_no,voucher_type,party_id,destination_party_id,payment_method,account_name,amount,reference_no,notes,paid_at,status,parties(id,name,party_type)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
   if (type === 'receipt' || type === 'payment') voucherQuery = voucherQuery.eq('voucher_type', type)
   if (start) voucherQuery = voucherQuery.gte('paid_at', `${start}T00:00:00.000Z`)
@@ -40,9 +41,6 @@ export async function GET(request: NextRequest) {
   const { data: vouchers, error } = await voucherQuery
   if (error) return NextResponse.json({ error: error.message || 'Unable to load vouchers' }, { status: 400 })
 
-  // sale_payments has two foreign keys to parties (payer and transfer destination).
-  // Do not ask PostgREST to infer the parties relationship: it is ambiguous.
-  // Fetch payer parties separately and attach them by party_id.
   let salePaymentQuery = supabase.from('sale_payments')
     .select('id,receipt_no,payment_method,amount,reference_no,notes,paid_at,status,invoice_id,party_id,sales_invoices!inner(invoice_no,grand_total)')
     .eq('business_id', profile.business_id).eq('status', 'active').order('paid_at', { ascending: false }).limit(limit)
@@ -62,6 +60,16 @@ export async function GET(request: NextRequest) {
   const salePartyMap = new Map(saleParties.map(p => [p.id, p]))
   const salePayments = (rawSalePayments ?? []).map(payment => ({ ...payment, parties: payment.party_id ? (salePartyMap.get(payment.party_id) ?? null) : null }))
 
+  const destinationPartyIds = Array.from(new Set((vouchers ?? []).map(x => x.destination_party_id).filter((id): id is string => Boolean(id))))
+  if (destinationPartyIds.length) {
+    const { data: destinationParties, error: destinationError } = await supabase.from('parties').select('id,name,party_type').eq('business_id', profile.business_id).in('id', destinationPartyIds)
+    if (destinationError) return NextResponse.json({ error: destinationError.message || 'Unable to load transfer parties' }, { status: 400 })
+    const destinationMap = new Map((destinationParties ?? []).map(p => [p.id, p]))
+    for (const voucher of vouchers ?? []) {
+      ;(voucher as typeof voucher & { destination_party?: unknown }).destination_party = voucher.destination_party_id ? (destinationMap.get(voucher.destination_party_id) ?? null) : null
+    }
+  }
+
   return NextResponse.json({ vouchers: vouchers ?? [], salePayments })
 }
 
@@ -71,6 +79,22 @@ export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid voucher' }, { status: 400 })
   const value = parsed.data
+
+  if (value.payment_method === 'party_transfer') {
+    if (value.invoice_id) return NextResponse.json({ error: 'Party-to-party transfer vouchers cannot be linked to a sales invoice. Use a general receipt/payment voucher.' }, { status: 400 })
+    if (!value.party_id || !value.destination_party_id) return NextResponse.json({ error: 'Select both From Party and To Party for a party-to-party transfer' }, { status: 400 })
+    const { data, error } = await supabase.rpc('record_party_transfer_voucher', {
+      p_voucher_type: value.voucher_type,
+      p_source_party_id: value.party_id,
+      p_destination_party_id: value.destination_party_id,
+      p_amount: value.amount,
+      p_reference_no: value.reference_no || null,
+      p_notes: value.notes || null,
+      p_paid_at: value.paid_at || new Date().toISOString(),
+    })
+    if (error) return NextResponse.json({ error: error.message || 'Unable to save party-to-party transfer' }, { status: 400 })
+    return NextResponse.json({ voucher: data }, { status: 201 })
+  }
 
   if (value.voucher_type === 'receipt' && value.invoice_id) {
     const { data, error } = await supabase.rpc('record_sale_payment', {
@@ -102,7 +126,7 @@ export async function POST(request: NextRequest) {
     notes: value.notes || null,
     paid_at: value.paid_at || new Date().toISOString(),
     created_by: user.id,
-  }).select('id,voucher_no,voucher_type,party_id,payment_method,account_name,amount,reference_no,notes,paid_at,status,parties(id,name,party_type)').single()
+  }).select('id,voucher_no,voucher_type,party_id,destination_party_id,payment_method,account_name,amount,reference_no,notes,paid_at,status,parties(id,name,party_type)').single()
   if (error) return NextResponse.json({ error: error.message || 'Unable to save voucher' }, { status: 400 })
   return NextResponse.json({ voucher: data }, { status: 201 })
 }
