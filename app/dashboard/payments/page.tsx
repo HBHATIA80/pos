@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Banknote, CreditCard, Loader2, Plus, ReceiptText, RefreshCw, Search, WalletCards, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Banknote, CreditCard, Loader2, Plus, ReceiptText, RefreshCw, Search, WalletCards, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type Party = { id: string; party_code?: string | null; name: string; phone?: string | null; alternate_phone?: string | null; party_type: 'customer' | 'supplier' | 'both'; is_active?: boolean }
 type Invoice = { id: string; invoice_no: string; grand_total: number; status: string; party_id: string | null; parties?: Party | null }
-type Voucher = { id: string; voucher_no: string; voucher_type: 'receipt' | 'payment'; party_id: string | null; payment_method: string; account_name: string | null; amount: number; reference_no: string | null; notes: string | null; paid_at: string; parties?: Party | null }
+type Voucher = { id: string; voucher_no: string; voucher_type: 'receipt' | 'payment'; party_id: string | null; destination_party_id?: string | null; payment_method: string; account_name: string | null; amount: number; reference_no: string | null; notes: string | null; paid_at: string; parties?: Party | null; destination_party?: Party | null }
 type SalePayment = { id: string; receipt_no: string; payment_method: string; amount: number; reference_no: string | null; notes: string | null; paid_at: string; invoice_id: string; parties?: Party | null; sales_invoices?: { invoice_no: string; grand_total: number } | null }
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -21,7 +21,8 @@ export default function PaymentsPage() {
   const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState<'receipt' | 'payment'>('receipt')
   const [partySearch, setPartySearch] = useState('')
-  const [form, setForm] = useState({ party_id: '', invoice_id: '', payment_method: 'cash', account_name: 'Cash', amount: '', reference_no: '', notes: '', paid_at: todayInput() })
+  const [destinationSearch, setDestinationSearch] = useState('')
+  const [form, setForm] = useState({ party_id: '', destination_party_id: '', invoice_id: '', payment_method: 'cash', account_name: 'Cash', amount: '', reference_no: '', notes: '', paid_at: todayInput() })
 
   async function load() {
     setLoading(true)
@@ -42,47 +43,65 @@ export default function PaymentsPage() {
   useEffect(() => { void load() }, [])
 
   const receiptRows = useMemo(() => [
-    ...salePayments.map(x => ({ id: `sale-${x.id}`, no: x.receipt_no, party: x.parties?.name || 'Walk-in', invoice: x.sales_invoices?.invoice_no || '—', method: x.payment_method, account: x.payment_method === 'cash' ? 'Cash' : 'Bank', amount: Number(x.amount), date: x.paid_at })),
-    ...vouchers.filter(x => x.voucher_type === 'receipt').map(x => ({ id: `voucher-${x.id}`, no: x.voucher_no, party: x.parties?.name || 'Other / Cash Receipt', invoice: '—', method: x.payment_method, account: x.account_name || '—', amount: Number(x.amount), date: x.paid_at })),
+    ...salePayments.map(x => ({ id: `sale-${x.id}`, no: x.receipt_no, party: x.parties?.name || 'Walk-in', destination: '', invoice: x.sales_invoices?.invoice_no || '—', method: x.payment_method, account: x.payment_method === 'cash' ? 'Cash' : 'Bank', amount: Number(x.amount), date: x.paid_at })),
+    ...vouchers.filter(x => x.voucher_type === 'receipt').map(x => ({ id: `voucher-${x.id}`, no: x.voucher_no, party: x.parties?.name || 'Other / Cash Receipt', destination: x.destination_party?.name || '', invoice: '—', method: x.payment_method, account: x.account_name || '—', amount: Number(x.amount), date: x.paid_at })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [salePayments, vouchers])
 
   const paymentRows = useMemo(() => vouchers.filter(x => x.voucher_type === 'payment').sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime()), [vouchers])
   const receivedTotal = receiptRows.reduce((n, x) => n + x.amount, 0)
   const paidTotal = paymentRows.reduce((n, x) => n + Number(x.amount), 0)
+  const isTransfer = form.payment_method === 'party_transfer'
 
   const partyOptions = useMemo(() => parties.filter(p => p.is_active !== false && (tab === 'receipt' ? p.party_type === 'customer' || p.party_type === 'both' : true)), [parties, tab])
+  const transferPartyOptions = useMemo(() => parties.filter(p => p.is_active !== false), [parties])
   const selectedParty = partyOptions.find(p => p.id === form.party_id) ?? null
+  const selectedDestinationParty = transferPartyOptions.find(p => p.id === form.destination_party_id) ?? null
 
   function change(key: string, value: string) { setForm(current => ({ ...current, [key]: value })) }
   function selectParty(party: Party | null) {
     setForm(current => ({ ...current, party_id: party?.id || '', invoice_id: '' }))
     setPartySearch(party ? `${party.name}${party.party_code ? ` · ${party.party_code}` : ''}` : '')
   }
+  function selectDestination(party: Party | null) {
+    setForm(current => ({ ...current, destination_party_id: party?.id || '' }))
+    setDestinationSearch(party ? `${party.name}${party.party_code ? ` · ${party.party_code}` : ''}` : '')
+  }
+  function setPaymentMode(value: string) {
+    const transfer = value === 'party_transfer'
+    setForm(current => ({ ...current, payment_method: value, account_name: transfer ? 'Party Transfer' : value === 'cash' ? 'Cash' : value === 'bank' ? 'Bank' : value.toUpperCase(), invoice_id: transfer ? '' : current.invoice_id, destination_party_id: transfer ? current.destination_party_id : '' }))
+    if (!transfer) setDestinationSearch('')
+  }
   function chooseTab(type: 'receipt' | 'payment') {
     setTab(type)
-    selectParty(null)
-    setForm(current => ({ ...current, party_id: '', invoice_id: '', amount: '', reference_no: '', notes: '', paid_at: todayInput(), account_name: 'Cash' }))
+    setPartySearch('')
+    setDestinationSearch('')
+    setForm(current => ({ ...current, party_id: '', destination_party_id: '', invoice_id: '', payment_method: 'cash', amount: '', reference_no: '', notes: '', paid_at: todayInput(), account_name: 'Cash' }))
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!form.amount || Number(form.amount) <= 0) return toast.error('Enter a valid amount')
-    if (tab === 'payment' && !form.party_id && !form.account_name.trim()) return toast.error('Select a party or enter the account name')
+    if (isTransfer) {
+      if (!form.party_id || !form.destination_party_id) return toast.error('Select both From Party and To Party')
+      if (form.party_id === form.destination_party_id) return toast.error('From Party and To Party must be different')
+    } else if (tab === 'payment' && !form.party_id && !form.account_name.trim()) return toast.error('Select a party or enter the account name')
     setSaving(true)
-    const response = await fetch('/api/vouchers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voucher_type: tab, party_id: form.party_id || null, invoice_id: tab === 'receipt' ? (form.invoice_id || null) : null, payment_method: form.payment_method, account_name: form.account_name, amount: Number(form.amount), reference_no: form.reference_no, notes: form.notes, paid_at: new Date(form.paid_at).toISOString() }) })
-    const result = await response.json().catch(() => ({}))
-    setSaving(false)
-    if (!response.ok) return toast.error(result.error || 'Unable to save entry')
-    toast.success(tab === 'receipt' ? 'Receipt saved' : 'Payment saved')
-    selectParty(null)
-    setForm(current => ({ ...current, amount: '', reference_no: '', notes: '', invoice_id: '', paid_at: todayInput() }))
-    void load()
+    try {
+      const response = await fetch('/api/vouchers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voucher_type: tab, party_id: form.party_id || null, destination_party_id: isTransfer ? form.destination_party_id || null : null, invoice_id: tab === 'receipt' && !isTransfer ? (form.invoice_id || null) : null, payment_method: form.payment_method, account_name: form.account_name, amount: Number(form.amount), reference_no: form.reference_no, notes: form.notes, paid_at: new Date(form.paid_at).toISOString() }) })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) return toast.error(result.error || 'Unable to save entry')
+      toast.success(isTransfer ? `${tab === 'receipt' ? 'Receipt' : 'Payment'} transfer saved` : tab === 'receipt' ? 'Receipt saved' : 'Payment saved')
+      selectParty(null)
+      selectDestination(null)
+      setForm(current => ({ ...current, amount: '', reference_no: '', notes: '', invoice_id: '', destination_party_id: '', paid_at: todayInput() }))
+      void load()
+    } finally { setSaving(false) }
   }
 
   return <div className="mx-auto max-w-7xl space-y-5">
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><CreditCard className="h-6 w-6" /></span><div><span className="text-xs font-semibold uppercase tracking-wide text-blue-600">Phase 12 · Accounts</span><h1 className="mt-1 text-2xl font-bold">Payments & Receipts</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Record money received from customers/parties or money paid to suppliers/parties, just like a Busy-style accounting voucher.</p></div></div>
+        <div className="flex items-start gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><CreditCard className="h-6 w-6" /></span><div><span className="text-xs font-semibold uppercase tracking-wide text-blue-600">Phase 12 · Accounts</span><h1 className="mt-1 text-2xl font-bold">Payments & Receipts</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Record money received from customers/parties or money paid to suppliers/parties, including direct party-to-party transfers.</p></div></div>
         <button onClick={() => void load()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"><RefreshCw className="h-4 w-4" /> Refresh</button>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2"><Stat icon={<ArrowDownLeft className="h-5 w-5" />} label="Total received" value={money(receivedTotal)} /><Stat icon={<ArrowUpRight className="h-5 w-5" />} label="Total paid" value={money(paidTotal)} /></div>
@@ -91,37 +110,37 @@ export default function PaymentsPage() {
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex border-b border-slate-200"><button onClick={() => chooseTab('receipt')} className={`flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-bold ${tab === 'receipt' ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500'}`}><ArrowDownLeft className="h-4 w-4" /> Receipt (Money In)</button><button onClick={() => chooseTab('payment')} className={`flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-bold ${tab === 'payment' ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500'}`}><ArrowUpRight className="h-4 w-4" /> Payment (Money Out)</button></div>
       <form onSubmit={submit} className="space-y-5 p-5 sm:p-7">
-        <div className="rounded-2xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">{tab === 'receipt' ? <WalletCards className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}</span><div><h2 className="font-semibold">{tab === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'}</h2><p className="text-xs text-slate-500">{tab === 'receipt' ? 'Customer/party pays us.' : 'We pay supplier/party, staff or another account.'}</p></div></div></div>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(210px,1fr)_minmax(210px,1fr)]">
-          <PartySearch label="Party / Account" value={partySearch} selectedParty={selectedParty} parties={partyOptions} onSelect={selectParty} onSearch={setPartySearch} />
-          <SelectField label="Payment mode" value={form.payment_method} onChange={v => { change('payment_method', v); change('account_name', v === 'cash' ? 'Cash' : v === 'bank' ? 'Bank' : v.toUpperCase()) }} options={ [['cash','Cash'],['bank','Bank / Cheque'],['upi','UPI'],['card','Card'],['cheque','Cheque'],['other','Other']] } />
+        <div className={`rounded-2xl p-4 ${isTransfer ? 'border border-emerald-200 bg-emerald-50' : 'bg-slate-50'}`}><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">{isTransfer ? <ArrowRight className="h-5 w-5 text-emerald-600" /> : tab === 'receipt' ? <WalletCards className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}</span><div><h2 className="font-semibold">{isTransfer ? 'Party-to-Party Transfer' : tab === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'}</h2><p className="text-xs text-slate-500">{isTransfer ? 'Move a balance directly from one party ledger to another without using shop cash or bank.' : tab === 'receipt' ? 'Customer/party pays us.' : 'We pay supplier/party, staff or another account.'}</p></div></div></div>
+        <div className={`grid gap-4 ${isTransfer ? 'lg:grid-cols-2' : 'lg:grid-cols-[minmax(0,2.2fr)_minmax(210px,1fr)_minmax(210px,1fr)]'}`}>
+          <PartySearch label={isTransfer ? 'From Party' : 'Party / Account'} value={partySearch} selectedParty={selectedParty} parties={isTransfer ? transferPartyOptions : partyOptions} onSelect={selectParty} onSearch={setPartySearch} excludeId={form.destination_party_id} />
+          {isTransfer ? <PartySearch label="To Party" value={destinationSearch} selectedParty={selectedDestinationParty} parties={transferPartyOptions} onSelect={selectDestination} onSearch={setDestinationSearch} excludeId={form.party_id} /> : <SelectField label="Payment mode" value={form.payment_method} onChange={setPaymentMode} options={ [['cash','Cash'],['bank','Bank / Cheque'],['upi','UPI'],['card','Card'],['cheque','Cheque'],['other','Other'],['party_transfer','Party to Party Transfer']] } />}
           <NumberField label="Amount" value={form.amount} onChange={v => change('amount', v)} required />
         </div>
-        {tab === 'receipt' && <div className="grid gap-4 lg:grid-cols-2"><SelectField label="Against sales invoice (optional)" value={form.invoice_id} onChange={v => change('invoice_id', v)} options={[['','General party receipt / advance'], ...invoices.filter(i => !form.party_id || i.party_id === form.party_id).map(i => [i.id, `${i.invoice_no} · ${money(i.grand_total)}${i.parties?.name ? ` · ${i.parties.name}` : ''}`])]} /><Field label="Account / counter" value={form.account_name} onChange={v => change('account_name', v)} placeholder="Cash, HDFC Bank, SBI, etc." /></div>}
-        {tab === 'payment' && <div className="grid gap-4 lg:grid-cols-2"><Field label="Account / cash-bank" value={form.account_name} onChange={v => change('account_name', v)} placeholder="Cash, HDFC Bank, SBI, etc." /><Field label="Reference / cheque / UTR" value={form.reference_no} onChange={v => change('reference_no', v)} /></div>}
-        {tab === 'receipt' && <div className="grid gap-4 lg:grid-cols-2"><Field label="Reference / cheque / UTR" value={form.reference_no} onChange={v => change('reference_no', v)} /><Field label="Date & time" type="datetime-local" value={form.paid_at} onChange={v => change('paid_at', v)} /></div>}
-        {tab === 'payment' && <div><Field label="Date & time" type="datetime-local" value={form.paid_at} onChange={v => change('paid_at', v)} /></div>}
-        <TextArea label="Narration / Notes" value={form.notes} onChange={v => change('notes', v)} placeholder="Being cash received / paid against account..." />
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => { selectParty(null); setForm(current => ({ ...current, amount: '', reference_no: '', notes: '', invoice_id: '' })) }} className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-semibold text-slate-700">Clear</button><button disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white disabled:opacity-60"><Plus className="h-4 w-4" />{saving ? 'Saving…' : `Save ${tab === 'receipt' ? 'Receipt' : 'Payment'}`}</button></div>
+        {isTransfer ? <div className="grid gap-4 lg:grid-cols-2"><Field label="Reference / cheque / UTR (optional)" value={form.reference_no} onChange={v => change('reference_no', v)} placeholder="Optional transfer reference" /><Field label="Date & time" type="datetime-local" value={form.paid_at} onChange={v => change('paid_at', v)} /></div> : tab === 'receipt' && <div className="grid gap-4 lg:grid-cols-2"><SelectField label="Against sales invoice (optional)" value={form.invoice_id} onChange={v => change('invoice_id', v)} options={[['','General party receipt / advance'], ...invoices.filter(i => !form.party_id || i.party_id === form.party_id).map(i => [i.id, `${i.invoice_no} · ${money(i.grand_total)}${i.parties?.name ? ` · ${i.parties.name}` : ''}`])]} /><Field label="Account / counter" value={form.account_name} onChange={v => change('account_name', v)} placeholder="Cash, HDFC Bank, SBI, etc." /></div>}
+        {!isTransfer && tab === 'payment' && <div className="grid gap-4 lg:grid-cols-2"><Field label="Account / cash-bank" value={form.account_name} onChange={v => change('account_name', v)} placeholder="Cash, HDFC Bank, SBI, etc." /><Field label="Reference / cheque / UTR" value={form.reference_no} onChange={v => change('reference_no', v)} /></div>}
+        {!isTransfer && tab === 'receipt' && <div className="grid gap-4 lg:grid-cols-2"><Field label="Reference / cheque / UTR" value={form.reference_no} onChange={v => change('reference_no', v)} /><Field label="Date & time" type="datetime-local" value={form.paid_at} onChange={v => change('paid_at', v)} /></div>}
+        {!isTransfer && tab === 'payment' && <div><Field label="Date & time" type="datetime-local" value={form.paid_at} onChange={v => change('paid_at', v)} /></div>}
+        <TextArea label="Narration / Notes" value={form.notes} onChange={v => change('notes', v)} placeholder={isTransfer ? 'Reason for party-to-party transfer...' : 'Being cash received / paid against account...'} />
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => { selectParty(null); selectDestination(null); setForm(current => ({ ...current, amount: '', reference_no: '', notes: '', invoice_id: '', destination_party_id: '' })) }} className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-semibold text-slate-700">Clear</button><button disabled={saving} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white disabled:opacity-60 ${isTransfer ? 'bg-emerald-600' : 'bg-blue-600'}`}><Plus className="h-4 w-4" />{saving ? 'Saving…' : `Save ${tab === 'receipt' ? 'Receipt' : 'Payment'}`}</button></div>
       </form>
     </section>
 
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 p-5"><div><h2 className="font-semibold">{tab === 'receipt' ? 'Receipt Register' : 'Payment Register'}</h2><p className="text-xs text-slate-500">{tab === 'receipt' ? `${receiptRows.length} entries · money received` : `${paymentRows.length} entries · money paid`}</p></div><ReceiptText className="h-5 w-5 text-slate-400" /></div>{loading ? <div className="py-16 text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600" /></div> : tab === 'receipt' ? <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="p-3">Date</th><th className="p-3">Receipt No.</th><th className="p-3">Party</th><th className="p-3">Invoice</th><th className="p-3">Mode</th><th className="p-3">Account</th><th className="p-3 text-right">Amount</th></tr></thead><tbody className="divide-y">{receiptRows.map(x => <tr key={x.id}><td className="p-3 text-slate-500">{new Date(x.date).toLocaleString('en-IN')}</td><td className="p-3 font-semibold">{x.no}</td><td className="p-3">{x.party}</td><td className="p-3">{x.invoice}</td><td className="p-3 capitalize">{x.method}</td><td className="p-3">{x.account}</td><td className="p-3 text-right font-bold">{money(x.amount)}</td></tr>)}</tbody></table></div> : <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="p-3">Date</th><th className="p-3">Payment No.</th><th className="p-3">Party</th><th className="p-3">Mode</th><th className="p-3">Account</th><th className="p-3">Reference</th><th className="p-3 text-right">Amount</th></tr></thead><tbody className="divide-y">{paymentRows.map(x => <tr key={x.id}><td className="p-3 text-slate-500">{new Date(x.paid_at).toLocaleString('en-IN')}</td><td className="p-3 font-semibold">{x.voucher_no}</td><td className="p-3">{x.parties?.name || 'Other account'}</td><td className="p-3 capitalize">{x.payment_method}</td><td className="p-3">{x.account_name || '—'}</td><td className="p-3">{x.reference_no || '—'}</td><td className="p-3 text-right font-bold">{money(Number(x.amount))}</td></tr>)}</tbody></table></div>}</section>
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 p-5"><div><h2 className="font-semibold">{tab === 'receipt' ? 'Receipt Register' : 'Payment Register'}</h2><p className="text-xs text-slate-500">{tab === 'receipt' ? `${receiptRows.length} entries · money received` : `${paymentRows.length} entries · money paid`}</p></div><ReceiptText className="h-5 w-5 text-slate-400" /></div>{loading ? <div className="py-16 text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600" /></div> : tab === 'receipt' ? <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="p-3">Date</th><th className="p-3">Receipt No.</th><th className="p-3">Party</th><th className="p-3">To Party</th><th className="p-3">Invoice</th><th className="p-3">Mode</th><th className="p-3">Account</th><th className="p-3 text-right">Amount</th></tr></thead><tbody className="divide-y">{receiptRows.map(x => <tr key={x.id}><td className="p-3 text-slate-500">{new Date(x.date).toLocaleString('en-IN')}</td><td className="p-3 font-semibold">{x.no}</td><td className="p-3">{x.party}</td><td className="p-3">{x.destination || '—'}</td><td className="p-3">{x.invoice}</td><td className="p-3 capitalize">{x.method === 'party_transfer' ? 'Party Transfer' : x.method}</td><td className="p-3">{x.account}</td><td className="p-3 text-right font-bold">{money(x.amount)}</td></tr>)}</tbody></table></div> : <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="p-3">Date</th><th className="p-3">Payment No.</th><th className="p-3">From Party</th><th className="p-3">To Party</th><th className="p-3">Mode</th><th className="p-3">Account</th><th className="p-3">Reference</th><th className="p-3 text-right">Amount</th></tr></thead><tbody className="divide-y">{paymentRows.map(x => <tr key={x.id}><td className="p-3 text-slate-500">{new Date(x.paid_at).toLocaleString('en-IN')}</td><td className="p-3 font-semibold">{x.voucher_no}</td><td className="p-3">{x.parties?.name || 'Other account'}</td><td className="p-3">{x.destination_party?.name || '—'}</td><td className="p-3 capitalize">{x.payment_method === 'party_transfer' ? 'Party Transfer' : x.payment_method}</td><td className="p-3">{x.account_name || '—'}</td><td className="p-3">{x.reference_no || '—'}</td><td className="p-3 text-right font-bold">{money(Number(x.amount))}</td></tr>)}</tbody></table></div>}</section>
   </div>
 }
 
-function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch }: { label: string; value: string; selectedParty: Party | null; parties: Party[]; onSelect: (party: Party | null) => void; onSearch: (value: string) => void }) {
+function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch, excludeId }: { label: string; value: string; selectedParty: Party | null; parties: Party[]; onSelect: (party: Party | null) => void; onSearch: (value: string) => void; excludeId?: string }) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const query = value.trim().toLowerCase()
   const normalize = (text: string) => text.toLowerCase().replace(/[\s()+\-./]/g, '')
   const matches = useMemo(() => {
-    const sorted = [...parties].sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = [...parties].filter(p => p.id !== excludeId).sort((a, b) => a.name.localeCompare(b.name))
     if (!query) return sorted.slice(0, 20)
     const normalizedQuery = normalize(query)
     return sorted.filter(p => [p.name, p.party_code || '', p.phone || '', p.alternate_phone || ''].some(v => v.toLowerCase().includes(query) || normalize(v).includes(normalizedQuery))).slice(0, 20)
-  }, [parties, query])
+  }, [parties, query, excludeId])
 
   useEffect(() => {
     function close(event: MouseEvent) { if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) setOpen(false) }
@@ -138,7 +157,7 @@ function PartySearch({ label, value, selectedParty, parties, onSelect, onSearch 
     if (event.key === 'Escape') setOpen(false)
   }
 
-  return <div ref={wrapperRef} className="relative block min-w-0"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-[68px] w-full items-center rounded-xl border bg-white px-4 outline-none transition ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-3 h-6 w-6 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null) }} onFocus={() => setOpen(true)} onKeyDown={keyDown} placeholder="Search party name, code or mobile number…" className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-lg font-semibold leading-tight text-slate-900 !shadow-none outline-none ring-0 placeholder:text-slate-400 focus:!border-0 focus:!shadow-none focus:outline-none focus:ring-0" autoComplete="off" />{value && <button type="button" onClick={clear} className="ml-2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Clear party"><X className="h-5 w-5" /></button>}</div>{open && <div className="absolute left-0 right-0 z-[60] mt-2 max-h-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">{matches.length ? <>{matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex min-h-[62px] w-full items-center justify-between rounded-lg px-4 py-3 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-base font-bold text-slate-900">{p.name}</span><span className="mt-0.5 block truncate text-sm text-slate-600">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || p.alternate_phone || 'No mobile'} · {p.party_type}{p.is_active === false ? ' · Inactive' : ''}</span></span><span className="ml-3 shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Select</span></button>)}</> : <div className="px-4 py-8 text-center"><p className="text-sm font-semibold text-slate-700">No exact party match</p><p className="mt-1 text-xs text-slate-500">Clear the search to browse all available parties.</p></div>}{parties.length > 20 && <div className="border-t px-3 py-2 text-[11px] text-slate-400">Showing up to 20 parties. Keep typing to narrow the list.</div>}</div>}</div>
+  return <div ref={wrapperRef} className="relative block min-w-0"><span className="mb-1.5 block text-xs font-semibold text-slate-600">{label}</span><div className={`flex min-h-[68px] w-full items-center rounded-xl border bg-white px-4 outline-none transition ${open ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'}`}><Search className="mr-3 h-6 w-6 shrink-0 text-slate-400" /><input value={value} onChange={e => { onSearch(e.target.value); setOpen(true); setActive(0); if (selectedParty) onSelect(null) }} onFocus={() => setOpen(true)} onKeyDown={keyDown} placeholder={label === 'To Party' ? 'Search destination party…' : 'Search party name, code or mobile number…'} className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-lg font-semibold leading-tight text-slate-900 !shadow-none outline-none ring-0 placeholder:text-slate-400 focus:!border-0 focus:!shadow-none focus:outline-none focus:ring-0" autoComplete="off" />{value && <button type="button" onClick={clear} className="ml-2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={`Clear ${label}`}><X className="h-5 w-5" /></button>}</div>{open && <div className="absolute left-0 right-0 z-[60] mt-2 max-h-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">{matches.length ? <>{matches.map((p, index) => <button type="button" key={p.id} onMouseDown={e => e.preventDefault()} onClick={() => select(p)} className={`flex min-h-[62px] w-full items-center justify-between rounded-lg px-4 py-3 text-left ${index === active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><span className="min-w-0"><span className="block truncate text-base font-bold text-slate-900">{p.name}</span><span className="mt-0.5 block truncate text-sm text-slate-600">{p.party_code ? `${p.party_code} · ` : ''}{p.phone || p.alternate_phone || 'No mobile'} · {p.party_type}{p.is_active === false ? ' · Inactive' : ''}</span></span><span className="ml-3 shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Select</span></button>)}</> : <div className="px-4 py-8 text-center"><p className="text-sm font-semibold text-slate-700">No exact party match</p><p className="mt-1 text-xs text-slate-500">Clear the search to browse all available parties.</p></div>}{parties.length > 20 && <div className="border-t px-3 py-2 text-[11px] text-slate-400">Showing up to 20 parties. Keep typing to narrow the list.</div>}</div>}</div>
 }
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">{icon}</span><div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-0.5 text-xl font-bold text-slate-900">{value}</p></div></div> }
