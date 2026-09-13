@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 const schema = z.object({
   entity: z.enum(['purchase', 'sale', 'party', 'product']),
   ids: z.array(z.string().uuid()).min(1).max(50),
+  reason: z.string().trim().max(500).optional().or(z.literal('')),
 })
 
 export async function POST(request: Request) {
@@ -24,27 +25,21 @@ export async function POST(request: Request) {
   const ids = [...new Set(parsed.data.ids)]
 
   if (parsed.data.entity === 'purchase' || parsed.data.entity === 'sale') {
-    const table = parsed.data.entity === 'purchase' ? 'purchase_invoices' : 'sales_invoices'
-    const { data: rows, error } = await supabase
-      .from(table)
-      .select('id,status,invoice_no')
-      .eq('business_id', profile.business_id)
-      .is('deleted_at', null)
-      .in('id', ids)
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    if ((rows?.length ?? 0) !== ids.length) return NextResponse.json({ error: 'One or more selected records were not found' }, { status: 404 })
-    const protectedRows = (rows ?? []).filter(row => row.status !== 'draft')
-    if (protectedRows.length) return NextResponse.json({ error: `Only draft ${parsed.data.entity}s can be deleted safely. Protected: ${protectedRows.map(row => row.invoice_no).join(', ')}` }, { status: 409 })
-
-    for (const id of ids) {
-      const functionName = parsed.data.entity === 'purchase' ? 'soft_delete_purchase_invoice' : 'soft_delete_sale_invoice'
-      const args = parsed.data.entity === 'purchase'
-        ? { p_invoice_id: id, p_reason: 'Deleted from bulk delete' }
-        : { p_invoice_id: id, p_reason: 'Deleted from bulk delete' }
-      const { error: rpcError } = await supabase.rpc(functionName, args)
-      if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 400 })
+    if (profile.role !== 'admin' && profile.role !== 'staff') {
+      return NextResponse.json({ error: 'Only admin or staff can delete draft vouchers' }, { status: 403 })
     }
-    return NextResponse.json({ deleted: ids.length })
+
+    const { data, error } = await supabase.rpc('bulk_soft_delete_draft_invoices', {
+      p_kind: parsed.data.entity,
+      p_invoice_ids: ids,
+      p_reason: parsed.data.reason || 'Deleted from bulk delete',
+    })
+    if (error) {
+      const message = error.message || 'Unable to delete selected vouchers'
+      const status = /only active draft|draft vouchers|completed|void/i.test(message) ? 409 : /unauthorized/i.test(message) ? 401 : 400
+      return NextResponse.json({ error: message }, { status })
+    }
+    return NextResponse.json({ deleted: Number(data?.deleted ?? ids.length), kind: parsed.data.entity })
   }
 
   const { data, error } = await supabase.rpc('delete_master_records', {
