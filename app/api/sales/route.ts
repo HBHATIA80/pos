@@ -36,25 +36,13 @@ const saleSchema = z.object({
 
 export async function GET() {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let query = supabase
     .from('sales_invoices')
     .select(`
-      id,
-      invoice_no,
-      status,
-      party_id,
-      subtotal,
-      discount_amount,
-      grand_total,
-      notes,
-      sold_at,
-      completed_at,
-      created_at,
-      created_by,
+      id, invoice_no, status, party_id, subtotal, discount_amount, grand_total, notes,
+      sold_at, completed_at, created_at, created_by,
       parties(id,name,phone,party_type),
       sales_invoice_items(id,product_id,sku,product_name,unit_name,quantity,unit_price,discount_amount,line_total)
     `)
@@ -76,15 +64,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => null)
   const parsed = saleSchema.safeParse(body?.data)
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid sale' }, { status: 400 })
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid sale' }, { status: 400 })
 
   const cookieStore = await cookies()
   const selectedDate = parsed.data.invoice_date || cookieStore.get('bizbook_invoice_date')?.value || new Date().toISOString().slice(0, 10)
@@ -92,9 +76,7 @@ export async function POST(request: Request) {
   if (!dateParsed.success) return NextResponse.json({ error: 'Invalid invoice date' }, { status: 400 })
   if (selectedDate > new Date().toISOString().slice(0, 10)) return NextResponse.json({ error: 'Invoice date cannot be in the future' }, { status: 400 })
 
-  const payload = profile.role === 'user'
-    ? { ...parsed.data, party_id: null, status: 'draft' as const }
-    : parsed.data
+  const payload = profile.role === 'user' ? { ...parsed.data, party_id: null, status: 'draft' as const } : parsed.data
 
   const { data, error } = await supabase.rpc('create_sales_invoice_with_date', {
     payload,
@@ -110,13 +92,8 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  if (profile.role === 'user') {
-    return NextResponse.json({ error: 'Customer accounts cannot complete or void sales.' }, { status: 403 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (profile.role === 'user') return NextResponse.json({ error: 'Customer accounts cannot complete or void sales.' }, { status: 403 })
 
   const body = await request.json().catch(() => null)
   const id = z.string().uuid().safeParse(body?.id)
@@ -135,39 +112,28 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   const { supabase, user, profile } = await getContext()
-  if (!user || !profile?.is_active || !profile.business_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (profile.role !== 'admin' && profile.role !== 'staff') return NextResponse.json({ error: 'Only admin or staff can delete draft sales' }, { status: 403 })
 
   const body = await request.json().catch(() => null)
-  const parsed = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }).safeParse(body)
+  const parsed = z.object({
+    ids: z.array(z.string().uuid()).min(1).max(50),
+    reason: z.string().trim().max(500).optional().or(z.literal('')),
+  }).safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Select at least one valid sales invoice' }, { status: 400 })
 
   const ids = [...new Set(parsed.data.ids)]
-  const { data: selected, error: lookupError } = await supabase
-    .from('sales_invoices')
-    .select('id,invoice_no,status')
-    .eq('business_id', profile.business_id)
-    .is('deleted_at', null)
-    .in('id', ids)
+  const { data, error } = await supabase.rpc('bulk_soft_delete_draft_invoices', {
+    p_kind: 'sale',
+    p_invoice_ids: ids,
+    p_reason: parsed.data.reason || null,
+  })
 
-  if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 400 })
-  if ((selected?.length ?? 0) !== ids.length) return NextResponse.json({ error: 'One or more selected sales invoices were not found' }, { status: 404 })
-
-  const nonDraft = (selected ?? []).filter(invoice => invoice.status !== 'draft')
-  if (nonDraft.length) {
-    return NextResponse.json({
-      error: `Only draft sales invoices can be deleted. Completed/void invoices are protected: ${nonDraft.map(invoice => invoice.invoice_no).join(', ')}`,
-    }, { status: 409 })
+  if (error) {
+    const message = error.message || 'Unable to delete selected sales invoices'
+    const status = /only active draft|draft vouchers|completed|void/i.test(message) ? 409 : /unauthorized/i.test(message) ? 401 : 400
+    return NextResponse.json({ error: message }, { status })
   }
 
-  for (const invoice of selected ?? []) {
-    const { error } = await supabase.rpc('soft_delete_sale_invoice', {
-      p_invoice_id: invoice.id,
-      p_reason: 'Deleted by admin/staff from draft sales records',
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  }
-
-  return NextResponse.json({ deleted: ids.length })
+  return NextResponse.json({ deleted: Number(data?.deleted ?? ids.length), kind: 'sale' })
 }
