@@ -26,7 +26,6 @@ export async function GET() {
     .limit(100)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-
   return NextResponse.json({ purchases: data ?? [] })
 }
 
@@ -66,36 +65,27 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const { supabase, user, profile } = await context()
   if (!user || !profile?.is_active || !profile.business_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (profile.role !== 'admin' && profile.role !== 'staff') return NextResponse.json({ error: 'Only admin or staff can delete draft purchases' }, { status: 403 })
 
   const body = await request.json().catch(() => null)
-  const parsed = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }).safeParse(body)
+  const parsed = z.object({
+    ids: z.array(z.string().uuid()).min(1).max(50),
+    reason: z.string().trim().max(500).optional().or(z.literal('')),
+  }).safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Select at least one valid purchase' }, { status: 400 })
 
   const ids = [...new Set(parsed.data.ids)]
-  const { data: selected, error: lookupError } = await supabase
-    .from('purchase_invoices')
-    .select('id,invoice_no,status')
-    .eq('business_id', profile.business_id)
-    .is('deleted_at', null)
-    .in('id', ids)
+  const { data, error } = await supabase.rpc('bulk_soft_delete_draft_invoices', {
+    p_kind: 'purchase',
+    p_invoice_ids: ids,
+    p_reason: parsed.data.reason || null,
+  })
 
-  if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 400 })
-  if ((selected?.length ?? 0) !== ids.length) return NextResponse.json({ error: 'One or more selected purchases were not found' }, { status: 404 })
-
-  const completed = (selected ?? []).filter((purchase) => purchase.status !== 'draft')
-  if (completed.length) {
-    return NextResponse.json({
-      error: `Only draft purchases can be deleted safely. Completed/void purchases must be handled through the invoice controls: ${completed.map((purchase) => purchase.invoice_no).join(', ')}`,
-    }, { status: 409 })
+  if (error) {
+    const message = error.message || 'Unable to delete selected purchases'
+    const status = /only active draft|draft vouchers|completed|void/i.test(message) ? 409 : /unauthorized/i.test(message) ? 401 : 400
+    return NextResponse.json({ error: message }, { status })
   }
 
-  for (const purchase of selected ?? []) {
-    const { error } = await supabase.rpc('soft_delete_purchase_invoice', {
-      p_invoice_id: purchase.id,
-      p_reason: 'Deleted by admin/staff from selected purchase records',
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  }
-
-  return NextResponse.json({ deleted: ids.length })
+  return NextResponse.json({ deleted: Number(data?.deleted ?? ids.length), kind: 'purchase' })
 }
