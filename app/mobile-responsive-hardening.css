@@ -1,0 +1,68 @@
+/* Shared mobile/tablet hardening for POS and business forms. */
+@media (max-width: 767px) {
+  html { -webkit-text-size-adjust: 100%; }
+  body { overflow-x: hidden; }
+
+  /* Financial/data-entry fields: keep the 16px size to prevent iOS zoom and give touch targets room. */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+    line-height: 1.35 !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select {
+    min-height: 48px;
+  }
+
+  textarea { min-height: 104px; padding-top: 12px; padding-bottom: 12px; }
+
+  button,
+  [role="button"] {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* POS product/customer/supplier search controls. */
+  :where(input[placeholder*="Search product"], input[placeholder*="Walk-in customer"], input[placeholder*="Walk-in supplier"], input[placeholder*="Product / Barcode"]) {
+    min-height: 52px !important;
+    font-size: 16px !important;
+  }
+
+  :where(div:has(> input[placeholder*="Search product"]), div:has(> input[placeholder*="Walk-in customer"]), div:has(> input[placeholder*="Walk-in supplier"])) {
+    min-height: 56px !important;
+  }
+
+  /* Prevent desktop tables from making the entire viewport scroll sideways. */
+  table { font-size: 13px; }
+  :where(.overflow-auto, .overflow-x-auto, .overflow-y-auto) { -webkit-overflow-scrolling: touch; }
+
+  /* Common mobile modal geometry. */
+  :where(.fixed.inset-0) {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  :where(.fixed.inset-0 > div) {
+    max-width: 100% !important;
+    max-height: calc(100dvh - 24px) !important;
+  }
+
+  /* Sticky mobile checkout/action bars should clear the home indicator. */
+  :where(.fixed.bottom-0, .sticky.bottom-0) {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  /* Make common card grids collapse cleanly without forcing a minimum desktop width. */
+  :where(.min-w-\[420px\], .min-w-\[360px\], .min-w-\[320px\]) { min-width: 0 !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  /* Tablet is a first-class layout, not a scaled desktop. */
+  input:not([type="checkbox"]):not([type="radio"]), select { min-height: 46px; }
+  button, [role="button"] { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

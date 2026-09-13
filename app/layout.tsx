@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import './mobile-ui-polish.css'
+import './mobile-responsive-hardening.css'
 import './receipt-palette.css'
 import './homepage-why-card.css'
 import './import-page-theme.css'
