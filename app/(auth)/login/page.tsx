@@ -7,17 +7,17 @@ import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, MessageCircle, Smartphon
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 
-const supportUrl = 'https://wa.me/919996609399?text=I%20have%20a%20question%20about%20BIZYBUK.IN'
+const supportUrl = 'https://wa.me/919996609399?text=I%20have%20a%20question%20about%20PARTRONIX.IN'
 
 function HomeBrand() {
   return (
-    <Link href="/" aria-label="BIZYBUK.IN home" className="flex w-fit items-center gap-3">
+    <Link href="/" aria-label="PARTRONIX.IN home" className="flex w-fit items-center gap-3">
       <span className="relative flex h-10 w-10 items-center justify-center rounded-[11px] border-[3px] border-[#18795c] bg-white text-[18px] font-black text-[#18795c] shadow-sm">
         <ShoppingCart className="absolute h-6 w-6" strokeWidth={2.8} />
         <span className="relative z-10 mt-0.5 text-[15px] font-black text-white">B</span>
       </span>
       <span className="text-[23px] font-black tracking-[-.055em] text-[#17382f]">
-        BIZYBUK<span className="text-[#18795c]">.IN</span>
+        PARTRONIX<span className="text-[#18795c]">.IN</span>
       </span>
     </Link>
   )
@@ -63,7 +63,7 @@ export default function LoginPage() {
           <div className="my-auto max-w-xl pb-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wider text-[#087f73] shadow-sm"><Zap className="h-3.5 w-3.5" /> Fast · Secure · Smart</div>
             <h1 className="mt-7 text-5xl font-black leading-[1.02] tracking-[-.055em] text-slate-950 xl:text-6xl">Run your business,<br /><span className="text-[#087f73]">with clarity.</span></h1>
-            <p className="mt-6 max-w-lg text-base font-medium leading-7 text-slate-800">Sales, inventory, customers, payments and everyday work — all in one clear BIZYBUK.IN workspace.</p>
+            <p className="mt-6 max-w-lg text-base font-medium leading-7 text-slate-800">Sales, inventory, customers, payments and everyday work — all in one clear PARTRONIX.IN workspace.</p>
             <div className="mt-9 space-y-4">
               {['One workspace for your daily business', 'Fast access to sales, stock and accounts', 'Secure access wherever you work'].map(item => <div key={item} className="biz-login-feature flex items-center gap-3 text-base font-bold text-slate-900"><span className="biz-login-feature-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0f8f83] text-white shadow-sm"><Check className="h-4 w-4" strokeWidth={3} /></span><span>{item}</span></div>)}
             </div>
@@ -75,7 +75,7 @@ export default function LoginPage() {
       <section className="flex min-h-screen flex-col bg-[#f7fbfa]">
         <header className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
           <div className="lg:hidden"><HomeBrand /></div>
-          <div className="ml-auto text-right text-sm font-semibold text-slate-700">New to BIZYBUK.IN? <Link href="/signup" className="font-black text-[#087f73] hover:text-[#06665d]">Create a shop</Link></div>
+          <div className="ml-auto text-right text-sm font-semibold text-slate-700">New to PARTRONIX.IN? <Link href="/signup" className="font-black text-[#087f73] hover:text-[#06665d]">Create a shop</Link></div>
         </header>
         <div className="flex flex-1 items-center justify-center px-5 pb-10 pt-2 sm:px-8 lg:px-12 lg:pb-16">
           <div className="w-full max-w-xl">
