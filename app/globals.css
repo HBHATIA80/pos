@@ -43,3 +43,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:1279px){aside>section{max-width:100%}}
 @media(max-width:768px){body{font-size:14px}.biz-nav-item{min-height:42px!important}.dashboard-bill-summary>section,.biz-bill-summary,aside>section{border-radius:16px!important}:where(div:has(> input[placeholder*="Search product"])) {min-height:56px!important}:where(div:has(> input[placeholder*="Search product"]) > input){height:52px!important;min-height:52px!important;font-size:15px!important}:where(.fixed.inset-0.z-\[100\])>div{max-height:calc(100vh - 16px)!important}:where(.fixed.inset-0.z-\[100\]) table{font-size:11px!important}:where(.fixed.inset-0.z-\[100\]) table th,:where(.fixed.inset-0.z-\[100\]) table td{padding:4px 5px!important}:where(.fixed.inset-0.z-\[100\]) table tbody tr{height:25px!important}}
 @media(max-width:640px){.biz-dashboard-card{min-height:0}.biz-light-modal-surface,.biz-payment-dialog{max-width:calc(100vw - 24px);border-radius:20px!important}:where(.fixed.inset-0.z-\[100\])>div{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;border-radius:20px!important}:where(.fixed.inset-0.z-\[100\]) table{table-layout:fixed!important}:where(.fixed.inset-0.z-\[100\]) table th,:where(.fixed.inset-0.z-\[100\]) table td{padding:4px 4px!important;font-size:10px!important}}
+
+
+/* Partronix.in shared design system: warm cream, forest green and gold. */
+:root{--biz-bg:#f5f2e9;--biz-surface:#fffdf8;--biz-surface-soft:#fbf8ef;--biz-surface-muted:#eee9db;--biz-text:#132c23;--biz-text-2:#31483d;--biz-muted:#65776c;--biz-placeholder:#7e8c82;--biz-line:#e4dcc9;--biz-line-strong:#cbbd9e;--biz-primary:#17634b;--biz-primary-dark:#0d382b;--biz-primary-soft:#e6f0e8;--biz-success:#17634b;--biz-success-dark:#0d382b;--biz-success-soft:#e6f0e8;--biz-warning:#b98119;--biz-warning-dark:#87590b;--biz-warning-soft:#fff5d9}
+body{font-size:16px;line-height:1.6;background:var(--biz-bg)}
+small,.text-xs{font-size:13px!important;line-height:1.45}
+input,select,textarea{font-size:16px!important;min-height:44px}
+button{min-height:40px}
+.biz-app-sidebar,.biz-app-header{background:var(--biz-surface)!important;border-color:var(--biz-line)!important}
+.biz-nav-item{font-size:15px!important;min-height:44px}
+img,video,canvas,svg{max-width:100%}
+@media(max-width:768px){body{font-size:16px}.biz-app-main{min-width:0;width:100%;overflow-x:hidden}main{padding-left:14px!important;padding-right:14px!important}h1{font-size:clamp(1.65rem,7vw,2.2rem)!important}h2{font-size:clamp(1.35rem,5.5vw,1.8rem)!important}button,a[role=button]{min-height:44px}.overflow-x-auto{max-width:100%;-webkit-overflow-scrolling:touch}table{min-width:640px}input,select,textarea{font-size:16px!important}}
