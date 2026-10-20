@@ -18,8 +18,8 @@ import SalesStockPolicy from './dashboard/sales/sales-stock-policy'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'BIZYBUK.IN · Business Management & POS',
-  description: 'BIZYBUK.IN — fast, secure and smart business management, POS, inventory, purchases, accounts and customer ordering software.',
+  title: 'Partronix.in · Mobile Parts & Business Portal',
+  description: 'Partronix.in — mobile parts catalogue, customer ordering, inventory and business management.',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
