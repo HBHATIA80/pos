@@ -3,13 +3,13 @@ import { ArrowRight, BarChart3, Check, ChevronDown, CreditCard, FileText, Headph
 
 function Brand() {
   return (
-    <Link href="/" aria-label="BIZYBUK.IN home" className="flex items-center gap-3">
+    <Link href="/" aria-label="PARTRONIX.IN home" className="flex items-center gap-3">
       <span className="relative flex h-10 w-10 items-center justify-center rounded-[11px] border-[3px] border-[#18795c] bg-white text-[18px] font-black text-[#18795c] shadow-sm">
         <ShoppingCart className="absolute h-6 w-6" strokeWidth={2.8} />
         <span className="relative z-10 mt-0.5 text-[15px] font-black text-white">B</span>
       </span>
       <span className="text-[23px] font-black tracking-[-.055em] text-[#17382f]">
-        BIZYBUK<span className="text-[#18795c]">.IN</span>
+        PARTRONIX<span className="text-[#18795c]">.IN</span>
       </span>
     </Link>
   )
@@ -46,7 +46,7 @@ function DashboardPreview() {
       <div className="relative overflow-hidden rounded-[20px] border border-[#d9e9e1] bg-white shadow-[0_24px_65px_rgba(23,67,52,.14)]">
         <div className="flex h-[44px] items-center justify-between border-b border-[#edf3ef] px-4">
           <div className="flex gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-slate-200" /><i className="h-2.5 w-2.5 rounded-full bg-slate-200" /><i className="h-2.5 w-2.5 rounded-full bg-slate-200" /></div>
-          <span className="rounded-full bg-[#f1f8f4] px-3 py-1 text-[8px] font-extrabold tracking-[.08em] text-[#4f7468]">BIZYBUK.IN</span>
+          <span className="rounded-full bg-[#f1f8f4] px-3 py-1 text-[8px] font-extrabold tracking-[.08em] text-[#4f7468]">PARTRONIX.IN</span>
         </div>
         <div className="grid grid-cols-[48px_1fr]">
           <aside className="border-r border-[#edf3ef] bg-[#f7fbf9] px-2 py-3">
@@ -57,7 +57,7 @@ function DashboardPreview() {
           </aside>
           <div className="min-w-0 p-4">
             <div className="flex items-start justify-between">
-              <div><p className="text-[8px] font-bold uppercase tracking-[.15em] text-slate-400">BIZYBUK.IN</p><h3 className="mt-1 text-[17px] font-extrabold text-[#17382f]">Business command centre</h3></div>
+              <div><p className="text-[8px] font-bold uppercase tracking-[.15em] text-slate-400">PARTRONIX.IN</p><h3 className="mt-1 text-[17px] font-extrabold text-[#17382f]">Business command centre</h3></div>
               <span className="rounded-full bg-[#e7f6ee] px-2.5 py-1 text-[8px] font-extrabold text-[#18795c]">LIVE</span>
             </div>
             <div className="mt-4 grid grid-cols-4 gap-2">
@@ -117,7 +117,7 @@ export default function HomePage() {
             <div className="hidden items-center gap-9 text-[14px] font-bold text-[#29483e] lg:flex">
               <a href="#features" className="transition-colors hover:text-[#18795c]">Features</a>
               <a href="#modules" className="transition-colors hover:text-[#18795c]">Modules</a>
-              <a href="#why" className="transition-colors hover:text-[#18795c]">Why BIZYBUK</a>
+              <a href="#why" className="transition-colors hover:text-[#18795c]">Why PARTRONIX</a>
               <a href="#pricing" className="transition-colors hover:text-[#18795c]">Pricing</a>
               <button className="inline-flex items-center gap-1 transition-colors hover:text-[#18795c]">Resources <ChevronDown className="h-4 w-4" /></button>
             </div>
@@ -143,7 +143,7 @@ export default function HomePage() {
 
             <div className="relative flex h-[410px] items-end justify-center self-end lg:h-[500px]">
               <div className="pointer-events-none absolute bottom-12 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#d5efe2] blur-3xl" />
-              <img src="/api/landing-assets/shop-owner" alt="BIZYBUK shop owner" className="relative z-10 h-full w-auto max-w-full object-contain" />
+              <img src="/api/landing-assets/shop-owner" alt="PARTRONIX shop owner" className="relative z-10 h-full w-auto max-w-full object-contain" />
             </div>
 
             <div className="relative z-10 flex justify-center lg:justify-end">
@@ -199,7 +199,7 @@ export default function HomePage() {
             <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#3fa67e]/25 blur-3xl" />
             <div className="relative grid gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
               <div>
-                <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.14em] text-[#d8f1e5]">Why BIZYBUK</span>
+                <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.14em] text-[#d8f1e5]">Why PARTRONIX</span>
                 <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-.04em] text-white sm:text-4xl">Less admin. More control.</h2>
                 <p className="mt-4 max-w-2xl text-[16px] leading-7 text-[#d6e9e1]">A clearer view of your business, from sales and stock to customers and payments. The interface stays calm, readable and focused on the action you need to take.</p>
                 <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -227,7 +227,7 @@ export default function HomePage() {
 
       <footer className="border-t border-[#e5eee9] bg-white">
         <div className="mx-auto flex min-h-[76px] max-w-[1380px] flex-col justify-center gap-3 px-5 text-[12px] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-12">
-          <span>© 2025 BIZYBUK.IN All rights reserved.</span>
+          <span>© 2025 PARTRONIX.IN All rights reserved.</span>
           <div className="flex items-center gap-4 sm:gap-5"><Link href="/privacy" className="font-medium text-[#4e7567] hover:text-[#18795c]">Privacy Policy</Link><span className="h-4 w-px bg-slate-200" /><Link href="/terms" className="font-medium text-[#4e7567] hover:text-[#18795c]">Terms &amp; Conditions</Link><span className="h-4 w-px bg-slate-200" /><Link href="/support" className="font-medium text-[#4e7567] hover:text-[#18795c]">Support</Link></div>
         </div>
       </footer>
